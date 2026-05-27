@@ -1,0 +1,50 @@
+﻿=== IEG3268 DLL 메서드 목록 ===
+
+클래스 이름: IEG3268_Dll.IEG3268
+네임스페이스: IEG3268_Dll
+어셈블리: IEG3268_Dll, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
+
+총 27개의 public 메서드:
+
+  String Axis1_is_PosData()
+  Void Axis1_OFF()
+  Void Axis1_ON()
+  Boolean Axis1_Status(String Status)
+  Void Axis1_UD_Config_Update(Int64 Acceleration, Int64 Deceleration, Int64 MaxVelocity, Int64 Velocity)
+  Void Axis1_UD_Homming()
+  Void Axis1_UD_Move_Send()
+  Void Axis1_UD_POS_Update(Int64 Position)
+  String Axis2_is_PosData()
+  Void Axis2_LR_Config_Update(Int64 Acceleration, Int64 Deceleration, Int64 MaxVelocity, Int64 Velocity)
+  Void Axis2_LR_Homming()
+  Void Axis2_LR_Move_Send()
+  Void Axis2_LR_POS_Update(Int64 Position)
+  Void Axis2_OFF()
+  Void Axis2_ON()
+  Boolean Axis2_Status(String Status)
+  Boolean CIFX_50RE_Connect()
+  Void CIFX_50RE_Disconnect()
+  Boolean Digital_Input(Int32 Numbering)
+  Void Digital_Output(Int32 numbering, Boolean value)
+  Void LAMP_Y_Send_Start(Int32 interval)
+  Void LAMP_Y_Send_Stop()
+  Void Lamp_Y_Timer_Start()
+  Void Lamp_Y_Timer_Tick(Object sender, EventArgs e)
+  Void ReadData_Send_Start(Int32 interval)
+  Void ReadData_Timer_Start()
+  Void ReadData_Timer_Tick(Object sender, EventArgs e)
+
+
+=== Timer 관련 메서드 ===
+
+  Void LAMP_Y_Send_Start(Int32 interval)
+  Void LAMP_Y_Send_Stop()
+  Void Lamp_Y_Timer_Start()
+  Void Lamp_Y_Timer_Tick(Object sender, EventArgs e)
+  Void ReadData_Send_Start(Int32 interval)
+  Void ReadData_Timer_Start()
+  Void ReadData_Timer_Tick(Object sender, EventArgs e)
+
+
+=== Properties ===
+
