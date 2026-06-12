@@ -1,5 +1,7 @@
 # Semiconductor UI - 반도체 통합 공정 및 실장비 제어 시스템 🖥️⚡
 
+> 📂 [포트폴리오 (Notion)](https://iced-tarsier-455.notion.site/350af40f5e6680d19f93f1653925a3b8) · 🎥 [시연 영상](https://youtu.be/_ko-Cr73uJA)
+
 본 프로젝트는 반도체 제조 공정 중 웨이퍼 이송 및 챔버 공정 시뮬레이션을 관리하고 실제 제어 장비와 실시간으로 연동하기 위한 **.NET WinForms 기반 통합 제어 시스템 (SemiconductorUi)** 입니다.
 
 실제 반도체 이송 공정 사양에 맞춰 설계되었으며, **EtherCAT(IEG3268 DLL)** 하드웨어 통신 모듈과 정밀 상태 머신(State Machine)을 통해 완벽한 자동화 시퀀스를 제공합니다.
