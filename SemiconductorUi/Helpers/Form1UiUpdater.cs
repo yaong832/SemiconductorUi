@@ -822,16 +822,17 @@ namespace SemiconductorUi.Helpers
                 return;
             }
 
-            // SV: 레시피가 적용된 경우에만 표시
+            // SV: 알람 판정용 타겟은 챔버 스펙을 항상 사용
+            // (레시피 미적용 시 SV=0이면 |PV-0|로 즉시 환경 알람 발생)
             double svTemp = 0, svPress = 0;
-            if (form.RecipeApplied && form.ChamberEnvSpecs.TryGetValue(unitKey, out var spec))
+            if (form.ChamberEnvSpecs.TryGetValue(unitKey, out var spec))
             {
                 svTemp = spec.TargetTemperatureC;
                 svPress = spec.TargetPressureTorr;
             }
 
-            // 가스/전력 SV: 레시피가 적용된 경우에만 표시
-            var gasRf = (form.RecipeApplied && form.UnitGasRfSv.ContainsKey(unitKey)) ? form.UnitGasRfSv[unitKey] : (0, 0, 0, 0);
+            // 가스/전력 SV: 유닛별 설정값 사용 (없으면 0)
+            var gasRf = form.UnitGasRfSv.ContainsKey(unitKey) ? form.UnitGasRfSv[unitKey] : (0, 0, 0, 0);
             double svNF3 = gasRf.NF3;
             double svO2 = gasRf.O2;
             double svCF4 = gasRf.CF4;
@@ -851,8 +852,7 @@ namespace SemiconductorUi.Helpers
             // 5. StatusText가 공정 진행 상태 ("처리 중", "2차 노광 중", "Processing", "공정 중")
             bool isChamberProcessing = form.SimulationRunning && cs != null && cs.CurrentWafer != null && 
                 cs.TotalSeconds > 0 && cs.RemainingSeconds > 0 &&
-                (cs.StatusText.Contains("처리 중") || cs.StatusText.Contains("2차 노광 중") || 
-                 cs.StatusText.Contains("Processing") || cs.StatusText.Contains("공정 중"));
+                ChamberStatusTexts.IsProcessing(cs.StatusText);
             
             if (isChamberProcessing)
             {
@@ -862,26 +862,16 @@ namespace SemiconductorUi.Helpers
                 pvPress = live != null ? live.PressureTorr : svPress;
 
                 // 가스/전력 PV: 알람이 발생하지 않도록 안전하게 랜덤 값 생성
-                pvNF3 = form.GenerateSafeRandomValue(svNF3, form.AlarmThresholds.GasWarnAbsSccm, form.AlarmThresholds.GasAlarmAbsSccm);
-                pvO2 = form.GenerateSafeRandomValue(svO2, form.AlarmThresholds.GasWarnAbsSccm, form.AlarmThresholds.GasAlarmAbsSccm);
-                pvCF4 = form.GenerateSafeRandomValue(svCF4, form.AlarmThresholds.GasWarnAbsSccm, form.AlarmThresholds.GasAlarmAbsSccm);
-                // RF: 1% 확률로 알람 발생
+                var thresholds = form.AlarmThresholds;
+                pvNF3 = form.GenerateSafeRandomValue(svNF3, thresholds.GasWarnAbsSccm, thresholds.GasAlarmAbsSccm);
+                pvO2 = form.GenerateSafeRandomValue(svO2, thresholds.GasWarnAbsSccm, thresholds.GasAlarmAbsSccm);
+                pvCF4 = form.GenerateSafeRandomValue(svCF4, thresholds.GasWarnAbsSccm, thresholds.GasAlarmAbsSccm);
+                // RF: 의도적 알람 주입 제거 — 안전 범위만 유지 (실제 알람은 임계값 이탈 시에만)
                 if (svRf > 0)
                 {
-                    bool shouldTriggerAlarm = form.envRandom.NextDouble() < 0.01;
-                    double rfWarnThreshold = svRf * form.AlarmThresholds.RfWarnRatio;
-                    double rfAlarmThreshold = svRf * form.AlarmThresholds.RfAlarmRatio;
-                    double rfSafeRange;
-                    if (shouldTriggerAlarm)
-                    {
-                        // 알람 발생: 경고 임계값의 80-100% 범위
-                        rfSafeRange = rfWarnThreshold * (0.8 + form.envRandom.NextDouble() * 0.2);
-                    }
-                    else
-                    {
-                        // 안전 범위: 경고 임계값의 20% 이내
-                        rfSafeRange = Math.Min(rfWarnThreshold * 0.2, rfAlarmThreshold * 0.15);
-                    }
+                    double rfWarnThreshold = svRf * thresholds.RfWarnRatio;
+                    double rfAlarmThreshold = svRf * thresholds.RfAlarmRatio;
+                    double rfSafeRange = Math.Min(rfWarnThreshold * 0.2, rfAlarmThreshold * 0.15);
                     double rfDeviation = (form.envRandom.NextDouble() - 0.5) * rfSafeRange * 2;
                     pvRf = Math.Max(0, svRf + rfDeviation);
                 }
@@ -974,9 +964,10 @@ namespace SemiconductorUi.Helpers
                 return;
             }
 
-            form.buttonStart.Enabled = !form.SimulationRunning || form.SimulationPaused || form.CurrentProcessState == MainFormViewModel.ProcessState.Error;
-            form.buttonPause.Enabled = form.SimulationRunning && !form.SimulationPaused;
-            form.buttonStop.Enabled = form.SimulationRunning;
+            form.buttonStart.Enabled = !form.IsHardwareInitInProgress
+                && (!form.SimulationRunning || form.SimulationPaused || form.CurrentProcessState == MainFormViewModel.ProcessState.Error);
+            form.buttonPause.Enabled = form.SimulationRunning && !form.SimulationPaused && !form.IsHardwareInitInProgress;
+            form.buttonStop.Enabled = form.SimulationRunning && !form.IsHardwareInitInProgress;
             
             // 알람 리셋 버튼: 헤더에 알람이 표시되면 활성화
             bool hasHeaderAlarm = form.HasHeaderAlarm();

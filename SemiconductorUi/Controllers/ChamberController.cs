@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using SemiconductorUi.Models;
 using SemiconductorUi.Controls;
+using SemiconductorUi.Helpers;
 
 namespace SemiconductorUi.Controllers
 {
@@ -38,7 +39,7 @@ namespace SemiconductorUi.Controllers
             public Wafer CurrentWafer { get; set; }
             public int RemainingSeconds { get; set; }
             public int TotalSeconds { get; set; }
-            public string StatusText { get; set; } = "Idle";
+            public string StatusText { get; set; } = ChamberStatusTexts.Idle;
             public bool ReservedForIncoming { get; set; }
             public bool PickupScheduled { get; set; }
             public double ProcessingAccumulator { get; set; }
@@ -223,7 +224,7 @@ namespace SemiconductorUi.Controllers
                 chamber.CurrentWafer = null;
                 chamber.RemainingSeconds = 0;
                 chamber.TotalSeconds = 0;
-                chamber.StatusText = "Idle";
+                chamber.StatusText = ChamberStatusTexts.Idle;
                 chamber.ReservedForIncoming = false;
                 chamber.PickupScheduled = false;
                 chamber.ProcessingAccumulator = 0;
@@ -245,7 +246,7 @@ namespace SemiconductorUi.Controllers
             chamber.CurrentWafer = wafer;
             chamber.RemainingSeconds = chamber.Step.DurationSeconds;
             chamber.TotalSeconds = chamber.Step.DurationSeconds;
-            chamber.StatusText = "Processing";
+            chamber.StatusText = ChamberStatusTexts.Processing;
             return true;
         }
 
@@ -264,7 +265,7 @@ namespace SemiconductorUi.Controllers
             chamber.CurrentWafer = null;
             chamber.RemainingSeconds = 0;
             chamber.TotalSeconds = 0;
-            chamber.StatusText = "Idle";
+            chamber.StatusText = ChamberStatusTexts.Idle;
             chamber.PickupScheduled = false;
             return wafer;
         }
@@ -371,7 +372,7 @@ namespace SemiconductorUi.Controllers
 
                     if (chamber.RemainingSeconds <= 0)
                     {
-                        chamber.StatusText = "Completed";
+                        chamber.StatusText = ChamberStatusTexts.Completed;
                     }
                 }
             }

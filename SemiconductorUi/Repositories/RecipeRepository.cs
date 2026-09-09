@@ -57,18 +57,33 @@ namespace SemiconductorUi.Repositories
 				{
 					var dir = Path.GetDirectoryName(_filePath);
 					if (!Directory.Exists(dir)) Directory.CreateDirectory(dir);
-					using (var fs = File.Create(_filePath))
+
+					var tempFilePath = _filePath + ".tmp";
+					using (var fs = File.Create(tempFilePath))
 					{
 						var ser = new XmlSerializer(typeof(List<RecipeSnapshot>));
 						ser.Serialize(fs, recipes ?? new List<RecipeSnapshot>());
 					}
-					}
-					catch (Exception ex)
+
+					if (File.Exists(_filePath))
 					{
-						// 파일 I/O 오류는 로깅만 하고 예외를 다시 던지지 않음
-						// 실제 장비 구동에 영향을 주지 않도록 기존 동작 유지
-						ExceptionHandler.HandleException(ex, "RecipeRepository.SaveAll");
+						var backupPath = _filePath + ".bak";
+						File.Copy(_filePath, backupPath, true);
+						File.Delete(_filePath);
 					}
+
+					File.Move(tempFilePath, _filePath);
+
+					var backupPathToDelete = _filePath + ".bak";
+					if (File.Exists(backupPathToDelete))
+					{
+						try { File.Delete(backupPathToDelete); } catch { }
+					}
+				}
+				catch (Exception ex)
+				{
+					ExceptionHandler.HandleException(ex, "RecipeRepository.SaveAll");
+				}
 			}
 		}
 

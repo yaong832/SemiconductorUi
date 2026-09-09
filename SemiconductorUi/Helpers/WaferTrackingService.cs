@@ -188,7 +188,7 @@ namespace SemiconductorUi.Helpers
             }
 
             // 중복 호출 방지: 이미 공정이 시작된 상태면 스킵
-            if (chamber.StatusText == "처리 중" || chamber.StatusText == "2차 노광 중")
+            if (ChamberStatusTexts.IsProcessing(chamber.StatusText))
             {
                 // 이미 공정 중이면 중복 호출 방지
                 return;
@@ -203,15 +203,15 @@ namespace SemiconductorUi.Helpers
             // 공정 상태 설정 (2차 노광 모드 고려)
             if (_form.SecondExposureEnabled && chamber == _form.ChamberCState)
             {
-                chamber.StatusText = "2차 노광 중";
+                chamber.StatusText = ChamberStatusTexts.SecondExposure;
             }
             else if (chamber == _form.ChamberBState && NeedsSecondExposure(wafer))
             {
-                chamber.StatusText = "2차 노광 중";
+                chamber.StatusText = ChamberStatusTexts.SecondExposure;
             }
             else
             {
-                chamber.StatusText = "처리 중";
+                chamber.StatusText = ChamberStatusTexts.Processing;
             }
 
             _form.AddLogMessage($"{chamber.UnitKey} 공정 시작: 웨이퍼 #{wafer.Id} (예상 시간: {chamber.TotalSeconds}초)", "INFO");

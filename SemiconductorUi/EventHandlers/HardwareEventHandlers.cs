@@ -172,79 +172,87 @@ namespace SemiconductorUi.EventHandlers
                 return;
             }
 
-            try
+            if (form.EtherCAT_M == null)
             {
-                // 서보 파라미터 설정 (AppSettings에서 읽어옴)
-                Int64 velocity = AppSettings.ServoDefaultVelocity;
-                Int64 maxVelocity = AppSettings.ServoDefaultMaxVelocity;
-                Int64 deceleration = AppSettings.ServoDefaultDeceleration;
-                Int64 acceleration = AppSettings.ServoDefaultAcceleration;
+                return;
+            }
 
-                // 서보 OFF 후 파라미터 설정
-                form.EtherCAT_M.Axis1_OFF();
-                form.EtherCAT_M.Axis2_OFF();
-                System.Threading.Thread.Sleep(100);
+            form.AddLogMessage("서보모터 ON 시작...", "INFO");
+            var ethercat = form.EtherCAT_M;
+            Int64 velocity = AppSettings.ServoDefaultVelocity;
+            Int64 maxVelocity = AppSettings.ServoDefaultMaxVelocity;
+            Int64 deceleration = AppSettings.ServoDefaultDeceleration;
+            Int64 acceleration = AppSettings.ServoDefaultAcceleration;
 
-                form.EtherCAT_M.Axis1_UD_Config_Update(velocity, maxVelocity, deceleration, acceleration);
-                form.EtherCAT_M.Axis2_LR_Config_Update(velocity, maxVelocity, deceleration, acceleration);
-
-                // 서보 ON
-                form.EtherCAT_M.Axis1_ON();
-                form.EtherCAT_M.Axis2_ON();
-                
-                // 서보 ON 완료 대기 (최대 2초)
-                System.Threading.Thread.Sleep(500); // 초기 안정화 대기
-                bool servoOnConfirmed = false;
-                var servoCheckTimeout = DateTime.Now.AddSeconds(2);
-                while (DateTime.Now < servoCheckTimeout)
+            System.Threading.Tasks.Task.Run(() =>
+            {
+                try
                 {
-                    try
-                    {
-                        // 서보 ON 상태 확인 (위치 데이터가 있으면 서보 ON으로 간주)
-                        string axis1Pos = form.EtherCAT_M.Axis1_is_PosData();
-                        string axis2Pos = form.EtherCAT_M.Axis2_is_PosData();
-                        bool hasPosition = !string.IsNullOrEmpty(axis1Pos) && axis1Pos != "-" &&
-                                          !string.IsNullOrEmpty(axis2Pos) && axis2Pos != "-";
-                        
-                        if (hasPosition)
-                        {
-                            servoOnConfirmed = true;
-                            break;
-                        }
-                    }
-                    catch (Exception checkEx)
-                    {
-                        // 상태 확인 오류는 무시하고 계속 시도
-                        System.Diagnostics.Debug.WriteLine($"서보 ON 상태 확인 오류: {checkEx.Message}");
-                    }
+                    ethercat.Axis1_OFF();
+                    ethercat.Axis2_OFF();
                     System.Threading.Thread.Sleep(100);
+
+                    ethercat.Axis1_UD_Config_Update(velocity, maxVelocity, deceleration, acceleration);
+                    ethercat.Axis2_LR_Config_Update(velocity, maxVelocity, deceleration, acceleration);
+
+                    ethercat.Axis1_ON();
+                    ethercat.Axis2_ON();
+
+                    System.Threading.Thread.Sleep(500);
+                    bool servoOnConfirmed = false;
+                    var servoCheckTimeout = DateTime.Now.AddSeconds(2);
+                    while (DateTime.Now < servoCheckTimeout)
+                    {
+                        try
+                        {
+                            string axis1Pos = ethercat.Axis1_is_PosData();
+                            string axis2Pos = ethercat.Axis2_is_PosData();
+                            bool hasPosition = !string.IsNullOrEmpty(axis1Pos) && axis1Pos != "-" &&
+                                              !string.IsNullOrEmpty(axis2Pos) && axis2Pos != "-";
+                            if (hasPosition)
+                            {
+                                servoOnConfirmed = true;
+                                break;
+                            }
+                        }
+                        catch (Exception checkEx)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"서보 ON 상태 확인 오류: {checkEx.Message}");
+                        }
+                        System.Threading.Thread.Sleep(100);
+                    }
+
+                    form.SafeBeginInvoke(() =>
+                    {
+                        if (servoOnConfirmed)
+                        {
+                            form.IsServoOn = true;
+                            form.AddLogMessage("서보모터 ON - 파라미터 설정 완료", "INFO");
+                        }
+                        else
+                        {
+                            form.IsServoOn = false;
+                            form.AddLogMessage("서보모터 ON 명령 전송 완료, 하지만 상태 확인 실패 - 수동 확인 필요", "WARN");
+                            MessageBox.Show(
+                                "서보 ON 명령을 전송했지만 상태 확인에 실패했습니다.\n\n" +
+                                "확인 사항:\n" +
+                                "1. 서보 모터 전원 확인\n" +
+                                "2. EtherCAT 연결 상태 확인\n" +
+                                "3. 서보 모터 상태 수동 확인",
+                                "서보 ON 확인", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        }
+                        form.UpdateServoStatusLabel();
+                    });
                 }
-                
-                if (servoOnConfirmed)
+                catch (Exception ex)
                 {
-                    form.IsServoOn = true;  // 서보 ON 상태 플래그 설정
-                    form.AddLogMessage("서보모터 ON - 파라미터 설정 완료", "INFO");
+                    form.SafeBeginInvoke(() =>
+                    {
+                        form.AddLogMessage($"서보 ON 오류: {ex.Message}", "ERROR");
+                        MessageBox.Show($"서보 ON 오류: {ex.Message}", "오류", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    });
                 }
-                else
-                {
-                    form.IsServoOn = false;
-                    form.AddLogMessage("서보모터 ON 명령 전송 완료, 하지만 상태 확인 실패 - 수동 확인 필요", "WARN");
-                    MessageBox.Show(
-                        "서보 ON 명령을 전송했지만 상태 확인에 실패했습니다.\n\n" +
-                        "확인 사항:\n" +
-                        "1. 서보 모터 전원 확인\n" +
-                        "2. EtherCAT 연결 상태 확인\n" +
-                        "3. 서보 모터 상태 수동 확인",
-                        "서보 ON 확인", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                }
-                
-                form.UpdateServoStatusLabel();
-            }
-            catch (Exception ex)
-            {
-                form.AddLogMessage($"서보 ON 오류: {ex.Message}", "ERROR");
-                MessageBox.Show($"서보 ON 오류: {ex.Message}", "오류", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
+            });
         }
 
         /// <summary>

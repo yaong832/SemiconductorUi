@@ -10,7 +10,6 @@ using System.Windows.Forms;
 using System.Drawing.Drawing2D;
 using IEG3268_Dll;
 using SemiconductorUi.Helpers;
-using SemiconductorUi.ViewModels;
 using SemiconductorUi.Controllers;
 using SemiconductorUi.Repositories;
 using SemiconductorUi.Models;
@@ -80,6 +79,10 @@ namespace SemiconductorUi
         
         // 알람 발생 전 프로세스 상태 저장 (알람 리셋 시 원래 상태로 복귀하기 위함)
         internal ProcessState? _stateBeforeAlarm = null;
+
+        // 공정 시작 시 서보/원점복귀 백그라운드 초기화 중
+        private volatile bool _hardwareInitInProgress;
+        internal bool IsHardwareInitInProgress => _hardwareInitInProgress;
         
         // 서비스 인터페이스 (의존성 주입)
         internal IChamberService ChamberService;
@@ -190,8 +193,9 @@ namespace SemiconductorUi
             }
         }
         
-        // ChamberAlarmStatus는 Dictionary이므로 직접 접근 가능하도록 래퍼 제공
-        internal Dictionary<string, bool> ChamberAlarmStatus => ViewModel?.ChamberAlarmStatus ?? new Dictionary<string, bool>();
+        // ChamberAlarmStatus는 ViewModel Dictionary를 그대로 노출 (null이면 빈 고정 인스턴스 — 매번 new 하면 리셋이 유실됨)
+        private static readonly Dictionary<string, bool> EmptyChamberAlarmStatus = new Dictionary<string, bool>();
+        internal Dictionary<string, bool> ChamberAlarmStatus => ViewModel?.ChamberAlarmStatus ?? EmptyChamberAlarmStatus;
         
         internal bool VerificationAlarmDismissed
         {
@@ -654,11 +658,7 @@ namespace SemiconductorUi
             get => HardwareManager?.IsTmHardwareInitialized ?? false;
             set
             {
-                // 읽기 전용이지만 리셋이 필요한 경우를 위해
-                if (value == false && HardwareManager != null)
-                {
-                    HardwareManager.ResetTmHardwareInitialized();
-                }
+                HardwareManager?.SetTmHardwareInitialized(value);
             }
         }
         
@@ -1074,6 +1074,62 @@ namespace SemiconductorUi
             {
                 StartSimulation();
             }
+
+            // 데모 스모크: 주기적으로 상태 파일을 남기고 지정 초 후 자동 종료
+            int exitSeconds = AppSettings.DemoModeAutoExitSeconds;
+            if (exitSeconds > 0)
+            {
+                _ = Task.Run(async () =>
+                {
+                    try
+                    {
+                        var dir = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Logs");
+                        System.IO.Directory.CreateDirectory(dir);
+                        var statusPath = System.IO.Path.Combine(dir, "SimVerify_status.txt");
+                        var end = DateTime.Now.AddSeconds(exitSeconds);
+                        while (DateTime.Now < end)
+                        {
+                            WriteSimVerifySnapshot(statusPath, "RUNNING");
+                            await Task.Delay(2000);
+                        }
+                        WriteSimVerifySnapshot(statusPath, "COMPLETED");
+                        SafeBeginInvoke(() =>
+                        {
+                            try { Close(); } catch { }
+                        });
+                    }
+                    catch (Exception ex)
+                    {
+                        ExceptionHandler.HandleException(ex, "DemoAutoExit");
+                    }
+                });
+            }
+        }
+
+        private void WriteSimVerifySnapshot(string statusPath, string phase)
+        {
+            try
+            {
+                var sb = new System.Text.StringBuilder();
+                sb.AppendLine($"Phase={phase}");
+                sb.AppendLine($"Time={DateTime.Now:yyyy-MM-dd HH:mm:ss}");
+                sb.AppendLine($"SimulationRunning={SimulationRunning}");
+                sb.AppendLine($"SimulationPaused={SimulationPaused}");
+                sb.AppendLine($"EthercatConnected={EthercatConnected}");
+                sb.AppendLine($"ProcessState={ViewModel?.CurrentProcessState}");
+                sb.AppendLine($"StatusProcessText={StatusProcessText}");
+                sb.AppendLine($"FoupA={foupManager?.GetFoupACount() ?? -1}");
+                sb.AppendLine($"FoupB={foupManager?.GetFoupBCount() ?? -1}");
+                sb.AppendLine($"ChamberA={ChamberAState?.StatusText}|Rem={ChamberAState?.RemainingSeconds}|Wafer={ChamberAState?.CurrentWafer?.Id}");
+                sb.AppendLine($"ChamberB={ChamberBState?.StatusText}|Rem={ChamberBState?.RemainingSeconds}|Wafer={ChamberBState?.CurrentWafer?.Id}");
+                sb.AppendLine($"ChamberC={ChamberCState?.StatusText}|Rem={ChamberCState?.RemainingSeconds}|Wafer={ChamberCState?.CurrentWafer?.Id}");
+                sb.AppendLine($"TmState={TransferService?.CurrentPhase}|Pending={TmHardwareActionPending}");
+                sb.AppendLine($"Transfer={TransferService?.CurrentTransfer?.Pickup}->{TransferService?.CurrentTransfer?.Dropoff}");
+                System.IO.File.WriteAllText(statusPath, sb.ToString(), System.Text.Encoding.UTF8);
+            }
+            catch
+            {
+            }
         }
 
         private static bool dllMethodsChecked = false;
@@ -1345,217 +1401,7 @@ namespace SemiconductorUi
             UpdateSimulationUi();
         }
 
-        private void buttonResetProcess_Click(object sender, EventArgs e)
-        {
-            if (!EnsureLoggedIn())
-            {
-                return;
-            }
-
-            string confirmMessage = "현재 공정을 완전히 초기화하시겠습니까?\nTM 대기 상태, FOUP 표시, 챔버 상태 등이 리셋됩니다.";
-            
-            // 하드웨어 모드 추가 안내
-            if (EthercatConnected)
-            {
-                confirmMessage += "\n\n[하드웨어 모드]\n• 실린더 후진 확인\n• 진공 OFF\n• 원점복귀 수행";
-            }
-
-            var confirm = MessageBox.Show(
-                confirmMessage,
-                "공정 리셋 확인",
-                MessageBoxButtons.YesNo,
-                MessageBoxIcon.Question);
-
-            if (confirm != DialogResult.Yes)
-            {
-                return;
-            }
-
-            SimulationController?.StopTimer();
-            
-            // 진행 중인 작업 취소 및 하드웨어 동작 중지
-            if (TransferService != null && TransferService.CurrentTransfer != null)
-            {
-                AddLogMessage($"공정 리셋: 진행 중인 작업 취소 - {EquipmentRegionHelper.FormatRegionLabel(TransferService.CurrentTransfer.Pickup)} → {EquipmentRegionHelper.FormatRegionLabel(TransferService.CurrentTransfer.Dropoff)}", "WARN");
-            }
-            
-            // 하드웨어 동작 플래그 리셋 (진행 중인 작업 중지)
-            TmHardwareActionPending = false;
-            TmSettleWaiting = false;
-            
-            // Transfer 큐 및 현재 작업 클리어
-            TransferService?.ResetToIdle();
-            TransferService?.ClearQueue();
-            
-            // 하드웨어 모드: 안전한 초기화 수행
-            if (EthercatConnected && EtherCAT_M != null)
-            {
-                try
-                {
-                    AddLogMessage("공정 리셋: 하드웨어 초기화 시작", "INFO");
-                    
-                    // 1. 진공 OFF (웨이퍼 분리)
-                    EtherCAT_M.Digital_Output(14, false); // 진공 OFF
-                    EtherCAT_M.Digital_Output(15, false); // 배기 OFF
-                    AddLogMessage("공정 리셋: 진공 OFF", "INFO");
-                    
-                    // 2. 실린더 상태 확인
-                    bool cylinderRetracted = false;
-                    try
-                    {
-                        cylinderRetracted = EtherCAT_M.Digital_Input(12); // 후진 센서
-                    }
-                    catch (Exception ex)
-                    {
-                        AddLogMessage($"실린더 상태 확인 오류: {ex.Message}", "WARN");
-                    }
-                    
-                    // 3. 실린더 전진 상태면 후진 시도
-                    if (!cylinderRetracted)
-                    {
-                        AddLogMessage("공정 리셋: 실린더 후진 시도", "INFO");
-                        EtherCAT_M.Digital_Output(12, false); // 전진 OFF
-                        EtherCAT_M.Digital_Output(13, true);  // 후진 ON
-                        
-                        // 후진 완료 대기 (최대 5초)
-                        var timeout = DateTime.Now.AddSeconds(5);
-                        while (DateTime.Now < timeout)
-                        {
-                            try
-                            {
-                                if (EtherCAT_M.Digital_Input(12))
-                                {
-                                    cylinderRetracted = true;
-                                    break;
-                                }
-                            }
-                            catch (Exception ex)
-                            {
-                                System.Diagnostics.Debug.WriteLine($"실린더 후진 확인 오류: {ex.Message}");
-                            }
-                            System.Threading.Thread.Sleep(100);
-                            // Application.DoEvents() 제거 - UI 스레드 블로킹 방지를 위해 제거
-                        }
-                        
-                        if (!cylinderRetracted)
-                        {
-                            AddLogMessage("공정 리셋: 실린더 후진 타임아웃 - 수동 확인 필요", "WARN");
-                            MessageBox.Show(
-                                "실린더 후진이 완료되지 않았습니다.\n수동으로 실린더 상태를 확인해주세요.",
-                                "경고", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                        }
-                        else
-                        {
-                            AddLogMessage("공정 리셋: 실린더 후진 완료", "INFO");
-                        }
-                    }
-                    
-                    // 4. 서보 ON 상태 확인 및 원점복귀
-                    if (IsServoOn && cylinderRetracted)
-                    {
-                        AddLogMessage("공정 리셋: 원점복귀 시작 - 1단계: 상하(Axis1)", "INFO");
-                        
-                        // 1단계: Axis1 (상하) 원점복귀
-                        EtherCAT_M.Axis1_UD_Homming();
-                        
-                        // Axis1 원점복귀 완료 대기 (최대 120초)
-                        var timeout = DateTime.Now.AddSeconds(120);
-                        while (DateTime.Now < timeout)
-                        {
-                            if (EtherCAT_M.Axis1_Status("HOME_D"))
-                            {
-                                break;
-                            }
-                            System.Threading.Thread.Sleep(100);
-                        }
-                        
-                        if (!EtherCAT_M.Axis1_Status("HOME_D"))
-                        {
-                            AddLogMessage("공정 리셋: 상하(Axis1) 원점복귀 타임아웃", "ERROR");
-                            TmHardwareInitialized = false;
-                        }
-                        else
-                        {
-                            AddLogMessage("공정 리셋: 상하(Axis1) 원점복귀 완료 - 2단계: 좌우(Axis2)", "INFO");
-                            
-                            // 2단계: Axis2 (좌우) 원점복귀
-                            EtherCAT_M.Axis2_LR_Homming();
-                            
-                            // Axis2 원점복귀 완료 대기 (최대 120초)
-                            timeout = DateTime.Now.AddSeconds(120);
-                            while (DateTime.Now < timeout)
-                            {
-                                if (EtherCAT_M.Axis2_Status("HOME_D"))
-                                {
-                                    break;
-                                }
-                                System.Threading.Thread.Sleep(100);
-                            }
-                            
-                            if (!EtherCAT_M.Axis2_Status("HOME_D"))
-                            {
-                                AddLogMessage("공정 리셋: 좌우(Axis2) 원점복귀 타임아웃", "ERROR");
-                                TmHardwareInitialized = false;
-                            }
-                            else
-                            {
-                                AddLogMessage("공정 리셋: 원점복귀 완료 (상하 → 좌우 순서)", "INFO");
-                                TmHardwareInitialized = true;
-                                UpdateServoStatusLabel(); // UI 업데이트 (Home 상태 표시)
-                            }
-                        }
-                    }
-                    else if (!IsServoOn)
-                    {
-                        AddLogMessage("공정 리셋: 서보 OFF 상태 - 서보 ON 후 원점복귀 필요", "WARN");
-                        TmHardwareInitialized = false;
-                    }
-                    
-                    // 상태 초기화
-                    TmHardwareActionPending = false;
-                    TmSettleWaiting = false;
-                    
-                    // 하드웨어 모드: 실제 TM 위치를 읽어서 UI에 반영
-                    if (TmHardwareController != null)
-                    {
-                        try
-                        {
-                            TmHardwareController.UpdateCurrentPositions();
-                            long currentX = TmHardwareController.CurrentAxis2Position;
-                            long currentY = TmHardwareController.CurrentAxis1Position;
-                            
-                            // 하드웨어 위치를 Region으로 변환
-                            var hardwareRegion = EquipmentRegionHelper.DetermineRegionFromPosition(currentX, currentY, TmHardwareController.Positions);
-                            
-                            // TM 위치 업데이트
-                            TmVisualTarget = hardwareRegion;
-                            TmCurrentPosition = hardwareRegion;
-                            
-                            // TM 시각화 업데이트 (하드웨어 모드이므로 하드웨어 업데이트 메서드 사용)
-                            UpdateTmVisualizationFromHardware();
-                            
-                            AddLogMessage($"공정 리셋: TM 위치 업데이트 완료 - {EquipmentRegionHelper.FormatRegionLabel(hardwareRegion)}", "INFO");
-                        }
-                        catch (Exception ex)
-                        {
-                            AddLogMessage($"공정 리셋: TM 위치 읽기 오류: {ex.Message}", "WARN");
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    AddLogMessage($"공정 리셋 하드웨어 오류: {ex.Message}", "ERROR");
-                }
-            }
-            
-            uiInitializer.InitializeSimulationState();
-            SetProcessState(ProcessState.Idle, "공정을 초기화했습니다.");
-            UpdateSimulationUi();
-            UpdateTmAnimationIdleTarget();
-            UpdateServoStatusLabel();
-            AddLogMessage("사용자가 공정을 수동 리셋했습니다.", "INFO");
-        }
-
+        // HookButton은 ProcessEventHandlers.ButtonResetProcess_Click만 연결. 아래는 미사용 구버전(삭제됨).
         private void buttonApplyRecipe_Click(object sender, EventArgs e)
         {
             if (!EnsureLoggedIn())
@@ -2059,63 +1905,22 @@ namespace SemiconductorUi
 
             var activityFactor = GetEnvironmentActivityFactor(chamberState);
             
-            // 1% 확률로 알람 발생, 99% 확률로 안전 범위 유지
-            bool shouldTriggerAlarm = envRandom.NextDouble() < 0.01;
-            
-            // 온도: 1% 확률로 알람 범위까지, 99% 확률로 안전 범위
-            double tempMaxDev;
-            if (shouldTriggerAlarm)
-            {
-                // 알람 발생: 경고 임계값의 80-100% 범위
-                tempMaxDev = AlarmThresholds.TempWarnDiffC * (0.8 + envRandom.NextDouble() * 0.2);
-            }
-            else
-            {
-                // 안전 범위: 경고 임계값의 30% 이내
-                tempMaxDev = Math.Min(AlarmThresholds.TempWarnDiffC * 0.3, 0.5);
-            }
+            // 시뮬레이션 PV는 경고 임계값 이내로만 변동 (의도적 알람 주입 없음)
+            double tempMaxDev = Math.Min(AlarmThresholds.TempWarnDiffC * 0.3, 0.5);
             live.TemperatureC = UpdateEnvChannel(live.TemperatureC, spec.TargetTemperatureC, 0.15, tempMaxDev);
             
-            // 압력: 1% 확률로 알람 발생
-            // 압력은 고압/저압에 따라 비율과 절대값 기준이 다르게 적용됨
+            // 압력: 고압/저압에 따라 안전 범위만 사용
             double pressMaxDev;
-            if (shouldTriggerAlarm)
+            if (spec.TargetPressureTorr > 10.0)
             {
-                // 알람 발생: 경고 임계값의 80-100% 범위
-                // 고압(>10 Torr): 절대값 기준 우선, 저압(≤10 Torr): 비율 기준 우선
-                double pressWarnLimit;
-                if (spec.TargetPressureTorr > 10.0)
-                {
-                    // 고압: 절대값 기준 (비율 기준은 너무 큼)
-                    pressWarnLimit = AlarmThresholds.PressWarnAbsTorr;
-                }
-                else
-                {
-                    // 저압: 비율과 절대값 중 작은 값 사용
-                    pressWarnLimit = Math.Min(
-                        spec.TargetPressureTorr * AlarmThresholds.PressWarnRatio,
-                        AlarmThresholds.PressWarnAbsTorr
-                    );
-                }
-                pressMaxDev = pressWarnLimit * (0.8 + envRandom.NextDouble() * 0.2);
+                pressMaxDev = AlarmThresholds.PressWarnAbsTorr * 0.3;
             }
             else
             {
-                // 안전 범위: 경고 임계값의 30% 이내
-                // 고압/저압에 따라 적절한 기준 사용
-                if (spec.TargetPressureTorr > 10.0)
-                {
-                    // 고압: 절대값 기준의 30%
-                    pressMaxDev = AlarmThresholds.PressWarnAbsTorr * 0.3;
-                }
-                else
-                {
-                    // 저압: 비율과 절대값 중 작은 값의 30%
-                    pressMaxDev = Math.Max(
-                        Math.Min(spec.TargetPressureTorr * AlarmThresholds.PressWarnRatio * 0.3, AlarmThresholds.PressWarnAbsTorr * 0.3),
-                        0.0001
-                    );
-                }
+                pressMaxDev = Math.Max(
+                    Math.Min(spec.TargetPressureTorr * AlarmThresholds.PressWarnRatio * 0.3, AlarmThresholds.PressWarnAbsTorr * 0.3),
+                    0.0001
+                );
             }
             live.PressureTorr = UpdateEnvChannel(live.PressureTorr, spec.TargetPressureTorr, 0.2, pressMaxDev);
             
@@ -2159,38 +1964,15 @@ namespace SemiconductorUi
 
         internal double GenerateSafeRandomValue(double sv, double warnThreshold, double alarmThreshold)
         {
-            // 1% 확률로 알람 발생
-            bool shouldTriggerAlarm = envRandom.NextDouble() < 0.01;
-            
             if (sv == 0)
             {
-                // SV가 0인 경우 누설 경고
-                if (shouldTriggerAlarm)
-                {
-                    // 알람 발생: 누설 경고 임계값의 80-100% 범위
-                    double maxLeak = AlarmThresholds.GasLeakWarnSccm * (0.8 + envRandom.NextDouble() * 0.2);
-                    return envRandom.NextDouble() * maxLeak;
-                }
-                else
-                {
-                    // 안전 범위: 누설 경고 임계값의 20% 이내
-                    double maxLeak = AlarmThresholds.GasLeakWarnSccm * 0.2;
-                    return envRandom.NextDouble() * maxLeak;
-                }
+                // SV=0: 누설 경고 임계값의 20% 이내만 (알람 주입 없음)
+                double maxLeak = AlarmThresholds.GasLeakWarnSccm * 0.2;
+                return envRandom.NextDouble() * maxLeak;
             }
             
-            // 가스/RF 값 생성
-            double safeRange;
-            if (shouldTriggerAlarm)
-            {
-                // 알람 발생: 경고 임계값의 80-100% 범위
-                safeRange = warnThreshold * (0.8 + envRandom.NextDouble() * 0.2);
-            }
-            else
-            {
-                // 안전 범위: 경고 임계값의 20% 이내
-                safeRange = Math.Min(warnThreshold * 0.2, alarmThreshold * 0.15);
-            }
+            // 가스/RF: 경고 임계값의 20% 이내만
+            double safeRange = Math.Min(warnThreshold * 0.2, alarmThreshold * 0.15);
             double deviation = (envRandom.NextDouble() - 0.5) * safeRange * 2;
             return Math.Max(0, sv + deviation);
         }
@@ -2765,6 +2547,12 @@ namespace SemiconductorUi
 
         internal void StartSimulation()
         {
+            if (_hardwareInitInProgress)
+            {
+                AddLogMessage("하드웨어 초기화가 진행 중입니다. 완료 후 다시 시도하세요.", "WARN");
+                return;
+            }
+
             // EtherCAT 연결 확인 (연결되어 있으면 실제 장비 제어)
             if (EthercatConnected)
             {
@@ -2778,45 +2566,31 @@ namespace SemiconductorUi
                     SetChamberLamp(EquipmentRegion.ChamberB, false);
                     SetChamberLamp(EquipmentRegion.ChamberC, false);
                     
-                    // 공정 시작 전 서보 ON + 원점복귀 자동 수행
+                    // 공정 시작 전 서보 ON + 원점복귀 — UI 스레드 블로킹 방지(백그라운드)
                     if (!TmHardwareInitialized)
                     {
-                        AddLogMessage("공정 시작 - TM 하드웨어 초기화 (서보 ON + 원점복귀)", "INFO");
-                        if (!PerformAutoServoOnAndHoming())
-                        {
-                            AddLogMessage("TM 하드웨어 초기화 실패 - 공정 시작 불가", "ERROR");
-                            MessageBox.Show(
-                                "TM 하드웨어 초기화에 실패했습니다.\n\n" +
-                                "확인 사항:\n" +
-                                "1. 서보 모터 상태 확인\n" +
-                                "2. 실린더가 후진 상태인지 확인\n" +
-                                "3. EtherCAT 연결 상태 확인\n\n" +
-                                "공정을 시작할 수 없습니다.",
-                                "초기화 실패", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                            return; // 공정 시작 중단
-                        }
+                        AddLogMessage("공정 시작 - TM 하드웨어 초기화 중 (서보 ON + 원점복귀, UI 비차단)", "INFO");
+                        BeginHardwareInitThenStartSimulation();
+                        return;
                     }
-                    else
+
+                    // 이미 초기화된 경우, 서보 상태 동기화
+                    if (TmHardwareController != null)
                     {
-                        // 이미 초기화된 경우, 서보 상태 동기화 (장비제어 폼에서 서보 ON한 경우 대비)
-                        if (TmHardwareController != null)
+                        AddLogMessage("공정 시작 - 서보 상태 동기화", "INFO");
+                        TmHardwareController.SyncServoStatus();
+                        
+                        if (!TmHardwareController.IsServoOn)
                         {
-                            AddLogMessage("공정 시작 - 서보 상태 동기화", "INFO");
-                            TmHardwareController.SyncServoStatus();
-                            
-                            // 서보 상태 확인
-                            if (!TmHardwareController.IsServoOn)
-                            {
-                                AddLogMessage("서보가 OFF 상태입니다. 서보를 ON한 후 공정을 시작해주세요.", "ERROR");
-                                MessageBox.Show(
-                                    "서보가 OFF 상태입니다.\n\n" +
-                                    "확인 사항:\n" +
-                                    "1. 서보 모터 ON 확인\n" +
-                                    "2. 원점복귀 완료 확인\n\n" +
-                                    "공정을 시작할 수 없습니다.",
-                                    "서보 OFF", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                                return; // 공정 시작 중단
-                            }
+                            AddLogMessage("서보가 OFF 상태입니다. 서보를 ON한 후 공정을 시작해주세요.", "ERROR");
+                            MessageBox.Show(
+                                "서보가 OFF 상태입니다.\n\n" +
+                                "확인 사항:\n" +
+                                "1. 서보 모터 ON 확인\n" +
+                                "2. 원점복귀 완료 확인\n\n" +
+                                "공정을 시작할 수 없습니다.",
+                                "서보 OFF", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                            return;
                         }
                     }
                     
@@ -2835,10 +2609,66 @@ namespace SemiconductorUi
                 }
             }
 
+            CompleteStartSimulation();
+        }
+
+        /// <summary>
+        /// 서보 ON + 원점복귀를 백그라운드에서 수행한 뒤 공정 시작을 이어간다.
+        /// </summary>
+        private void BeginHardwareInitThenStartSimulation()
+        {
+            _hardwareInitInProgress = true;
+            UpdateProcessControlButtons();
+
+            System.Threading.Tasks.Task.Run(() =>
+            {
+                bool ok = false;
+                string failReason = null;
+                try
+                {
+                    ok = PerformAutoServoOnAndHoming(out failReason);
+                }
+                catch (Exception ex)
+                {
+                    failReason = ex.Message;
+                    ok = false;
+                }
+
+                SafeBeginInvoke(() =>
+                {
+                    _hardwareInitInProgress = false;
+                    UpdateProcessControlButtons();
+
+                    if (!ok)
+                    {
+                        AddLogMessage($"TM 하드웨어 초기화 실패 - 공정 시작 불가: {failReason}", "ERROR");
+                        MessageBox.Show(
+                            "TM 하드웨어 초기화에 실패했습니다.\n\n" +
+                            (string.IsNullOrEmpty(failReason) ? "" : $"사유: {failReason}\n\n") +
+                            "확인 사항:\n" +
+                            "1. 서보 모터 상태 확인\n" +
+                            "2. 실린더가 후진 상태인지 확인\n" +
+                            "3. EtherCAT 연결 상태 확인\n\n" +
+                            "공정을 시작할 수 없습니다.",
+                            "초기화 실패", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        return;
+                    }
+
+                    AddLogMessage("하드웨어 모드로 공정 시작 - 실제 장비 제어 활성화", "INFO");
+                    CompleteStartSimulation();
+                });
+            });
+        }
+
+        /// <summary>
+        /// 하드웨어 준비 완료 후(또는 시뮬) 실제 공정 상태 머신 기동.
+        /// </summary>
+        private void CompleteStartSimulation()
+        {
             uiInitializer.InitializeSimulationState();
             // 공정 시작 시 환경 텔레메트리 초기화 (PV 값이 이제부터 생성됨)
             uiInitializer.InitializeEnvironmentTelemetry();
-            // 이전 완료 수량을 기준선으로 저장하여 신규 배치 완료 판정을 분리
+            // 이전 완료 수량을 기준선으로 저장하여 현재 배치 완료 판정을 분리
             FoupBCompletedBaseline = foupManager?.GetFoupBCount() ?? 0;
             int targetLoadCount = GetEffectiveWaferTarget();
             activeBatchTargetCount = targetLoadCount;
@@ -3050,7 +2880,7 @@ namespace SemiconductorUi
             }
 
             // 도어가 열려있거나 닫는 중이면 마지막 처리 시간 초기화 (다시 시작할 때 누적 방지)
-            if (!IsChamberDoorClosed(chamber) || chamber.StatusText == "Door Closing")
+            if (!IsChamberDoorClosed(chamber) || ChamberStatusTexts.IsAwaitingProcessStart(chamber.StatusText))
             {
                 chamber.LastProcessedTime = DateTime.MinValue;
                 return;
@@ -3394,6 +3224,10 @@ namespace SemiconductorUi
             }
 
             var wafer = foupManager.PeekWaferFromFoupA();
+            if (wafer == null)
+            {
+                return;
+            }
             wafer.CurrentStage = "TM Load";
 
             var task = new TransferController.TransferTask
@@ -3416,12 +3250,23 @@ namespace SemiconductorUi
         /// </summary>
         private bool IsReadyForTransfer(ChamberController.ChamberState chamber)
         {
-            // 리팩토링 전 로직으로 복원: RemainingSeconds <= 0만 체크
-            // StatusText 체크는 제거 (DecrementChamberTime에서 자동으로 설정됨)
-            return chamber != null
-                   && chamber.CurrentWafer != null
-                   && chamber.RemainingSeconds <= 0
-                   && !chamber.PickupScheduled;
+            if (chamber == null || chamber.CurrentWafer == null || chamber.RemainingSeconds > 0 || chamber.PickupScheduled)
+            {
+                return false;
+            }
+
+            // 도어가 필요한 챔버는 닫힌 뒤에만 반출 예약 (Door Closing 중 스케줄 방지)
+            if (EquipmentRegionHelper.RequiresDoor(chamber.Region) && IsRegionDoorOpen(chamber.Region))
+            {
+                return false;
+            }
+
+            if (ChamberStatusTexts.IsAwaitingProcessStart(chamber.StatusText))
+            {
+                return false;
+            }
+
+            return true;
         }
 
         private bool IsChamberAvailable(ChamberController.ChamberState chamber)
@@ -3470,17 +3315,22 @@ namespace SemiconductorUi
             
             if (task.RetryCount > TransferController.TransferTask.MaxRetryCount)
             {
-                // 최대 재시도 횟수 초과 - 작업 제거
+                // 최대 재시도 횟수 초과 - 작업 제거 및 예약 플래그 해제
                 AddLogMessage(
                     $"[작업 실패] {EquipmentRegionHelper.FormatRegionLabel(task.Pickup)} → {EquipmentRegionHelper.FormatRegionLabel(task.Dropoff)} " +
                     $"(웨이퍼 #{task.Wafer?.Id}) - 재시도 횟수 초과 ({task.RetryCount}/{TransferController.TransferTask.MaxRetryCount}) - 작업 제거",
                     "ERROR");
                 
-                // 웨이퍼 상태 복원 (원래 위치로)
+                // 웨이퍼 상태 복원 (원래 위치로) + 스케줄 플래그 해제 (고착 방지)
                 if (task.SourceChamber != null && task.Wafer != null)
                 {
                     task.SourceChamber.CurrentWafer = task.Wafer;
+                    task.SourceChamber.PickupScheduled = false;
                     AddLogMessage($"웨이퍼 #{task.Wafer.Id} 상태 복원: {EquipmentRegionHelper.FormatRegionLabel(task.SourceChamber.Region)}", "INFO");
+                }
+                if (task.DestinationChamber != null)
+                {
+                    task.DestinationChamber.ReservedForIncoming = false;
                 }
                 
                 return false; // 작업 제거됨
@@ -3654,21 +3504,22 @@ namespace SemiconductorUi
         }
         
         /// <summary>
-        /// 도어 센서 상태 확인 (EtherCAT 하드웨어)
+        /// 도어 센서 상태 확인 (EtherCAT 하드웨어).
+        /// 현재 장비에는 도어 위치 센서가 없음 → 항상 false (열림 미확인).
+        /// 이송 대기 로직은 CheckDoorOpenForCurrentRegion의 시간 대기를 사용한다.
         /// </summary>
         private bool CheckDoorSensorOpen(EquipmentRegion region)
         {
-            if (!EthercatConnected) return true;
+            if (!EthercatConnected) return false;
             return ChamberHardwareHelper.CheckDoorSensorOpen(EtherCAT_M, region);
         }
         
         /// <summary>
-        /// 도어 닫힘 센서 상태 확인 (EtherCAT 하드웨어)
-        /// 닫힘 센서가 별도로 존재하는 경우 사용
+        /// 도어 닫힘 센서 상태 확인. 센서 미설치 시 항상 false (닫힘 미확인).
         /// </summary>
         private bool CheckDoorSensorClosed(EquipmentRegion region)
         {
-            if (!EthercatConnected) return true;
+            if (!EthercatConnected) return false;
             return ChamberHardwareHelper.CheckDoorSensorClosed(EtherCAT_M, region);
         }
 
@@ -3727,15 +3578,7 @@ namespace SemiconductorUi
                     }
                     else
                     {
-                        AddLogMessage("TM 실린더 전진 실패 - 이송 중단", "ERROR");
-                        TmHardwareActionPending = false;
-                        TmSettleWaiting = false;
-                        TransferService?.ResetToIdle();
-                        // 큐에 작업이 있으면 다음 작업 시작 시도
-                        if (TransferService?.QueueCount > 0)
-                        {
-                            tmProcessor?.StartNextTransfer();
-                        }
+                        tmProcessor?.AbortCurrentHardwareTransfer("픽업 전 실린더 전진 실패");
                     }
                 }
                 else
@@ -3821,7 +3664,7 @@ namespace SemiconductorUi
                     }
                     else
                     {
-                        tmProcessor?.BeginTmPhase(TransferController.TmPhase.DropoffExtend, AppSettings.TmDropoffDurationTicks, CurrentTransfer.Dropoff, true);
+                        tmProcessor?.AbortCurrentHardwareTransfer("드롭오프 전 실린더 전진 실패");
                     }
                 }
                 else
@@ -3871,7 +3714,7 @@ namespace SemiconductorUi
                 var source = CurrentTransfer.SourceChamber;
                 source.CurrentWafer = null;
                 source.PickupScheduled = false;
-                source.StatusText = "대기";
+                source.StatusText = ChamberStatusTexts.Idle;
                 source.TotalSeconds = 0;
                 source.RemainingSeconds = 0;
                 source.ProcessingAccumulator = 0;
@@ -3922,7 +3765,7 @@ namespace SemiconductorUi
                 destination.CurrentWafer = CurrentTransfer.Wafer;
                 destination.TotalSeconds = destination.Step.DurationSeconds;
                 destination.RemainingSeconds = destination.Step.DurationSeconds;
-                destination.StatusText = "Door Closing";
+                destination.StatusText = ChamberStatusTexts.DoorClosing;
                 destination.ProcessingAccumulator = 0;
                 UpdateChamberWaferIndicators();
                 // 중요: 공정 시작은 도어가 닫힌 후에만 시작 (WaitDoorDropoffClose Phase에서 처리)
@@ -3933,7 +3776,7 @@ namespace SemiconductorUi
                 CurrentTransfer.OnCompleted(CurrentTransfer.Wafer);
             }
 
-            AddLogMessage($"TM 완료: {EquipmentRegionHelper.FormatRegionLabel(CurrentTransfer.Pickup)} -> {EquipmentRegionHelper.FormatRegionLabel(CurrentTransfer.Dropoff)} (웨이퍼 #{CurrentTransfer.Wafer.Id})", "INFO");
+            AddLogMessage($"TM 완료: {EquipmentRegionHelper.FormatRegionLabel(CurrentTransfer.Pickup)} -> {EquipmentRegionHelper.FormatRegionLabel(CurrentTransfer.Dropoff)} (웨이퍼 #{CurrentTransfer.Wafer?.Id})", "INFO");
             TmCarryingVisual = false;
             return true;
         }
@@ -3996,12 +3839,7 @@ namespace SemiconductorUi
             bool timeRemaining = chamber.RemainingSeconds > 0;  // 프로그레스바가 움직이는 조건
             bool doorClosed = !IsRegionDoorOpen(chamber.Region);
             
-            // 실제 공정 진행 중 확인 (StatusText가 "처리 중" 또는 "2차 노광 중")
-            // "Door Open 대기", "Door Closing", "TM 대기" 등의 상태에서는 false
-            bool isActuallyProcessing = !string.IsNullOrEmpty(chamber.StatusText) &&
-                (chamber.StatusText.Contains("처리 중") || 
-                 chamber.StatusText.Contains("2차 노광 중") ||
-                 chamber.StatusText.Contains("Processing"));
+            bool isActuallyProcessing = ChamberStatusTexts.IsProcessing(chamber.StatusText);
             
             return hasWafer && hasProcessTime && timeRemaining && doorClosed && isActuallyProcessing;
         }
@@ -4038,9 +3876,7 @@ namespace SemiconductorUi
             isSyncingEquipmentState = true; // 동기화 시작
                 try
                 {
-                    // ReadData_Timer_Start()로 주기적으로 읽고 있으므로,
-                    // 연결 직후 약간의 지연을 두고 상태를 읽음
-                    System.Threading.Thread.Sleep(200); // 200ms 대기 (ReadData가 한 번 실행될 시간 확보)
+                    // ReadData 타이머가 이미 주기적으로 갱신 중이므로 UI 스레드 Sleep 없이 즉시 읽음
                     
                 // Chamber A, B, C에 대한 도어 및 램프 상태 매핑
                 // (Region, 도어 Digital_Input 인덱스, 램프 Digital_Input 인덱스)
@@ -4682,7 +4518,7 @@ namespace SemiconductorUi
                 return new PmDetailData
                 {
                     UnitKey = "Unknown",
-                    StatusText = "Idle",
+                    StatusText = ChamberStatusTexts.Idle,
                     RecipeName = "N/A",
                     StepName = "N/A",
                     RecipeTimeCurrent = 0,
@@ -4951,6 +4787,7 @@ namespace SemiconductorUi
                                 SetAlarmThresholdsFromSnapshot(snapshot);
                                 AddLogMessage("알람 임계값 설정이 업데이트되었습니다.", "INFO");
                             };
+                            cf.OnOpenTeaching = OpenTeachingPositionEditor;
                             cf.ShowDialog(this);
                         }
                     }
@@ -5094,6 +4931,10 @@ namespace SemiconductorUi
             {
                 using (var ecf = new EquipmentControlForm(EtherCAT_M, EthercatConnected))
                 {
+                    ecf.IsAutoProcessActive = () =>
+                        CurrentProcessState == ProcessState.Running ||
+                        CurrentProcessState == ProcessState.Paused;
+
                     // 도어 상태 변경 시 UI 업데이트 콜백
                     ecf.OnDoorStateChanged = (region, isOpen) =>
                     {
@@ -5178,6 +5019,7 @@ namespace SemiconductorUi
                             Invoke(new Action(() =>
                             {
                                 TmHardwareInitialized = true;
+                                TmHardwareController?.MarkHomedAfterSuccessfulHoming();
                                 UpdateServoStatusLabel();
                                 AddLogMessage("장비제어 폼에서 원점복귀 완료", "INFO");
                             }));
@@ -5185,10 +5027,13 @@ namespace SemiconductorUi
                         else
                         {
                             TmHardwareInitialized = true;
+                            TmHardwareController?.MarkHomedAfterSuccessfulHoming();
                             UpdateServoStatusLabel();
                             AddLogMessage("장비제어 폼에서 원점복귀 완료", "INFO");
                         }
                     };
+
+                    ecf.OnTeachingRequested = OpenTeachingPositionEditor;
                     
                     ecf.ShowDialog(this);
                 }
@@ -5253,8 +5098,58 @@ namespace SemiconductorUi
                     };
                     AddLogMessage("알람 임계값 설정이 업데이트되었습니다.", "INFO");
                 };
+                configForm.OnOpenTeaching = OpenTeachingPositionEditor;
                 configForm.ShowDialog(this);
             }
+        }
+
+        /// <summary>
+        /// TM 티칭 위치 편집 UI (TeachingPositions.xml)
+        /// </summary>
+        internal void OpenTeachingPositionEditor()
+        {
+            try
+            {
+                var initial = TmHardwareController != null
+                    ? TmHardwareController.Positions.ToData()
+                    : Repositories.TeachingPositionsRepository.Load();
+
+                using (var form = new Forms.TeachingPositionForm(
+                    initial,
+                    () => EtherCAT_M,
+                    () => EthercatConnected,
+                    ApplyTeachingPositions))
+                {
+                    form.ShowDialog(this);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(this, $"티칭 위치 폼 오류: {ex.Message}", "오류", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                AddLogMessage($"티칭 위치 폼 오류: {ex.Message}", "ERROR");
+            }
+        }
+
+        /// <summary>
+        /// 저장/적용된 티칭값을 런타임 컨트롤러에 반영
+        /// </summary>
+        internal void ApplyTeachingPositions(Controllers.TmHardwareController.TmPositionSet positions)
+        {
+            if (positions == null)
+            {
+                return;
+            }
+
+            if (TmHardwareController != null)
+            {
+                TmHardwareController.Positions.ApplyFrom(positions.ToData());
+            }
+
+            AddLogMessage(
+                $"TM 티칭 위치 적용: Home=({positions.Home_X},{positions.Home_Y}), " +
+                $"CA_X={positions.ChamberA_X}, CB_X={positions.ChamberB_X}, CC_X={positions.ChamberC_X}, " +
+                $"FA_X={positions.FoupA_X}, FB_X={positions.FoupB_X}, DescendOffset={positions.DescendOffset}",
+                "INFO");
         }
 
         private void buttonNavTrend_Click(object sender, EventArgs e)
@@ -5683,6 +5578,12 @@ namespace SemiconductorUi
 
         internal void AddLogMessage(string message, string level)
         {
+            if (InvokeRequired)
+            {
+                SafeBeginInvoke(() => AddLogMessage(message, level));
+                return;
+            }
+
             // LoggerService를 통해 로그 기록
             LoggerService?.Log(message, level);
             
@@ -5691,6 +5592,40 @@ namespace SemiconductorUi
             if (normalizedLevel == "ALARM" || normalizedLevel == "ERROR" || normalizedLevel == "CRITICAL")
             {
                 UpdateHeaderEventMessage(normalizedLevel, message);
+            }
+        }
+
+        /// <summary>
+        /// UI 스레드로 안전하게 BeginInvoke. 종료/미생성 핸들은 무시.
+        /// </summary>
+        internal void SafeBeginInvoke(Action action)
+        {
+            if (action == null)
+            {
+                return;
+            }
+
+            try
+            {
+                if (IsDisposed || !IsHandleCreated)
+                {
+                    return;
+                }
+
+                if (InvokeRequired)
+                {
+                    BeginInvoke(action);
+                }
+                else
+                {
+                    action();
+                }
+            }
+            catch (ObjectDisposedException)
+            {
+            }
+            catch (InvalidOperationException)
+            {
             }
         }
         
@@ -6670,11 +6605,9 @@ namespace SemiconductorUi
                         // TM 하드웨어 초기화 상태 업데이트 (원점복귀 완료 = 초기화 완료)
                         TmHardwareInitialized = true;
                         
-                        // TmHardwareController가 있으면 동기화
                         if (TmHardwareController != null)
                         {
-                            // TmHardwareController의 상태도 업데이트 (필요시)
-                            // PerformHoming()이 이미 _isHomed = true로 설정했으므로 여기서는 Form1의 상태만 업데이트
+                            TmHardwareController.MarkHomedAfterSuccessfulHoming();
                         }
 
                         UpdateServoStatusLabel();
@@ -6707,19 +6640,20 @@ namespace SemiconductorUi
         }
 
         /// <summary>
-        /// 공정 시작 시 자동으로 서보 ON + 원점복귀 수행
-        /// 원점복귀 완료를 기다린 후 공정 시작 (안전성 강화)
+        /// 공정 시작 시 자동으로 서보 ON + 원점복귀 수행.
+        /// 백그라운드 스레드에서 호출 가능 (UI 로그는 AddLogMessage가 마샬링).
         /// </summary>
-        private bool PerformAutoServoOnAndHoming()
+        private bool PerformAutoServoOnAndHoming(out string failReason)
         {
+            failReason = null;
             try
             {
                 // 1. 실린더 후진 상태 확인 (인터락)
                 bool cylinderRetracted = EtherCAT_M.Digital_Input(12);
                 if (!cylinderRetracted)
                 {
+                    failReason = "실린더가 후진 상태가 아닙니다. 먼저 실린더를 후진시켜 주세요.";
                     AddLogMessage("공정 시작 실패: 실린더가 후진 상태가 아닙니다", "ERROR");
-                    MessageBox.Show("실린더가 후진 상태가 아닙니다.\n먼저 실린더를 후진시켜 주세요.", "인터락", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return false;
                 }
 
@@ -6840,6 +6774,7 @@ namespace SemiconductorUi
                     
                     if (!servoOnConfirmed)
                     {
+                        failReason = "서보 ON 확인 실패: 위치 데이터를 읽을 수 없습니다.";
                         AddLogMessage("서보 ON 확인 실패: 위치 데이터를 읽을 수 없습니다", "ERROR");
                         IsServoOn = false; // 플래그 동기화
                         return false;
@@ -6890,6 +6825,7 @@ namespace SemiconductorUi
                 
                 if (!EtherCAT_M.Axis1_Status("HOME_D"))
                 {
+                    failReason = "원점복귀 실패: Axis1 타임아웃 (120초 초과)";
                     AddLogMessage("공정 시작 원점복귀 실패: Axis1 타임아웃 (120초 초과)", "ERROR");
                     TmHardwareInitialized = false;
                     IsServoOn = false; // 타임아웃 시 서보 상태도 초기화
@@ -6912,6 +6848,7 @@ namespace SemiconductorUi
                 
                 if (!EtherCAT_M.Axis2_Status("HOME_D"))
                 {
+                    failReason = "원점복귀 실패: Axis2 타임아웃 (120초 초과)";
                     AddLogMessage("공정 시작 원점복귀 실패: Axis2 타임아웃 (120초 초과)", "ERROR");
                     TmHardwareInitialized = false;
                     IsServoOn = false; // 타임아웃 시 서보 상태도 초기화
@@ -6922,11 +6859,12 @@ namespace SemiconductorUi
                 TmHardwareInitialized = true;
                 IsServoOn = true; // 서보 ON 상태 확실히 설정
                 
-                // TmHardwareController 서보 상태 동기화 (서보 이동 시 필요)
+                // TmHardwareController 서보/원점 상태 동기화 (이동 인터락 HasEverHomed)
                 if (TmHardwareController != null)
                 {
+                    TmHardwareController.MarkHomedAfterSuccessfulHoming();
                     TmHardwareController.SyncServoStatus();
-                    AddLogMessage("TmHardwareController 서보 상태 동기화 완료", "INFO");
+                    AddLogMessage("TmHardwareController 서보/원점 상태 동기화 완료", "INFO");
                 }
                 
                 AddLogMessage("서보 ON + 원점복귀 완료 (상하 → 좌우 순서)", "INFO");
@@ -6935,6 +6873,7 @@ namespace SemiconductorUi
             }
             catch (Exception ex)
             {
+                failReason = ex.Message;
                 AddLogMessage($"서보 ON + 원점복귀 오류: {ex.Message}", "ERROR");
                 return false;
             }
@@ -7092,6 +7031,11 @@ namespace SemiconductorUi
         /// </summary>
         internal void UpdateServoStatusLabel()
         {
+            if (InvokeRequired)
+            {
+                SafeBeginInvoke(() => UpdateServoStatusLabel());
+                return;
+            }
             uiUpdater?.UpdateServoStatusLabel();
         }
 
@@ -7198,28 +7142,24 @@ namespace SemiconductorUi
                     return true;
                 }
                 
-                // 시간 기반 완료 체크: 서보 이동 시작 후 5초가 지나면 타임아웃 처리
-                if (TmHardwareActionPending && elapsedMs >= SERVO_XY_MOVE_TIMEOUT_MS)
-                {
-                    // 실제 위치 확인 (TmHardwareController를 통해)
-                    if (TmHardwareController != null)
+                    // 타임아웃: 완료로 위장하지 않음 → 상위 CheckTmHardwareTimeout이 Abort 처리
+                    if (TmHardwareActionPending && elapsedMs >= SERVO_XY_MOVE_TIMEOUT_MS)
                     {
-                        TmHardwareController.UpdateCurrentPositions();
-                        long currentX = TmHardwareController.CurrentAxis2Position;
-                        long currentY = TmHardwareController.CurrentAxis1Position;
-                        AddLogMessage($"서보 이동 타임아웃 ({elapsedMs:F0}ms) - 현재 위치: X={currentX}, Y={currentY}", "WARN");
-                    }
-                    else
-                    {
-                        AddLogMessage($"서보 이동 타임아웃 ({elapsedMs:F0}ms) - 위치 확인 불가", "WARN");
+                        if (TmHardwareController != null)
+                        {
+                            TmHardwareController.UpdateCurrentPositions();
+                            long currentX = TmHardwareController.CurrentAxis2Position;
+                            long currentY = TmHardwareController.CurrentAxis1Position;
+                            AddLogMessage($"서보 XY 이동 미완료 ({elapsedMs:F0}ms) - 현재 위치: X={currentX}, Y={currentY} (완료 대기/타임아웃 처리)", "WARN");
+                        }
+                        else
+                        {
+                            AddLogMessage($"서보 XY 이동 미완료 ({elapsedMs:F0}ms)", "WARN");
+                        }
+                        return false;
                     }
                     
-                    // 타임아웃 발생 시에도 완료로 처리 (기존 동작 유지)
-                    // 하지만 경고 로그를 남겨서 문제 추적 가능하도록 함
-                    return true;
-                }
-                
-                return false;
+                    return false;
             }
             catch (Exception ex)
             {
@@ -7475,9 +7415,10 @@ namespace SemiconductorUi
             {
                 return EtherCAT_M.Digital_Input(13); // 전진 센서
             }
-            catch
+            catch (Exception ex)
             {
-                return true;
+                AddLogMessage($"실린더 전진 센서 확인 오류: {ex.Message}", "WARN");
+                return false; // fail-closed: 센서 불명이면 미완료
             }
         }
 
@@ -7492,9 +7433,10 @@ namespace SemiconductorUi
             {
                 return EtherCAT_M.Digital_Input(12); // 후진 센서
             }
-            catch
+            catch (Exception ex)
             {
-                return true;
+                AddLogMessage($"실린더 후진 센서 확인 오류: {ex.Message}", "WARN");
+                return false; // fail-closed
             }
         }
 
@@ -7677,10 +7619,11 @@ namespace SemiconductorUi
                     return true;
                 }
                 
-                // 시간 기반 완료 체크: 서보 이동 시작 후 3초가 지나면 완료로 처리
+                // 시간 기반: soft timeout은 완료로 위장하지 않음 (하드 타임아웃이 Abort)
                 if (TmHardwareActionPending && elapsedMs >= SERVO_MOVE_TIMEOUT_MS)
                 {
-                    return true;
+                    AddLogMessage($"서보 Axis1 이동 미완료 ({elapsedMs:F0}ms) - PP_D 대기 중", "WARN");
+                    return false;
                 }
                 
                 return false;
@@ -7688,6 +7631,46 @@ namespace SemiconductorUi
             catch
             {
                 return false;  // 오류 시 대기 (안전)
+            }
+        }
+
+        /// <summary>
+        /// 이송 Abort 후 하드웨어 안전 자세 시도 (진공 OFF, 실린더 후진)
+        /// </summary>
+        internal void TrySafeStopTmHardwareAfterAbort()
+        {
+            if (!IsTmHardwareModeAvailable() || EtherCAT_M == null)
+            {
+                return;
+            }
+
+            try
+            {
+                EtherCAT_M.Digital_Output(14, false); // 진공 OFF
+                EtherCAT_M.Digital_Output(15, false); // 배기 OFF
+                TmHardwareController?.SyncVacuumState(false);
+                AddLogMessage("Abort 안전정지: 진공/배기 OFF", "WARN");
+            }
+            catch (Exception ex)
+            {
+                AddLogMessage($"Abort 안전정지 진공 OFF 실패: {ex.Message}", "ERROR");
+            }
+
+            try
+            {
+                // 실린더가 전진 중이면 후진 명령 (완료 대기는 Abort 경로에서 하지 않음)
+                bool retracted = false;
+                try { retracted = EtherCAT_M.Digital_Input(12); } catch { }
+                if (!retracted)
+                {
+                    EtherCAT_M.Digital_Output(12, false);
+                    EtherCAT_M.Digital_Output(13, true);
+                    AddLogMessage("Abort 안전정지: 실린더 후진 명령", "WARN");
+                }
+            }
+            catch (Exception ex)
+            {
+                AddLogMessage($"Abort 안전정지 실린더 후진 실패: {ex.Message}", "ERROR");
             }
         }
 
@@ -7702,6 +7685,7 @@ namespace SemiconductorUi
             {
                 EtherCAT_M.Digital_Output(15, false); // 배기 OFF
                 EtherCAT_M.Digital_Output(14, true);  // 흡기 ON
+                TmHardwareController?.SyncVacuumState(true);
                 AddLogMessage("TM 진공 흡기 ON", "INFO");
                 return true;
             }
@@ -7723,6 +7707,7 @@ namespace SemiconductorUi
             {
                 EtherCAT_M.Digital_Output(14, false); // 흡기 OFF
                 EtherCAT_M.Digital_Output(15, true);  // 배기 ON
+                TmHardwareController?.SyncVacuumState(false);
                 StartTmHardwareAction();
                 AddLogMessage("TM 진공 OFF + 배기 시작", "INFO");
                 return true;

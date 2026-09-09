@@ -26,11 +26,28 @@ namespace SemiconductorUi.Helpers
         }
 
         /// <summary>
+        /// 같은 틱/스택에서 StartNextTransfer 재귀를 피하기 위한 지연 시작 플래그.
+        /// ProcessTm 진입 시 한 번만 소비한다.
+        /// </summary>
+        private bool _startNextTransferRequested;
+
+        /// <summary>
         /// TM 프로세스 메인 처리 메서드
         /// TransferController의 현재 Phase에 따라 적절한 처리 메서드를 호출합니다.
         /// </summary>
         public void ProcessTm()
         {
+            if (_startNextTransferRequested)
+            {
+                _startNextTransferRequested = false;
+                if (form.CurrentTransfer == null && form.TransferService?.QueueCount > 0)
+                {
+                    StartNextTransfer();
+                    // 같은 틱에서 Phase까지 연속 처리하지 않음 (실패 재시도 폭주 방지)
+                    return;
+                }
+            }
+
             if (form.TmPhase == TransferController.TmPhase.Idle)
             {
                 // Idle 상태이고 큐에 작업이 있으면 시작
@@ -79,27 +96,8 @@ namespace SemiconductorUi.Helpers
                 if (form.CheckTmHardwareTimeout())
                 {
                     form.HandleHardwareError($"TM 하드웨어 동작 타임아웃 (Phase: {form.TmPhase}, 타임아웃: {AppSettings.TmHardwareActionTimeoutMs}ms)");
-                    form.TmHardwareActionPending = false;
-                    form.TmSettleWaiting = false;
-                    
-                    // 재시도 처리
-                    var failedTask = form.CurrentTransfer;
-                    if (failedTask != null)
-                    {
-                        form.TransferService?.ResetToIdle();
-                        bool retryScheduled = form.HandleFailedTransfer(failedTask, $"하드웨어 동작 타임아웃 (Phase: {form.TmPhase})");
-                        
-                        // 재시도 예정이거나 큐에 다른 작업이 있으면 다음 작업 시작 시도
-                        if (retryScheduled || (form.TransferService?.QueueCount > 0))
-                        {
-                            StartNextTransfer();
-                        }
-                    }
-                    else
-                    {
-                        form.TransferService?.ResetToIdle();
-                    }
-                    // 타임아웃 발생 시 자동 일시정지 (HandleHardwareError에서 처리)
+                    // 일시정지되므로 즉시 다음 이송을 시작하지 않음
+                    AbortTransferAndScheduleRetry($"하드웨어 동작 타임아웃 (Phase: {form.TmPhase})", requestNext: false);
                 }
                 else
                 {
@@ -268,22 +266,8 @@ namespace SemiconductorUi.Helpers
                 }
                 else
                 {
-                    // 실패 시: Transfer 취소 및 재시도 처리
-                    form.AddLogMessage($"TM 이동 실패: {form.CurrentTransfer.Pickup} → {form.CurrentTransfer.Dropoff} - 이송 취소", "ERROR");
-                    form.TmHardwareActionPending = false;
-                    form.TmSettleWaiting = false;
-                    
-                    var failedTask = form.CurrentTransfer;
-                    form.TransferService?.ResetToIdle();
-                    
-                    // 재시도 처리
-                    bool retryScheduled = form.HandleFailedTransfer(failedTask, "서보 이동 실패");
-                    
-                    // 재시도 예정이거나 큐에 다른 작업이 있으면 다음 작업 시작 시도
-                    if (retryScheduled || (form.TransferService?.QueueCount > 0))
-                    {
-                        StartNextTransfer();
-                    }
+                    // 실패 시: 성공 경로로 진행하지 않고 중단·재시도
+                    AbortTransferAndScheduleRetry("픽업 서보 이동 실패");
                 }
             }
             else
@@ -324,7 +308,7 @@ namespace SemiconductorUi.Helpers
                 
                 form.doorOpenConsecutiveChecks++;
                 
-                // 도어 열림 대기 시간: 약 0.75초 (5틱 * 150ms)
+                // 도어 열림 대기: 센서 없음 → DoorOpenWaitTicks (기본 14틱 ≈ 2.1초 @150ms)
                 if (form.doorOpenConsecutiveChecks < AppSettings.DoorOpenWaitTicks)
                 {
                     // 아직 대기 중
@@ -343,15 +327,7 @@ namespace SemiconductorUi.Helpers
                 }
                 else
                 {
-                    form.AddLogMessage("TM 실린더 전진 실패 - 이송 중단", "ERROR");
-                    form.TmHardwareActionPending = false;
-                    form.TmSettleWaiting = false;
-                    form.TransferService?.ResetToIdle();
-                    // 큐에 작업이 있으면 다음 작업 시작 시도
-                    if (form.TransferService?.QueueCount > 0)
-                    {
-                        StartNextTransfer();
-                    }
+                    AbortTransferAndScheduleRetry("픽업 전 실린더 전진 실패");
                 }
             }
             else
@@ -369,23 +345,7 @@ namespace SemiconductorUi.Helpers
         {
             if (!form.PerformPickup())
             {
-                // PerformPickup 실패는 대부분 정상적인 재시도 상황 (도어 열림 대기, 공정 완료 대기 등)
-                // BeforeFinal 로직: 단순히 재시도 (오류 로그 없음)
-                // 정상적인 재시도 상황이므로 INFO 레벨로 변경
-                form.AddLogMessage($"[재시도] PerformPickup 대기: {EquipmentRegionHelper.FormatRegionLabel(form.CurrentTransfer.Pickup)} → {EquipmentRegionHelper.FormatRegionLabel(form.CurrentTransfer.Dropoff)} - 자동 재시도 예정", "INFO");
-                
-                // Transfer 취소 및 재시도 처리
-                var failedTask = form.CurrentTransfer;
-                form.TmHardwareActionPending = false;
-                form.TmSettleWaiting = false;
-                form.TransferService?.ResetToIdle();
-                bool retryScheduled = form.HandleFailedTransfer(failedTask, "PerformPickup 실패");
-                
-                // 재시도 예정이거나 큐에 다른 작업이 있으면 다음 작업 시작 시도
-                if (retryScheduled || (form.TransferService?.QueueCount > 0))
-                {
-                    StartNextTransfer();
-                }
+                AbortTransferAndScheduleRetry("PerformPickup 실패");
                 return;
             }
             BeginTmPhase(TransferController.TmPhase.PickupRetract, AppSettings.TmPickupRetractTicks, form.CurrentTransfer.Pickup, true);
@@ -403,19 +363,7 @@ namespace SemiconductorUi.Helpers
             if (form.TmHardwareActionPending && (DateTime.Now - form.tmHardwareActionStartTime).TotalMilliseconds > AppSettings.CylinderActionTimeoutMs)
             {
                 form.HandleHardwareError($"TM 실린더 전진 타임아웃 (Phase: {form.TmPhase}, 타임아웃: {AppSettings.CylinderActionTimeoutMs}ms)");
-                form.TmHardwareActionPending = false;
-                form.TmSettleWaiting = false;
-                
-                // 재시도 처리
-                var failedTask = form.CurrentTransfer;
-                form.TransferService?.ResetToIdle();
-                bool retryScheduled = form.HandleFailedTransfer(failedTask, "실린더 전진 타임아웃");
-                
-                // 재시도 예정이거나 큐에 다른 작업이 있으면 다음 작업 시작 시도
-                if (retryScheduled || (form.TransferService?.QueueCount > 0))
-                {
-                    StartNextTransfer();
-                }
+                AbortTransferAndScheduleRetry("실린더 전진 타임아웃", requestNext: false);
                 return;
             }
             
@@ -431,56 +379,8 @@ namespace SemiconductorUi.Helpers
                 }
                 else
                 {
-                    // 하드웨어 실패 시 시뮬레이션 모드로 폴백
-                    if (!form.SetTmVacuumOn())
-                    {
-                        // 진공 ON 실패 시 웨이퍼 상태 추적 및 재시도 처리
-                        form.AddLogMessage($"진공 ON 실패: 웨이퍼 위치 확인 필요 - {EquipmentRegionHelper.FormatRegionLabel(form.CurrentTransfer.Pickup)}", "ERROR");
-                        
-                        // 웨이퍼 상태 추적: 현재 TM 위치에 웨이퍼가 있을 수 있음
-                        if (form.CurrentTransfer != null && form.CurrentTransfer.Wafer != null)
-                        {
-                            form.AddLogMessage($"웨이퍼 #{form.CurrentTransfer.Wafer.Id} 상태: 진공 실패로 인해 위치 불확실 (TM 위치: {EquipmentRegionHelper.FormatRegionLabel(form.TmCurrentPosition)})", "WARN");
-                        }
-                        
-                        // 재시도 처리
-                        var failedTask = form.CurrentTransfer;
-                        form.TmHardwareActionPending = false;
-                        form.TmSettleWaiting = false;
-                        form.TransferService?.ResetToIdle();
-                        bool retryScheduled = form.HandleFailedTransfer(failedTask, "진공 ON 실패");
-                        
-                        // 재시도 예정이거나 큐에 다른 작업이 있으면 다음 작업 시작 시도
-                        if (retryScheduled || (form.TransferService?.QueueCount > 0))
-                        {
-                            StartNextTransfer();
-                        }
-                        return;
-                    }
-                    
-                    // 논리적 픽업 수행 - 실패 시 Transfer 취소
-                    if (!form.PerformPickup())
-                    {
-                        // PerformPickup 실패는 대부분 정상적인 재시도 상황 (도어 열림 대기, 공정 완료 대기 등)
-                        // 정상적인 재시도 상황이므로 INFO 레벨로 변경
-                        form.AddLogMessage($"[재시도] PerformPickup 대기: {EquipmentRegionHelper.FormatRegionLabel(form.CurrentTransfer.Pickup)} → {EquipmentRegionHelper.FormatRegionLabel(form.CurrentTransfer.Dropoff)} - 자동 재시도 예정", "INFO");
-                        
-                        // Transfer 취소 및 재시도 처리
-                        var failedTask = form.CurrentTransfer;
-                        form.TmHardwareActionPending = false;
-                        form.TmSettleWaiting = false;
-                        form.TransferService?.ResetToIdle();
-                        bool retryScheduled2 = form.HandleFailedTransfer(failedTask, "PerformPickup 실패");
-                        
-                        // 재시도 예정이거나 큐에 다른 작업이 있으면 다음 작업 시작 시도
-                        if (retryScheduled2 || (form.TransferService?.QueueCount > 0))
-                        {
-                            StartNextTransfer();
-                        }
-                        return;
-                    }
-                    
-                    BeginTmPhase(TransferController.TmPhase.PickupExtend_VacuumOn, 2, form.CurrentTransfer.Pickup, false);
+                    // 안착 실패 시 진공 ON 폴백 금지 — 웨이퍼 위치 불일치 위험
+                    AbortTransferAndScheduleRetry("안착(Land) 서보 이동 실패");
                 }
             }
             else
@@ -500,27 +400,7 @@ namespace SemiconductorUi.Helpers
             {
                 if (!form.SetTmVacuumOn())
                 {
-                    // 진공 ON 실패 시 웨이퍼 상태 추적 및 재시도 처리
-                    form.AddLogMessage($"진공 ON 실패: 웨이퍼 위치 확인 필요 - {EquipmentRegionHelper.FormatRegionLabel(form.CurrentTransfer.Pickup)}", "ERROR");
-                    
-                    // 웨이퍼 상태 추적: 현재 TM 위치에 웨이퍼가 있을 수 있음
-                    if (form.CurrentTransfer != null && form.CurrentTransfer.Wafer != null)
-                    {
-                        form.AddLogMessage($"웨이퍼 #{form.CurrentTransfer.Wafer.Id} 상태: 진공 실패로 인해 위치 불확실 (TM 위치: {EquipmentRegionHelper.FormatRegionLabel(form.TmCurrentPosition)})", "WARN");
-                    }
-                    
-                    // 재시도 처리
-                    var failedTask = form.CurrentTransfer;
-                    form.TmHardwareActionPending = false;
-                    form.TmSettleWaiting = false;
-                    form.TransferService?.ResetToIdle();
-                    bool retryScheduled = form.HandleFailedTransfer(failedTask, "진공 ON 실패");
-                    
-                    // 재시도 예정이거나 큐에 다른 작업이 있으면 다음 작업 시작 시도
-                    if (retryScheduled || (form.TransferService?.QueueCount > 0))
-                    {
-                        StartNextTransfer();
-                    }
+                    AbortTransferAndScheduleRetry("진공 ON 실패");
                     return;
                 }
             }
@@ -528,22 +408,7 @@ namespace SemiconductorUi.Helpers
             // 논리적 픽업 수행 - 실패 시 Transfer 취소
             if (!form.PerformPickup())
             {
-                // PerformPickup 실패는 대부분 정상적인 재시도 상황 (도어 열림 대기, 공정 완료 대기 등)
-                // 정상적인 재시도 상황이므로 INFO 레벨로 변경
-                form.AddLogMessage($"[재시도] PerformPickup 대기: {EquipmentRegionHelper.FormatRegionLabel(form.CurrentTransfer.Pickup)} → {EquipmentRegionHelper.FormatRegionLabel(form.CurrentTransfer.Dropoff)} - 자동 재시도 예정", "INFO");
-                
-                // Transfer 취소 및 재시도 처리
-                var failedTask = form.CurrentTransfer;
-                form.TmHardwareActionPending = false;
-                form.TmSettleWaiting = false;
-                form.TransferService?.ResetToIdle();
-                bool retryScheduled = form.HandleFailedTransfer(failedTask, "PerformPickup 실패");
-                
-                // 재시도 예정이거나 큐에 다른 작업이 있으면 다음 작업 시작 시도
-                if (retryScheduled || (form.TransferService?.QueueCount > 0))
-                {
-                    StartNextTransfer();
-                }
+                AbortTransferAndScheduleRetry("PerformPickup 실패");
                 return;
             }
             
@@ -562,7 +427,7 @@ namespace SemiconductorUi.Helpers
             }
             else
             {
-                BeginTmPhase(TransferController.TmPhase.PickupRetract, AppSettings.TmPickupRetractTicks, form.CurrentTransfer.Pickup, true);
+                AbortTransferAndScheduleRetry("픽업 후 상승(Raise) 서보 이동 실패");
             }
         }
 
@@ -586,7 +451,7 @@ namespace SemiconductorUi.Helpers
             }
             else
             {
-                form.ProcessTmPickupRetractComplete();
+                AbortTransferAndScheduleRetry("픽업 후 실린더 후진 실패");
             }
         }
 
@@ -601,14 +466,7 @@ namespace SemiconductorUi.Helpers
             if (form.TmHardwareActionPending && (DateTime.Now - form.tmHardwareActionStartTime).TotalMilliseconds > AppSettings.CylinderActionTimeoutMs)
             {
                 form.HandleHardwareError($"TM 실린더 후진 타임아웃 (Phase: {form.TmPhase}, 타임아웃: {AppSettings.CylinderActionTimeoutMs}ms)");
-                form.TmHardwareActionPending = false;
-                form.TmSettleWaiting = false;
-                form.TransferService?.ResetToIdle();
-                // 큐에 작업이 있으면 다음 작업 시작 시도
-                if (form.TransferService?.QueueCount > 0)
-                {
-                    StartNextTransfer();
-                }
+                AbortTransferAndScheduleRetry("픽업 후 실린더 후진 타임아웃", requestNext: false);
                 return;
             }
             
@@ -683,7 +541,7 @@ namespace SemiconductorUi.Helpers
                 }
                 else
                 {
-                    form.ProcessTmMoveToDropoffComplete();
+                    AbortTransferAndScheduleRetry("드롭오프 서보 이동 실패");
                 }
             }
             else
@@ -722,7 +580,7 @@ namespace SemiconductorUi.Helpers
                 
                 form.doorOpenConsecutiveChecks++;
                 
-                // 도어 열림 대기 시간: 약 0.75초 (5틱 * 150ms)
+                // 도어 열림 대기: 센서 없음 → DoorOpenWaitTicks (기본 14틱 ≈ 2.1초 @150ms)
                 if (form.doorOpenConsecutiveChecks < AppSettings.DoorOpenWaitTicks)
                 {
                     // 아직 대기 중
@@ -741,15 +599,7 @@ namespace SemiconductorUi.Helpers
                 }
                 else
                 {
-                    form.AddLogMessage("TM 실린더 전진 실패 - 이송 중단", "ERROR");
-                    form.TmHardwareActionPending = false;
-                    form.TmSettleWaiting = false;
-                    form.TransferService?.ResetToIdle();
-                    // 큐에 작업이 있으면 다음 작업 시작 시도
-                    if (form.TransferService?.QueueCount > 0)
-                    {
-                        StartNextTransfer();
-                    }
+                    AbortTransferAndScheduleRetry("드롭오프 전 실린더 전진 실패");
                 }
             }
             else
@@ -784,19 +634,7 @@ namespace SemiconductorUi.Helpers
             if (form.TmHardwareActionPending && (DateTime.Now - form.tmHardwareActionStartTime).TotalMilliseconds > AppSettings.CylinderActionTimeoutMs)
             {
                 form.HandleHardwareError($"TM 실린더 전진 타임아웃 (Phase: {form.TmPhase}, 타임아웃: {AppSettings.CylinderActionTimeoutMs}ms)");
-                form.TmHardwareActionPending = false;
-                form.TmSettleWaiting = false;
-                
-                // 재시도 처리
-                var failedTask = form.CurrentTransfer;
-                form.TransferService?.ResetToIdle();
-                bool retryScheduled = form.HandleFailedTransfer(failedTask, "실린더 전진 타임아웃");
-                
-                // 재시도 예정이거나 큐에 다른 작업이 있으면 다음 작업 시작 시도
-                if (retryScheduled || (form.TransferService?.QueueCount > 0))
-                {
-                    StartNextTransfer();
-                }
+                AbortTransferAndScheduleRetry("드롭오프 실린더 전진 타임아웃", requestNext: false);
                 return;
             }
             
@@ -812,12 +650,8 @@ namespace SemiconductorUi.Helpers
                 }
                 else
                 {
-                    if (!form.PerformDropoff())
-                    {
-                        BeginTmPhase(TransferController.TmPhase.DropoffExtend, 1, form.CurrentTransfer.Dropoff, true);
-                        return;
-                    }
-                    BeginTmPhase(TransferController.TmPhase.DropoffRetract, AppSettings.TmDropoffRetractTicks, form.CurrentTransfer.Dropoff, false);
+                    // 하강(드롭용) 서보 실패 시 논리 드롭으로 폴백하지 않음
+                    AbortTransferAndScheduleRetry("드롭오프 하강 서보 이동 실패");
                 }
             }
             else
@@ -841,7 +675,11 @@ namespace SemiconductorUi.Helpers
                     return;
                 }
             }
-            form.PerformDropoff(); // 논리적 드롭 수행
+            if (!form.PerformDropoff())
+            {
+                AbortTransferAndScheduleRetry("PerformDropoff 실패 (도어/상태)");
+                return;
+            }
             BeginTmPhase(TransferController.TmPhase.DropoffExtend_VacuumOffExhaust, 2, form.CurrentTransfer.Dropoff, true); // 배기 대기
         }
 
@@ -860,7 +698,7 @@ namespace SemiconductorUi.Helpers
             }
             else
             {
-                BeginTmPhase(TransferController.TmPhase.DropoffRetract, AppSettings.TmDropoffRetractTicks, form.CurrentTransfer.Dropoff, false);
+                AbortTransferAndScheduleRetry("드롭 후 하강(Descend) 이동 실패 — 실린더 후진 보류");
             }
         }
 
@@ -885,7 +723,7 @@ namespace SemiconductorUi.Helpers
             }
             else
             {
-                form.ProcessTmDropoffRetractComplete();
+                AbortTransferAndScheduleRetry("드롭오프 후 실린더 후진 실패");
             }
         }
 
@@ -900,19 +738,7 @@ namespace SemiconductorUi.Helpers
             if (form.TmHardwareActionPending && (DateTime.Now - form.tmHardwareActionStartTime).TotalMilliseconds > AppSettings.CylinderActionTimeoutMs)
             {
                 form.HandleHardwareError($"TM 실린더 후진 타임아웃 (Phase: {form.TmPhase}, 타임아웃: {AppSettings.CylinderActionTimeoutMs}ms)");
-                form.TmHardwareActionPending = false;
-                form.TmSettleWaiting = false;
-                
-                // 재시도 처리
-                var failedTask = form.CurrentTransfer;
-                form.TransferService?.ResetToIdle();
-                bool retryScheduled = form.HandleFailedTransfer(failedTask, "실린더 후진 타임아웃");
-                
-                // 재시도 예정이거나 큐에 다른 작업이 있으면 다음 작업 시작 시도
-                if (retryScheduled || (form.TransferService?.QueueCount > 0))
-                {
-                    StartNextTransfer();
-                }
+                AbortTransferAndScheduleRetry("드롭오프 후 실린더 후진 타임아웃", requestNext: false);
                 return;
             }
             
@@ -980,7 +806,8 @@ namespace SemiconductorUi.Helpers
                 var destination = form.CurrentTransfer.DestinationChamber;
                 // 도어가 닫힌 후에만 공정 시작 (PerformDropoff()에서 웨이퍼는 이미 배치됨)
                 // 중복 호출 방지: StatusText가 "Door Closing"이고 아직 공정이 시작되지 않았을 때만
-                if (destination.CurrentWafer != null && destination.RemainingSeconds > 0 && destination.StatusText == "Door Closing")
+                if (destination.CurrentWafer != null && destination.RemainingSeconds > 0
+                    && ChamberStatusTexts.IsAwaitingProcessStart(destination.StatusText))
                 {
                     // 중요: 도어 상태를 명시적으로 닫힘으로 설정 (ViewModel 동기화)
                     // EnsureDoorClosedForRegion()이 호출되었지만 ViewModel 상태가 업데이트되지 않았을 수 있음
@@ -1008,6 +835,73 @@ namespace SemiconductorUi.Helpers
         #endregion
 
         #region Helper Methods
+
+        /// <summary>
+        /// 다음 틱에서 StartNextTransfer를 실행하도록 예약 (재귀 호출 금지).
+        /// </summary>
+        private void RequestStartNextTransfer()
+        {
+            _startNextTransferRequested = true;
+        }
+
+        /// <summary>
+        /// 하드웨어/논리 실패 시 현재 이송을 중단하고 재시도 큐에 넣는다.
+        /// 성공처럼 다음 Phase로 진행하지 않는다.
+        /// </summary>
+        private void AbortTransferAndScheduleRetry(string reason, bool requestNext = true)
+        {
+            var failedTask = form.CurrentTransfer;
+            form.TmHardwareActionPending = false;
+            form.TmSettleWaiting = false;
+            form.doorOpenCommandSent = false;
+            form.doorCloseCommandSent = false;
+            form.doorOpenConsecutiveChecks = 0;
+            form.doorCloseWaitTicks = 0;
+
+            // 하드웨어 모드: 진공 OFF + 실린더 후진 시도 (다음 이동 전 안전 자세)
+            form.TrySafeStopTmHardwareAfterAbort();
+
+            form.TransferService?.ResetToIdle();
+
+            form.AddLogMessage($"TM 이송 중단: {reason}", "ERROR");
+
+            if (failedTask == null)
+            {
+                if (requestNext && form.TransferService?.QueueCount > 0)
+                {
+                    RequestStartNextTransfer();
+                }
+                return;
+            }
+
+            bool retryScheduled = form.HandleFailedTransfer(failedTask, reason);
+            if (requestNext && (retryScheduled || (form.TransferService?.QueueCount > 0)))
+            {
+                RequestStartNextTransfer();
+            }
+        }
+
+        /// <summary>Form1에서 하드웨어 실패 Abort를 직접 호출할 때 사용</summary>
+        internal void AbortCurrentHardwareTransfer(string reason)
+        {
+            AbortTransferAndScheduleRetry(reason);
+        }
+
+        /// <summary>
+        /// 공정 미완료로 아직 픽업할 수 없을 때 — 재시도 카운트 없이 큐에 되돌림.
+        /// </summary>
+        private void DeferTransferUntilProcessReady(TransferController.TransferTask task, string infoMessage)
+        {
+            form.AddLogMessage(infoMessage, "INFO");
+            form.TmHardwareActionPending = false;
+            form.TmSettleWaiting = false;
+            form.TransferService?.ResetToIdle();
+            if (task != null)
+            {
+                form.TransferService?.EnqueueTransfer(task);
+            }
+            // 다음 ProcessTm Idle에서 자연스럽게 재시도 (Request 없이 두어 같은 틱 재진입 방지)
+        }
 
         /// <summary>
         /// 다음 Transfer 작업 시작
@@ -1074,27 +968,14 @@ namespace SemiconductorUi.Helpers
             // 스케줄링 후 상태가 변경되었을 수 있음 (예: 공정이 아직 완료되지 않음)
             // 주의: 이미 스케줄된 Transfer는 PickupScheduled=true이므로 IsReadyForTransfer()가 false를 반환함
             // 따라서 RemainingSeconds만 체크해야 함
-            // BeforeFinal 로직: RemainingSeconds > 0이면 단순히 대기 (오류 로그 없음)
             if (currentTask.SourceChamber != null)
             {
                 var source = currentTask.SourceChamber;
-                // 공정이 완료되지 않았으면 Transfer 취소 (정상적인 재시도 상황이므로 INFO 레벨)
                 if (source.CurrentWafer != null && source.RemainingSeconds > 0)
                 {
-                    // 정상적인 재시도 상황: 스케줄링 시점과 실행 시점 사이의 타이밍 차이
-                    // 오류가 아닌 정상적인 동작이므로 INFO 레벨로 변경
-                    form.AddLogMessage($"[재시도] Transfer 대기: {source.UnitKey}에서 웨이퍼 #{currentTask.Wafer?.Id} 공정 진행 중 " +
-                        $"(RemainingSeconds={source.RemainingSeconds}) - 자동 재시도 예정", "INFO");
-                    
-                    // Transfer 취소 및 재시도 처리
-                    form.TransferService?.ResetToIdle();
-                    bool retryScheduled = form.HandleFailedTransfer(currentTask, "공정 완료 전 Transfer 시작 시도");
-                    
-                    // 재시도 예정이거나 큐에 다른 작업이 있으면 다음 작업 시작 시도
-                    if (retryScheduled || (form.TransferService?.QueueCount > 0))
-                    {
-                        StartNextTransfer();
-                    }
+                    DeferTransferUntilProcessReady(currentTask,
+                        $"[대기] Transfer 보류: {source.UnitKey} 웨이퍼 #{currentTask.Wafer?.Id} 공정 진행 중 " +
+                        $"(RemainingSeconds={source.RemainingSeconds})");
                     return;
                 }
             }
@@ -1109,21 +990,7 @@ namespace SemiconductorUi.Helpers
                 }
                 else
                 {
-                    // 실패 시: Transfer 취소 및 재시도 처리
-                    form.AddLogMessage($"TM 이송 시작 실패: {currentTask.Pickup} → {currentTask.Dropoff} - 이송 취소", "ERROR");
-                    form.TmHardwareActionPending = false;
-                    form.TmSettleWaiting = false;
-                    form.TransferService?.ResetToIdle();
-                    
-                    // 재시도 처리
-                    bool retryScheduled = form.HandleFailedTransfer(currentTask, "서보 이동 실패");
-                    
-                    // 재시도 예정이거나 큐에 다른 작업이 있으면 다음 작업 시작 시도
-                    if (retryScheduled || (form.TransferService?.QueueCount > 0))
-                    {
-                        StartNextTransfer();
-                    }
-                    return;
+                    AbortTransferAndScheduleRetry("픽업 서보 이동 시작 실패");
                 }
             }
             else

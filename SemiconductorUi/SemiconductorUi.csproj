@@ -123,6 +123,7 @@
     <Compile Include="Helpers\EquipmentRegionHelper.cs" />
     <Compile Include="Helpers\RecipeValidator.cs" />
     <Compile Include="Helpers\ChamberHardwareHelper.cs" />
+    <Compile Include="Helpers\ChamberStatusTexts.cs" />
     <Compile Include="Helpers\Form1UiUpdater.cs" />
     <Compile Include="Helpers\Form1Initializer.cs" />
     <Compile Include="Helpers\Form1Configurator.cs" />
@@ -143,6 +144,11 @@
       <DependentUpon>ConfigForm.cs</DependentUpon>
     </Compile>
     <Compile Include="Models\DataContracts.cs" />
+    <Compile Include="Models\TeachingPositionsData.cs" />
+    <Compile Include="Repositories\TeachingPositionsRepository.cs" />
+    <Compile Include="Forms\TeachingPositionForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="Controllers\TmHardwareController.cs" />
     <Compile Include="EventHandlers\Form1EventHandlersBase.cs" />
     <Compile Include="EventHandlers\LoginEventHandlers.cs" />

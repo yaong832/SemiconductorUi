@@ -383,6 +383,20 @@ namespace SemiconductorUi.Controls
             while (angle < -Math.PI) angle += (float)(2 * Math.PI);
             return angle;
         }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                if (animationTimer != null)
+                {
+                    animationTimer.Stop();
+                    animationTimer.Tick -= AnimationTimer_Tick;
+                    animationTimer.Dispose();
+                }
+            }
+            base.Dispose(disposing);
+        }
     }
 }
 

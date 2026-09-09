@@ -27,6 +27,7 @@ namespace SemiconductorUi.Forms
         private Button btnSave;
         private Button btnCancel;
         private Button btnReset;
+        private Button btnTeaching;
         private FlowLayoutPanel panelButtons;
 
         protected override void Dispose(bool disposing)
@@ -97,14 +98,18 @@ namespace SemiconductorUi.Forms
             this.btnSave = CreateButton("저장", Color.FromArgb(72, 115, 90), DialogResult.None);
             this.btnCancel = CreateButton("취소", Color.FromArgb(97, 97, 97), DialogResult.Cancel);
             this.btnReset = CreateButton("기본값 복원", Color.FromArgb(128, 74, 74), DialogResult.None);
+            this.btnTeaching = CreateButton("TM 티칭 위치", Color.FromArgb(55, 95, 140), DialogResult.None);
+            this.btnTeaching.Width = 130;
 
             btnSave.Click += btnSave_Click;
             btnCancel.Click += btnCancel_Click;
             btnReset.Click += btnReset_Click;
+            btnTeaching.Click += btnTeaching_Click;
 
             panelButtons.Controls.Add(btnSave);
             panelButtons.Controls.Add(btnCancel);
             panelButtons.Controls.Add(btnReset);
+            panelButtons.Controls.Add(btnTeaching);
         }
 
         private GroupBox CreateGroupBox(string title, int index)

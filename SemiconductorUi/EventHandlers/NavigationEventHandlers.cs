@@ -170,6 +170,10 @@ namespace SemiconductorUi.EventHandlers
             {
                 using (var ecf = new EquipmentControlForm(form.EtherCAT_M, form.EthercatConnected))
                 {
+                    ecf.IsAutoProcessActive = () =>
+                        form.CurrentProcessState == ViewModels.MainFormViewModel.ProcessState.Running ||
+                        form.CurrentProcessState == ViewModels.MainFormViewModel.ProcessState.Paused;
+
                     // 도어 상태 변경 시 UI 업데이트 콜백
                     ecf.OnDoorStateChanged = (region, isOpen) =>
                     {
@@ -258,14 +262,21 @@ namespace SemiconductorUi.EventHandlers
                             form.Invoke(new Action(() =>
                             {
                                 form.TmHardwareInitialized = true;
+                                form.TmHardwareController?.MarkHomedAfterSuccessfulHoming();
                                 form.UpdateServoStatusLabel();
                             }));
                         }
                         else
                         {
                             form.TmHardwareInitialized = true;
+                            form.TmHardwareController?.MarkHomedAfterSuccessfulHoming();
                             form.UpdateServoStatusLabel();
                         }
+                    };
+
+                    ecf.OnTeachingRequested = () =>
+                    {
+                        form.OpenTeachingPositionEditor();
                     };
                     
                     // 실린더 상태 변경 시 UI 업데이트 콜백 (필요 시 구현)

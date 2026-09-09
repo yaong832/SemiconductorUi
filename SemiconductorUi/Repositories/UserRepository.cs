@@ -62,18 +62,32 @@ namespace SemiconductorUi.Repositories
 					if (!Directory.Exists(dir)) Directory.CreateDirectory(dir);
 
 					var userList = new UserList { Users = users ?? new List<User>() };
-					using (var fs = File.Create(_filePath))
+					var tempFilePath = _filePath + ".tmp";
+					using (var fs = File.Create(tempFilePath))
 					{
 						var ser = new XmlSerializer(typeof(UserList));
 						ser.Serialize(fs, userList);
 					}
+
+					if (File.Exists(_filePath))
+					{
+						var backupPath = _filePath + ".bak";
+						File.Copy(_filePath, backupPath, true);
+						File.Delete(_filePath);
+					}
+
+					File.Move(tempFilePath, _filePath);
+
+					var backupPathToDelete = _filePath + ".bak";
+					if (File.Exists(backupPathToDelete))
+					{
+						try { File.Delete(backupPathToDelete); } catch { }
+					}
 				}
-			catch (Exception ex)
-			{
-				// 파일 I/O 오류는 로깅만 하고 예외를 다시 던지지 않음
-				// 실제 장비 구동에 영향을 주지 않도록 기존 동작 유지
-				ExceptionHandler.HandleException(ex, "UserRepository.SaveAll");
-			}
+				catch (Exception ex)
+				{
+					ExceptionHandler.HandleException(ex, "UserRepository.SaveAll");
+				}
 			}
 		}
 
@@ -84,17 +98,14 @@ namespace SemiconductorUi.Repositories
 				new User
 				{
 					Username = "admin",
-					// 비밀번호는 평문으로 저장 (첫 로그인 시 자동으로 해시로 마이그레이션됨)
-					// 실제 장비 구동에 영향을 주지 않도록 기존 동작 유지
-					Password = "admin123",
+					Password = PasswordHelper.HashPassword("admin123"),
 					Role = "관리자",
 					CreatedAt = DateTime.Now
 				},
 				new User
 				{
 					Username = "operator",
-					// 비밀번호는 평문으로 저장 (첫 로그인 시 자동으로 해시로 마이그레이션됨)
-					Password = "operator123",
+					Password = PasswordHelper.HashPassword("operator123"),
 					Role = "작업자",
 					CreatedAt = DateTime.Now
 				}

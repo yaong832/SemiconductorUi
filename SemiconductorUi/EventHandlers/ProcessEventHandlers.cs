@@ -314,138 +314,122 @@ namespace SemiconductorUi.EventHandlers
             // Transfer 큐 및 현재 작업 클리어
             form.TransferService?.ResetToIdle();
             form.TransferService?.ClearQueue();
-            
-            // 하드웨어 모드: 안전한 초기화 수행
-            if (form.EthercatConnected && form.EtherCAT_M != null)
-            {
-                try
-                {
-                    form.AddLogMessage("공정 리셋: 하드웨어 초기화 시작", "INFO");
-                    
-                    // 1. 진공 OFF (웨이퍼 분리)
-                    form.EtherCAT_M.Digital_Output(14, false); // 진공 OFF
-                    form.EtherCAT_M.Digital_Output(15, false); // 배기 OFF
-                    form.AddLogMessage("공정 리셋: 진공 OFF", "INFO");
-                    
-                    // 2. 실린더 상태 확인
-                    bool cylinderRetracted = false;
-                    try
-                    {
-                        cylinderRetracted = form.EtherCAT_M.Digital_Input(12); // 후진 센서
-                    }
-                    catch (Exception ex)
-                    {
-                        form.AddLogMessage($"실린더 상태 확인 오류: {ex.Message}", "WARN");
-                    }
-                    
-                    // 3. 실린더 전진 상태면 후진 시도
-                    if (!cylinderRetracted)
-                    {
-                        form.AddLogMessage("공정 리셋: 실린더 후진 시도", "INFO");
-                        form.EtherCAT_M.Digital_Output(12, false); // 전진 OFF
-                        form.EtherCAT_M.Digital_Output(13, true);  // 후진 ON
-                        
-                        // 후진 완료 대기 (최대 5초)
-                        var timeout = DateTime.Now.AddSeconds(5);
-                        while (DateTime.Now < timeout)
-                        {
-                            try
-                            {
-                                if (form.EtherCAT_M.Digital_Input(12))
-                                {
-                                    cylinderRetracted = true;
-                                    break;
-                                }
-                            }
-                            catch (Exception ex)
-                            {
-                                System.Diagnostics.Debug.WriteLine($"실린더 후진 확인 오류: {ex.Message}");
-                            }
-                            System.Threading.Thread.Sleep(100);
-                        }
-                        
-                        if (!cylinderRetracted)
-                        {
-                            form.AddLogMessage("공정 리셋: 실린더 후진 타임아웃 - 수동 확인 필요", "WARN");
-                            MessageBox.Show(
-                                "실린더 후진이 완료되지 않았습니다.\n수동으로 실린더 상태를 확인해주세요.",
-                                "경고", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                        }
-                        else
-                        {
-                            form.AddLogMessage("공정 리셋: 실린더 후진 완료", "INFO");
-                        }
-                    }
-                    
-                    // 4. 서보 ON 상태 확인 및 원점복귀 (BeforeFinal 로직: 명령만 전송, 완료 대기 없음)
-                    if (form.IsServoOn && cylinderRetracted)
-                    {
-                        form.AddLogMessage("공정 리셋: 원점복귀 시작", "INFO");
-                        
-                        // BeforeFinal 로직: 원점복귀 명령만 전송 (완료 대기 없음)
-                        try
-                        {
-                            form.EtherCAT_M.Axis1_UD_Homming();
-                            System.Threading.Thread.Sleep(100);
-                            form.EtherCAT_M.Axis2_LR_Homming();
-                            
-                            form.AddLogMessage("공정 리셋: 원점복귀 명령 전송 완료", "INFO");
-                            form.TmHardwareInitialized = true;
-                        }
-                        catch (Exception homingEx)
-                        {
-                            form.AddLogMessage($"공정 리셋 원점복귀 오류: {homingEx.Message}", "ERROR");
-                        }
-                    }
-                    else if (!form.IsServoOn)
-                    {
-                        form.AddLogMessage("공정 리셋: 서보 OFF 상태 - 서보 ON 후 원점복귀 필요", "WARN");
-                        form.TmHardwareInitialized = false;
-                    }
-                    
-                    // 상태 초기화 (이미 위에서 리셋했지만 안전을 위해 다시 설정)
-                    form.TmHardwareActionPending = false;
-                    form.TmSettleWaiting = false;
-                    
-                    // 하드웨어 모드: 실제 TM 위치를 읽어서 UI에 반영
-                    if (form.TmHardwareController != null)
-                    {
-                        try
-                        {
-                            form.TmHardwareController.UpdateCurrentPositions();
-                            long currentX = form.TmHardwareController.CurrentAxis2Position;
-                            long currentY = form.TmHardwareController.CurrentAxis1Position;
-                            
-                            // 하드웨어 위치를 Region으로 변환
-                            var hardwareRegion = EquipmentRegionHelper.DetermineRegionFromPosition(currentX, currentY, form.TmHardwareController.Positions);
-                            
-                            // TM 위치 업데이트
-                            form.TmVisualTarget = hardwareRegion;
-                            form.TmCurrentPosition = hardwareRegion;
-                            
-                            // TM 시각화 업데이트 (하드웨어 모드이므로 하드웨어 업데이트 메서드 사용)
-                            form.UpdateTmVisualizationFromHardware();
-                            
-                            form.AddLogMessage($"공정 리셋: TM 위치 업데이트 완료 - {EquipmentRegionHelper.FormatRegionLabel(hardwareRegion)}", "INFO");
-                        }
-                        catch (Exception ex)
-                        {
-                            form.AddLogMessage($"공정 리셋: TM 위치 읽기 오류: {ex.Message}", "WARN");
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    form.AddLogMessage($"공정 리셋 하드웨어 오류: {ex.Message}", "ERROR");
-                }
-            }
-            
+
+            // 소프트웨어 상태는 즉시 리셋 (UI 블로킹 방지)
             form.InitializeSimulationState();
             form.SetProcessState(MainFormViewModel.ProcessState.Idle, "공정을 초기화했습니다.");
             form.UpdateSimulationUi();
             form.UpdateTmAnimationIdleTarget();
             form.UpdateServoStatusLabel();
             form.AddLogMessage("사용자가 공정을 수동 리셋했습니다.", "INFO");
+            
+            // 하드웨어 초기화(대기 포함)는 백그라운드에서 수행
+            if (form.EthercatConnected && form.EtherCAT_M != null)
+            {
+                form.AddLogMessage("공정 리셋: 하드웨어 초기화 시작 (백그라운드)", "INFO");
+                var ethercat = form.EtherCAT_M;
+                var servoOn = form.IsServoOn;
+                System.Threading.Tasks.Task.Run(() =>
+                {
+                    try
+                    {
+                        ethercat.Digital_Output(14, false);
+                        ethercat.Digital_Output(15, false);
+                        form.AddLogMessage("공정 리셋: 진공 OFF", "INFO");
+
+                        bool cylinderRetracted = false;
+                        try { cylinderRetracted = ethercat.Digital_Input(12); }
+                        catch (Exception ex) { form.AddLogMessage($"실린더 상태 확인 오류: {ex.Message}", "WARN"); }
+
+                        if (!cylinderRetracted)
+                        {
+                            form.AddLogMessage("공정 리셋: 실린더 후진 시도", "INFO");
+                            ethercat.Digital_Output(12, false);
+                            ethercat.Digital_Output(13, true);
+                            var timeout = DateTime.Now.AddSeconds(5);
+                            while (DateTime.Now < timeout)
+                            {
+                                try
+                                {
+                                    if (ethercat.Digital_Input(12)) { cylinderRetracted = true; break; }
+                                }
+                                catch { }
+                                System.Threading.Thread.Sleep(100);
+                            }
+
+                            if (!cylinderRetracted)
+                            {
+                                form.AddLogMessage("공정 리셋: 실린더 후진 타임아웃 - 수동 확인 필요", "WARN");
+                                form.SafeBeginInvoke(() => MessageBox.Show(
+                                    "실린더 후진이 완료되지 않았습니다.\n수동으로 실린더 상태를 확인해주세요.",
+                                    "경고", MessageBoxButtons.OK, MessageBoxIcon.Warning));
+                            }
+                            else
+                            {
+                                form.AddLogMessage("공정 리셋: 실린더 후진 완료", "INFO");
+                            }
+                        }
+
+                        if (servoOn && cylinderRetracted)
+                        {
+                            form.AddLogMessage("공정 리셋: 원점복귀 시작", "INFO");
+                            try
+                            {
+                                ethercat.Axis1_UD_Homming();
+                                System.Threading.Thread.Sleep(100);
+                                ethercat.Axis2_LR_Homming();
+                                form.SafeBeginInvoke(() =>
+                                {
+                                    form.AddLogMessage("공정 리셋: 원점복귀 명령 전송 완료", "INFO");
+                                    form.TmHardwareInitialized = true;
+                                });
+                            }
+                            catch (Exception homingEx)
+                            {
+                                form.AddLogMessage($"공정 리셋 원점복귀 오류: {homingEx.Message}", "ERROR");
+                            }
+                        }
+                        else if (!servoOn)
+                        {
+                            form.SafeBeginInvoke(() =>
+                            {
+                                form.AddLogMessage("공정 리셋: 서보 OFF 상태 - 서보 ON 후 원점복귀 필요", "WARN");
+                                form.TmHardwareInitialized = false;
+                            });
+                        }
+
+                        form.TmHardwareActionPending = false;
+                        form.TmSettleWaiting = false;
+
+                        form.SafeBeginInvoke(() =>
+                        {
+                            if (form.TmHardwareController != null)
+                            {
+                                try
+                                {
+                                    form.TmHardwareController.UpdateCurrentPositions();
+                                    long currentX = form.TmHardwareController.CurrentAxis2Position;
+                                    long currentY = form.TmHardwareController.CurrentAxis1Position;
+                                    var hardwareRegion = EquipmentRegionHelper.DetermineRegionFromPosition(currentX, currentY, form.TmHardwareController.Positions);
+                                    form.TmVisualTarget = hardwareRegion;
+                                    form.TmCurrentPosition = hardwareRegion;
+                                    form.UpdateTmVisualizationFromHardware();
+                                    form.AddLogMessage($"공정 리셋: TM 위치 업데이트 완료 - {EquipmentRegionHelper.FormatRegionLabel(hardwareRegion)}", "INFO");
+                                }
+                                catch (Exception ex)
+                                {
+                                    form.AddLogMessage($"공정 리셋: TM 위치 읽기 오류: {ex.Message}", "WARN");
+                                }
+                            }
+                            form.UpdateServoStatusLabel();
+                        });
+                    }
+                    catch (Exception ex)
+                    {
+                        form.AddLogMessage($"공정 리셋 하드웨어 오류: {ex.Message}", "ERROR");
+                    }
+                });
+            }
         }
 
         /// <summary>

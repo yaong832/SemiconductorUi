@@ -33,6 +33,11 @@ namespace SemiconductorUi
         /// </summary>
         public static bool DemoModeAutoStart => GetSetting("DemoModeAutoStart", false);
 
+        /// <summary>
+        /// 데모 자동 종료 초(0이면 종료 안 함). 시뮬레이션 스모크 테스트용.
+        /// </summary>
+        public static int DemoModeAutoExitSeconds => GetSetting("DemoModeAutoExitSeconds", 0);
+
         #endregion
 
         #region UI 설정
@@ -97,14 +102,15 @@ namespace SemiconductorUi
         public static Color SeparatorLineColor => GetColorSetting("SeparatorLineColor", 200, 200, 210);
 
         /// <summary>
-        /// 웨이퍼 브러시 색상 (MediumBlue 투명도 180)
+        /// 웨이퍼 브러시 색상 (MediumBlue RGB 0,0,205 + Alpha 180)
+        /// GetColorSetting(key, R, G, B, A?)
         /// </summary>
-        public static Color WaferBrushColor => GetColorSetting("WaferBrushColor", 180, 0, 0, 205); // Alpha=180, MediumBlue RGB (0,0,205)
+        public static Color WaferBrushColor => GetColorSetting("WaferBrushColor", 0, 0, 205, 180);
 
         /// <summary>
-        /// 웨이퍼 펜 색상 (MediumBlue 투명도 150)
+        /// 웨이퍼 펜 색상 (MediumBlue RGB 0,0,205 + Alpha 150)
         /// </summary>
-        public static Color WaferPenColor => GetColorSetting("WaferPenColor", 150, 0, 0, 205); // Alpha=150, MediumBlue RGB (0,0,205)
+        public static Color WaferPenColor => GetColorSetting("WaferPenColor", 0, 0, 205, 150);
 
         /// <summary>
         /// 테두리 색상 (밝은 회색)
@@ -215,14 +221,15 @@ namespace SemiconductorUi
         public static int TmDoorActionTicks => GetSetting("TmDoorActionTicks", 2);
 
         /// <summary>
-        /// 도어 열림 대기 틱 수
+        /// 도어 열림 대기 틱 수 (하드웨어 틱 150ms 기준, 기본 14 ≈ 2.1초).
+        /// 도어 위치 센서가 없어 시간으로만 대기하므로 실제 개폐 시간보다 짧게 잡지 말 것.
         /// </summary>
-        public static int DoorOpenWaitTicks => GetSetting("DoorOpenWaitTicks", 4);
+        public static int DoorOpenWaitTicks => GetSetting("DoorOpenWaitTicks", 14);
 
         /// <summary>
-        /// 도어 닫힘 대기 틱 수
+        /// 도어 닫힘 대기 틱 수 (하드웨어 틱 150ms 기준, 기본 14 ≈ 2.1초).
         /// </summary>
-        public static int DoorCloseWaitTicks => GetSetting("DoorCloseWaitTicks", 4);
+        public static int DoorCloseWaitTicks => GetSetting("DoorCloseWaitTicks", 14);
 
         #endregion
 

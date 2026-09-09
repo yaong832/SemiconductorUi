@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -16,6 +16,21 @@ namespace SemiconductorUi
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
+
+            Application.ThreadException += (s, e) =>
+            {
+                ExceptionHandler.HandleException(e.Exception, "UI Thread");
+            };
+            Application.SetUnhandledExceptionMode(UnhandledExceptionMode.CatchException);
+            AppDomain.CurrentDomain.UnhandledException += (s, e) =>
+            {
+                var ex = e.ExceptionObject as Exception;
+                if (ex != null)
+                {
+                    ExceptionHandler.HandleException(ex, "Unhandled");
+                }
+            };
+
             Application.Run(new Form1());
         }
     }

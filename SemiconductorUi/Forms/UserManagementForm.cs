@@ -204,7 +204,7 @@ namespace SemiconductorUi.Forms
 				var newUser = new User
 				{
 					Username = textBoxUsername.Text.Trim(),
-				Password = textBoxPassword.Text, // BeforeFinal 로직: 평문 비밀번호
+					Password = PasswordHelper.HashPassword(textBoxPassword.Text),
 					Role = comboBoxRole.SelectedItem?.ToString() ?? "작업자",
 					CreatedAt = DateTime.Now
 				};
@@ -233,7 +233,7 @@ namespace SemiconductorUi.Forms
 				var user = users.FirstOrDefault(u => u.Username == selectedUser.Username);
 				if (user != null)
 				{
-				user.Password = textBoxPassword.Text; // BeforeFinal 로직: 평문 비밀번호
+				user.Password = PasswordHelper.HashPassword(textBoxPassword.Text);
 					user.Role = comboBoxRole.SelectedItem?.ToString() ?? "작업자";
 					UserRepository.SaveAll(users);
 						LoadUsers();

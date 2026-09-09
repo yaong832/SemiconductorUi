@@ -12,6 +12,8 @@ namespace SemiconductorUi.Forms
     {
         private EnvThresholdSnapshot currentThresholds;
         public Action<EnvThresholdSnapshot> OnSaved;
+        /// <summary>TM 티칭 위치 폼 열기 (Form1에서 하드웨어 콜백 연결)</summary>
+        public Action OnOpenTeaching;
 
         public ConfigForm(EnvThresholdSnapshot initialThresholds)
         {
@@ -118,6 +120,20 @@ namespace SemiconductorUi.Forms
             {
                 currentThresholds = CreateDefaultThresholds();
                 LoadThresholdsToUI();
+            }
+        }
+
+        private void btnTeaching_Click(object sender, EventArgs e)
+        {
+            if (OnOpenTeaching != null)
+            {
+                OnOpenTeaching.Invoke();
+                return;
+            }
+
+            using (var form = new TeachingPositionForm(TeachingPositionsRepository.Load()))
+            {
+                form.ShowDialog(this);
             }
         }
     }

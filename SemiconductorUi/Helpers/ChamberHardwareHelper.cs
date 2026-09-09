@@ -147,62 +147,47 @@ namespace SemiconductorUi.Helpers
         }
 
         /// <summary>
-        /// 도어 열림 센서 입력 인덱스 가져오기
+        /// 도어 열림 센서 입력 인덱스.
+        /// EtherTest 기준: 챔버 도어에는 별도의 열림/닫힘 센서가 없음.
+        /// 센서가 추가되면 여기에 실제 Digital_Input 인덱스를 넣고,
+        /// HasDoorPositionSensors를 true로 바꾸면 됩니다.
+        /// 출력 인덱스(4/5 등)와 같은 번호를 입력으로 쓰면 안 됩니다.
         /// </summary>
-        /// <param name="region">EquipmentRegion</param>
-        /// <returns>센서 입력 인덱스 (Region이 챔버가 아니면 -1)</returns>
         public static int GetDoorOpenSensorInputIndex(EquipmentRegion region)
         {
-            switch (region)
-            {
-                case EquipmentRegion.ChamberA:
-                    return 5;  // Chamber A 도어 열림 센서
-                case EquipmentRegion.ChamberB:
-                    return 8;  // Chamber B 도어 열림 센서
-                case EquipmentRegion.ChamberC:
-                    return 11; // Chamber C 도어 열림 센서
-                default:
-                    return -1;
-            }
+            // 센서 미설치 — 확인 불가
+            return -1;
         }
 
         /// <summary>
-        /// 도어 닫힘 센서 입력 인덱스 가져오기
+        /// 도어 닫힘 센서 입력 인덱스. 센서 미설치 시 -1.
         /// </summary>
-        /// <param name="region">EquipmentRegion</param>
-        /// <returns>센서 입력 인덱스 (Region이 챔버가 아니면 -1)</returns>
         public static int GetDoorClosedSensorInputIndex(EquipmentRegion region)
         {
-            switch (region)
-            {
-                case EquipmentRegion.ChamberA:
-                    return 4;  // Chamber A 도어 닫힘 센서
-                case EquipmentRegion.ChamberB:
-                    return 7;  // Chamber B 도어 닫힘 센서
-                case EquipmentRegion.ChamberC:
-                    return 10; // Chamber C 도어 닫힘 센서
-                default:
-                    return -1;
-            }
+            return -1;
         }
 
         /// <summary>
-        /// 도어 열림 센서 상태 확인 (EtherCAT)
+        /// 도어 위치 센서가 실제로 연결되어 있는지.
+        /// false이면 이송 시퀀스는 시간 대기만 사용해야 한다.
         /// </summary>
-        /// <param name="ethercatDevice">EtherCAT 장치</param>
-        /// <param name="region">EquipmentRegion</param>
-        /// <returns>열림 상태 (오류 시 true 반환)</returns>
+        public static bool HasDoorPositionSensors => false;
+
+        /// <summary>
+        /// 도어 열림 센서 확인.
+        /// 센서 없음/오류/미연결 시 false (fail-closed: "열림 완료"로 오인하지 않음).
+        /// </summary>
         public static bool CheckDoorSensorOpen(IEG3268 ethercatDevice, EquipmentRegion region)
         {
-            if (ethercatDevice == null)
+            if (!HasDoorPositionSensors || ethercatDevice == null)
             {
-                return true; // 오류 시 완료로 처리
+                return false;
             }
 
             int inputIndex = GetDoorOpenSensorInputIndex(region);
             if (inputIndex < 0)
             {
-                return true; // FOUP은 도어 없음
+                return false;
             }
 
             try
@@ -211,27 +196,25 @@ namespace SemiconductorUi.Helpers
             }
             catch
             {
-                return true; // 오류 시 완료로 처리
+                return false; // fail-closed
             }
         }
 
         /// <summary>
-        /// 도어 닫힘 센서 상태 확인 (EtherCAT)
+        /// 도어 닫힘 센서 확인.
+        /// 센서 없음/오류/미연결 시 false (fail-closed: "닫힘 완료"로 오인하지 않음).
         /// </summary>
-        /// <param name="ethercatDevice">EtherCAT 장치</param>
-        /// <param name="region">EquipmentRegion</param>
-        /// <returns>닫힘 상태 (오류 시 true 반환)</returns>
         public static bool CheckDoorSensorClosed(IEG3268 ethercatDevice, EquipmentRegion region)
         {
-            if (ethercatDevice == null)
+            if (!HasDoorPositionSensors || ethercatDevice == null)
             {
-                return true; // 오류 시 완료로 처리
+                return false;
             }
 
             int inputIndex = GetDoorClosedSensorInputIndex(region);
             if (inputIndex < 0)
             {
-                return true; // FOUP은 도어 없음
+                return false;
             }
 
             try
@@ -240,7 +223,7 @@ namespace SemiconductorUi.Helpers
             }
             catch
             {
-                return true; // 오류 시 완료로 처리
+                return false; // fail-closed
             }
         }
     }

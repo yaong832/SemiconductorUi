@@ -56,26 +56,26 @@ namespace SemiconductorUi.Controllers
         /// </summary>
         public class TmPositionSet
         {
-            // 하강 위치 오프셋 (안착 위치 - 이 값 = 하강 위치)
-            public const long DESCEND_OFFSET = 30000;
+            // 하강 위치 오프셋 (안착 위치 - 이 값 = 하강 위치). UI/TeachingPositions.xml에서 변경 가능.
+            public long DescendOffset { get; set; } = 30000;
 
             // Chamber A 위치 (좌우: -59064)
             public long ChamberA_X { get; set; } = -59064;
             public long ChamberA_LandY { get; set; } = 806931;    // 안착 위치
             public long ChamberA_RaiseY { get; set; } = 1156931;  // 상승 위치
-            public long ChamberA_DescendY => ChamberA_LandY - DESCEND_OFFSET;  // 하강 위치
+            public long ChamberA_DescendY => ChamberA_LandY - DescendOffset;  // 하강 위치
 
             // Chamber B 위치 (좌우: -190823)
             public long ChamberB_X { get; set; } = -190823;
             public long ChamberB_LandY { get; set; } = 806931;
             public long ChamberB_RaiseY { get; set; } = 1156931;
-            public long ChamberB_DescendY => ChamberB_LandY - DESCEND_OFFSET;
+            public long ChamberB_DescendY => ChamberB_LandY - DescendOffset;
 
             // Chamber C 위치 (좌우: -321600)
             public long ChamberC_X { get; set; } = -321600;
             public long ChamberC_LandY { get; set; } = 806931;
             public long ChamberC_RaiseY { get; set; } = 1156931;
-            public long ChamberC_DescendY => ChamberC_LandY - DESCEND_OFFSET;
+            public long ChamberC_DescendY => ChamberC_LandY - DescendOffset;
 
             // FOUP A 위치 (좌우: 14140)
             public long FoupA_X { get; set; } = 14140;
@@ -97,14 +97,13 @@ namespace SemiconductorUi.Controllers
                 2332102,  // 4층 상승
                 3018457   // 5층 상승
             };
-            // FOUP A 하강 위치 (안착 - 20000)
             public long[] FoupA_DescendY => new long[]
             {
-                FoupA_LandY[0] - DESCEND_OFFSET,
-                FoupA_LandY[1] - DESCEND_OFFSET,
-                FoupA_LandY[2] - DESCEND_OFFSET,
-                FoupA_LandY[3] - DESCEND_OFFSET,
-                FoupA_LandY[4] - DESCEND_OFFSET
+                FoupA_LandY[0] - DescendOffset,
+                FoupA_LandY[1] - DescendOffset,
+                FoupA_LandY[2] - DescendOffset,
+                FoupA_LandY[3] - DescendOffset,
+                FoupA_LandY[4] - DescendOffset
             };
 
             // FOUP B 위치 (좌우: -394293, 상하는 FOUP A와 동일)
@@ -127,19 +126,82 @@ namespace SemiconductorUi.Controllers
                 2332102,  // 4층 상승
                 3018457   // 5층 상승
             };
-            // FOUP B 하강 위치 (안착 - 20000)
             public long[] FoupB_DescendY => new long[]
             {
-                FoupB_LandY[0] - DESCEND_OFFSET,
-                FoupB_LandY[1] - DESCEND_OFFSET,
-                FoupB_LandY[2] - DESCEND_OFFSET,
-                FoupB_LandY[3] - DESCEND_OFFSET,
-                FoupB_LandY[4] - DESCEND_OFFSET
+                FoupB_LandY[0] - DescendOffset,
+                FoupB_LandY[1] - DescendOffset,
+                FoupB_LandY[2] - DescendOffset,
+                FoupB_LandY[3] - DescendOffset,
+                FoupB_LandY[4] - DescendOffset
             };
 
-            // Home 위치 (대기 위치 - 안전한 중간 위치)
+            // Home / 대기 위치 (원점 복귀 후 기준 좌표)
             public long Home_X { get; set; } = 0;
             public long Home_Y { get; set; } = 0;
+
+            /// <summary>저장 데이터에서 위치값을 덮어씁니다.</summary>
+            public void ApplyFrom(SemiconductorUi.Models.TeachingPositionsData data)
+            {
+                if (data == null) return;
+                DescendOffset = data.DescendOffset;
+                ChamberA_X = data.ChamberA_X;
+                ChamberA_LandY = data.ChamberA_LandY;
+                ChamberA_RaiseY = data.ChamberA_RaiseY;
+                ChamberB_X = data.ChamberB_X;
+                ChamberB_LandY = data.ChamberB_LandY;
+                ChamberB_RaiseY = data.ChamberB_RaiseY;
+                ChamberC_X = data.ChamberC_X;
+                ChamberC_LandY = data.ChamberC_LandY;
+                ChamberC_RaiseY = data.ChamberC_RaiseY;
+                FoupA_X = data.FoupA_X;
+                FoupB_X = data.FoupB_X;
+                Home_X = data.Home_X;
+                Home_Y = data.Home_Y;
+                FoupA_LandY = EnsureSlotArray(FoupA_LandY, data.FoupA_LandY, new long[] { 102379, 782378, 1432388, 2119399, 2818463 });
+                FoupA_RaiseY = EnsureSlotArray(FoupA_RaiseY, data.FoupA_RaiseY, new long[] { 302380, 982378, 1627604, 2332102, 3018457 });
+                FoupB_LandY = EnsureSlotArray(FoupB_LandY, data.FoupB_LandY, new long[] { 102379, 782378, 1432388, 2119399, 2818463 });
+                FoupB_RaiseY = EnsureSlotArray(FoupB_RaiseY, data.FoupB_RaiseY, new long[] { 302380, 982378, 1627604, 2332102, 3018457 });
+            }
+
+            /// <summary>현재 위치값을 저장 DTO로 변환합니다.</summary>
+            public SemiconductorUi.Models.TeachingPositionsData ToData()
+            {
+                return new SemiconductorUi.Models.TeachingPositionsData
+                {
+                    DescendOffset = DescendOffset,
+                    ChamberA_X = ChamberA_X,
+                    ChamberA_LandY = ChamberA_LandY,
+                    ChamberA_RaiseY = ChamberA_RaiseY,
+                    ChamberB_X = ChamberB_X,
+                    ChamberB_LandY = ChamberB_LandY,
+                    ChamberB_RaiseY = ChamberB_RaiseY,
+                    ChamberC_X = ChamberC_X,
+                    ChamberC_LandY = ChamberC_LandY,
+                    ChamberC_RaiseY = ChamberC_RaiseY,
+                    FoupA_X = FoupA_X,
+                    FoupB_X = FoupB_X,
+                    Home_X = Home_X,
+                    Home_Y = Home_Y,
+                    FoupA_LandY = (long[])FoupA_LandY.Clone(),
+                    FoupA_RaiseY = (long[])FoupA_RaiseY.Clone(),
+                    FoupB_LandY = (long[])FoupB_LandY.Clone(),
+                    FoupB_RaiseY = (long[])FoupB_RaiseY.Clone()
+                };
+            }
+
+            private static long[] EnsureSlotArray(long[] target, long[] source, long[] defaults)
+            {
+                if (target == null || target.Length != 5)
+                {
+                    target = (long[])defaults.Clone();
+                }
+                if (source == null) return target;
+                for (int i = 0; i < 5 && i < source.Length; i++)
+                {
+                    target[i] = source[i];
+                }
+                return target;
+            }
         }
 
         /// <summary>
@@ -176,6 +238,7 @@ namespace SemiconductorUi.Controllers
         private bool _isInitialized;
         private bool _isServoOn;
         private bool _isHomed;
+        private bool _hasEverHomed; // 세션 내 원점복귀 1회 이상 완료 (이동해도 유지)
         private bool _isVacuumOn;
 
         // 현재 상태 추적
@@ -199,9 +262,14 @@ namespace SemiconductorUi.Controllers
         public bool IsServoOn => _isServoOn;
 
         /// <summary>
-        /// 원점복귀 완료 여부
+        /// 현재 원점 위치 여부 (이동하면 false)
         /// </summary>
         public bool IsHomed => _isHomed;
+
+        /// <summary>
+        /// 세션 중 원점복귀를 한 번이라도 완료했는지 (이동 인터락용)
+        /// </summary>
+        public bool HasEverHomed => _hasEverHomed;
 
         /// <summary>
         /// 진공 흡착 상태
@@ -276,7 +344,24 @@ namespace SemiconductorUi.Controllers
                 
                 if (servoIsOn)
                 {
-                    Log("서보 상태 동기화: ON", "INFO");
+                    try
+                    {
+                        // 양쪽 HOME_D면 세션 원점복귀 이력으로 인정 (공정/수동 홈 경로 동기화)
+                        if (_ethercat.Axis1_Status("HOME_D") && _ethercat.Axis2_Status("HOME_D"))
+                        {
+                            _isHomed = true;
+                            _hasEverHomed = true;
+                            Log("서보 상태 동기화: ON + Homed", "INFO");
+                        }
+                        else
+                        {
+                            Log("서보 상태 동기화: ON", "INFO");
+                        }
+                    }
+                    catch
+                    {
+                        Log("서보 상태 동기화: ON (HOME_D 확인 실패)", "INFO");
+                    }
                 }
                 else
                 {
@@ -403,6 +488,7 @@ namespace SemiconductorUi.Controllers
                     if (_ethercat.Axis2_Status("HOME_D"))
                     {
                         _isHomed = true;
+                        _hasEverHomed = true;
                         _currentAxis1Pos = 0;
                         _currentAxis2Pos = 0;
                         Log("원점복귀 완료 (상하 → 좌우 순서)", "INFO");
@@ -418,6 +504,28 @@ namespace SemiconductorUi.Controllers
                 Log($"원점복귀 오류: {ex.Message}", "ERROR");
                 return TmOperationResult.Fail($"원점복귀 오류: {ex.Message}");
             }
+        }
+
+        /// <summary>
+        /// 외부 경로(공정 시작/장비제어 폼)에서 원점복귀 성공 시 호출.
+        /// MoveToPosition이 요구하는 HasEverHomed 플래그를 맞춘다.
+        /// </summary>
+        public void MarkHomedAfterSuccessfulHoming()
+        {
+            _isHomed = true;
+            _hasEverHomed = true;
+            _isServoOn = true;
+            _currentAxis1Pos = 0;
+            _currentAxis2Pos = 0;
+            Log("원점복귀 상태 플래그 동기화 (HasEverHomed=true)", "INFO");
+        }
+
+        /// <summary>
+        /// 진공 상태 플래그만 동기화 (Form1 Digital_Output 경로용)
+        /// </summary>
+        public void SyncVacuumState(bool isOn)
+        {
+            _isVacuumOn = isOn;
         }
 
         /// <summary>
@@ -442,6 +550,7 @@ namespace SemiconductorUi.Controllers
                 _isServoOn = false;
                 _isInitialized = false;
                 _isHomed = false;
+                _hasEverHomed = false;
             }
             catch (Exception ex)
             {
@@ -463,6 +572,12 @@ namespace SemiconductorUi.Controllers
         {
             try
             {
+                // 세션 원점복귀 미완료 시 이동 금지
+                if (!_hasEverHomed)
+                {
+                    return TmOperationResult.Fail("원점복귀가 완료되지 않았습니다");
+                }
+
                 // 안전 인터락: 실린더가 후진 상태여야 이동 가능
                 if (!CheckCylinderRetracted())
                 {
@@ -571,6 +686,11 @@ namespace SemiconductorUi.Controllers
         {
             try
             {
+                if (!_hasEverHomed)
+                {
+                    return TmOperationResult.Fail("원점복귀가 완료되지 않았습니다");
+                }
+
                 // 상하 이동은 실린더 상태와 무관 (좌우 이동만 인터락)
                 // 웨이퍼 픽업 시퀀스: 실린더 전진 → 하강 → 진공ON → 상승 → 실린더 후진
 
@@ -1149,7 +1269,7 @@ namespace SemiconductorUi.Controllers
                 return TmOperationResult.Fail("서보모터가 OFF 상태입니다");
             }
 
-            if (!_isHomed)
+            if (!_hasEverHomed)
             {
                 return TmOperationResult.Fail("원점복귀가 완료되지 않았습니다");
             }

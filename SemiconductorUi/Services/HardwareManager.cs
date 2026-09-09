@@ -164,13 +164,18 @@ namespace SemiconductorUi.Services
             {
                 _tmHardwareController = new TmHardwareController(_ethercat, Log);
 
-                // 위치 설정은 TmPositionSet에 기본값으로 티칭값이 설정되어 있음
+                // TeachingPositions.xml 티칭값 적용 (없으면 코드 기본값)
+                var teaching = SemiconductorUi.Repositories.TeachingPositionsRepository.Load();
+                _tmHardwareController.Positions.ApplyFrom(teaching);
+
                 Log("TM 하드웨어 컨트롤러 생성 완료 (티칭값 적용됨)", "INFO");
+                Log($"  DescendOffset={_tmHardwareController.Positions.DescendOffset}", "INFO");
                 Log($"  Chamber A: X={_tmHardwareController.Positions.ChamberA_X}", "INFO");
                 Log($"  Chamber B: X={_tmHardwareController.Positions.ChamberB_X}", "INFO");
                 Log($"  Chamber C: X={_tmHardwareController.Positions.ChamberC_X}", "INFO");
                 Log($"  FOUP A: X={_tmHardwareController.Positions.FoupA_X}", "INFO");
                 Log($"  FOUP B: X={_tmHardwareController.Positions.FoupB_X}", "INFO");
+                Log($"  Home: X={_tmHardwareController.Positions.Home_X}, Y={_tmHardwareController.Positions.Home_Y}", "INFO");
 
                 return true;
             }
@@ -265,6 +270,14 @@ namespace SemiconductorUi.Services
         public void ResetTmHardwareInitialized()
         {
             _isTmHardwareInitialized = false;
+        }
+
+        /// <summary>
+        /// TM 하드웨어 초기화 완료 여부 설정 (원점복귀 성공 시 true)
+        /// </summary>
+        public void SetTmHardwareInitialized(bool value)
+        {
+            _isTmHardwareInitialized = value;
         }
 
         #endregion

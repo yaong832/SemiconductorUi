@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Windows.Forms;
 using IEG3268_Dll;
@@ -17,8 +18,14 @@ namespace SemiconductorUi.Forms
         public Action<bool, bool, bool> OnMainLampStateChanged; // red, yellow, green
         public Action<bool> OnServoStateChanged; // isOn
         public Action OnHomingRequested; // 원점복귀 요청
+        public Action OnTeachingRequested; // 티칭 위치 편집
         public Action<bool> OnCylinderStateChanged; // isExtended
         public Action<bool> OnVacuumStateChanged; // isOn
+
+        /// <summary>
+        /// 자동 공정(Running/Paused) 중이면 true. 챔버 램프·도어·진공 수동 제어를 막을 때 사용.
+        /// </summary>
+        public Func<bool> IsAutoProcessActive;
 
         // Chamber 램프 버튼
         private Button buttonChamberALampOn;
@@ -62,6 +69,10 @@ namespace SemiconductorUi.Forms
         // 상태 업데이트 타이머
         private System.Windows.Forms.Timer statusUpdateTimer;
 
+        // ON 유지 시간(초) 후 자동 OFF용 타이머
+        private readonly Dictionary<string, System.Windows.Forms.Timer> timedActionTimers =
+            new Dictionary<string, System.Windows.Forms.Timer>();
+
         public EquipmentControlForm(IEG3268 device, bool connected)
         {
             ethercatDevice = device;
@@ -102,6 +113,7 @@ namespace SemiconductorUi.Forms
                 statusUpdateTimer.Dispose();
                 statusUpdateTimer = null;
             }
+            DisposeAllTimedActions();
             base.OnFormClosed(e);
         }
 
@@ -112,8 +124,9 @@ namespace SemiconductorUi.Forms
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;
             this.MinimizeBox = false;
+            this.AutoScroll = true;
             this.BackColor = Color.FromArgb(250, 250, 255);
-            this.ClientSize = new Size(800, 700);
+            this.ClientSize = new Size(820, 720);
 
             // 상태 레이블
             labelStatus = new Label();
@@ -127,7 +140,7 @@ namespace SemiconductorUi.Forms
             int yPos = 50;
 
             // Chamber A 제어 그룹
-            var groupChamberA = CreateChamberGroup("Chamber A", yPos, 
+            var groupChamberA = CreateChamberGroup("Chamber A", "ChamberA", yPos, 
                 ref buttonChamberALampOn, ref buttonChamberALampOff,
                 ref buttonChamberADoorOpen, ref buttonChamberADoorClose,
                 () => ControlChamberLamp(3, true),
@@ -135,10 +148,10 @@ namespace SemiconductorUi.Forms
                 () => ControlChamberDoor(4, 5, true),
                 () => ControlChamberDoor(4, 5, false));
             this.Controls.Add(groupChamberA);
-            yPos += 120;
+            yPos += 130;
 
             // Chamber B 제어 그룹
-            var groupChamberB = CreateChamberGroup("Chamber B", yPos,
+            var groupChamberB = CreateChamberGroup("Chamber B", "ChamberB", yPos,
                 ref buttonChamberBLampOn, ref buttonChamberBLampOff,
                 ref buttonChamberBDoorOpen, ref buttonChamberBDoorClose,
                 () => ControlChamberLamp(6, true),
@@ -146,10 +159,10 @@ namespace SemiconductorUi.Forms
                 () => ControlChamberDoor(7, 8, true),
                 () => ControlChamberDoor(7, 8, false));
             this.Controls.Add(groupChamberB);
-            yPos += 120;
+            yPos += 130;
 
             // Chamber C 제어 그룹
-            var groupChamberC = CreateChamberGroup("Chamber C", yPos,
+            var groupChamberC = CreateChamberGroup("Chamber C", "ChamberC", yPos,
                 ref buttonChamberCLampOn, ref buttonChamberCLampOff,
                 ref buttonChamberCDoorOpen, ref buttonChamberCDoorClose,
                 () => ControlChamberLamp(9, true),
@@ -157,12 +170,12 @@ namespace SemiconductorUi.Forms
                 () => ControlChamberDoor(10, 11, true),
                 () => ControlChamberDoor(10, 11, false));
             this.Controls.Add(groupChamberC);
-            yPos += 120;
+            yPos += 130;
 
             // 3색 램프 제어 그룹
             var groupMainLamp = CreateMainLampGroup(yPos);
             this.Controls.Add(groupMainLamp);
-            yPos += 100;
+            yPos += 110;
 
             // 일괄 제어 그룹
             var groupBatchControl = CreateBatchControlGroup(yPos);
@@ -172,10 +185,10 @@ namespace SemiconductorUi.Forms
             // 서보 모터 제어 그룹 (TM 제어)
             var groupServoControl = CreateServoControlGroup(yPos);
             this.Controls.Add(groupServoControl);
-            yPos += 130;
+            yPos += 170;
 
             // 폼 높이 조정
-            this.ClientSize = new Size(800, yPos + 60);
+            this.ClientSize = new Size(820, Math.Min(yPos + 60, 780));
 
             // 닫기 버튼
             var bottomPanel = new FlowLayoutPanel();
@@ -205,7 +218,7 @@ namespace SemiconductorUi.Forms
             UpdateButtonStates();
         }
 
-        private GroupBox CreateChamberGroup(string title, int yPos,
+        private GroupBox CreateChamberGroup(string title, string keyPrefix, int yPos,
             ref Button btnLampOn, ref Button btnLampOff,
             ref Button btnDoorOpen, ref Button btnDoorClose,
             Action lampOnAction, Action lampOffAction,
@@ -217,8 +230,11 @@ namespace SemiconductorUi.Forms
             group.BackColor = Color.FromArgb(240, 240, 245);
             group.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
             group.Location = new Point(16, yPos);
-            group.Size = new Size(760, 110);
+            group.Size = new Size(780, 120);
             group.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+
+            string lampKey = keyPrefix + "_Lamp";
+            string doorKey = keyPrefix + "_Door";
 
             // 램프 제어
             var labelLamp = new Label();
@@ -230,21 +246,29 @@ namespace SemiconductorUi.Forms
             btnLampOn = CreateControlButton("ON", new Size(80, 28), Color.FromArgb(76, 175, 80), lampOnAction);
             btnLampOn.Location = new Point(80, 22);
 
-            btnLampOff = CreateControlButton("OFF", new Size(80, 28), Color.FromArgb(158, 158, 158), lampOffAction);
+            btnLampOff = CreateControlButton("OFF", new Size(80, 28), Color.FromArgb(158, 158, 158),
+                () => { CancelTimedAction(lampKey); lampOffAction(); });
             btnLampOff.Location = new Point(170, 22);
+
+            AddTimedOnOffControls(group, 270, 22, lampKey, title + " 램프",
+                lampOnAction, lampOffAction);
 
             // 도어 제어
             var labelDoor = new Label();
             labelDoor.Text = "도어:";
             labelDoor.ForeColor = Color.FromArgb(40, 40, 40);
-            labelDoor.Location = new Point(12, 60);
+            labelDoor.Location = new Point(12, 65);
             labelDoor.Size = new Size(60, 20);
 
             btnDoorOpen = CreateControlButton("열기", new Size(80, 28), Color.FromArgb(33, 150, 243), doorOpenAction);
-            btnDoorOpen.Location = new Point(80, 57);
+            btnDoorOpen.Location = new Point(80, 62);
 
-            btnDoorClose = CreateControlButton("닫기", new Size(80, 28), Color.FromArgb(244, 67, 54), doorCloseAction);
-            btnDoorClose.Location = new Point(170, 57);
+            btnDoorClose = CreateControlButton("닫기", new Size(80, 28), Color.FromArgb(244, 67, 54),
+                () => { CancelTimedAction(doorKey); doorCloseAction(); });
+            btnDoorClose.Location = new Point(170, 62);
+
+            AddTimedOnOffControls(group, 270, 62, doorKey, title + " 도어",
+                doorOpenAction, doorCloseAction);
 
             group.Controls.Add(labelLamp);
             group.Controls.Add(btnLampOn);
@@ -264,7 +288,7 @@ namespace SemiconductorUi.Forms
             group.BackColor = Color.FromArgb(240, 240, 245);
             group.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
             group.Location = new Point(16, yPos);
-            group.Size = new Size(760, 80);
+            group.Size = new Size(780, 90);
             group.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
 
             // 적색 램프
@@ -274,37 +298,49 @@ namespace SemiconductorUi.Forms
             labelRed.Location = new Point(12, 25);
             labelRed.Size = new Size(50, 20);
 
-            buttonMainLampRedOn = CreateControlButton("ON", new Size(70, 28), Color.FromArgb(244, 67, 54), () => ControlMainLamp(0, true));
-            buttonMainLampRedOn.Location = new Point(70, 22);
+            buttonMainLampRedOn = CreateControlButton("ON", new Size(60, 28), Color.FromArgb(244, 67, 54), () => ControlMainLamp(0, true));
+            buttonMainLampRedOn.Location = new Point(60, 22);
 
-            buttonMainLampRedOff = CreateControlButton("OFF", new Size(70, 28), Color.FromArgb(158, 158, 158), () => ControlMainLamp(0, false));
-            buttonMainLampRedOff.Location = new Point(150, 22);
+            buttonMainLampRedOff = CreateControlButton("OFF", new Size(60, 28), Color.FromArgb(158, 158, 158),
+                () => { CancelTimedAction("MainLamp_Red"); ControlMainLamp(0, false); });
+            buttonMainLampRedOff.Location = new Point(128, 22);
+
+            AddTimedOnOffControls(group, 198, 22, "MainLamp_Red", "3색 적색",
+                () => ControlMainLamp(0, true), () => ControlMainLamp(0, false), compact: true);
 
             // 황색 램프
             var labelYellow = new Label();
             labelYellow.Text = "황색:";
             labelYellow.ForeColor = Color.FromArgb(255, 167, 38);
-            labelYellow.Location = new Point(240, 25);
+            labelYellow.Location = new Point(12, 55);
             labelYellow.Size = new Size(50, 20);
 
-            buttonMainLampYellowOn = CreateControlButton("ON", new Size(70, 28), Color.FromArgb(255, 167, 38), () => ControlMainLamp(1, true));
-            buttonMainLampYellowOn.Location = new Point(298, 22);
+            buttonMainLampYellowOn = CreateControlButton("ON", new Size(60, 28), Color.FromArgb(255, 167, 38), () => ControlMainLamp(1, true));
+            buttonMainLampYellowOn.Location = new Point(60, 52);
 
-            buttonMainLampYellowOff = CreateControlButton("OFF", new Size(70, 28), Color.FromArgb(158, 158, 158), () => ControlMainLamp(1, false));
-            buttonMainLampYellowOff.Location = new Point(378, 22);
+            buttonMainLampYellowOff = CreateControlButton("OFF", new Size(60, 28), Color.FromArgb(158, 158, 158),
+                () => { CancelTimedAction("MainLamp_Yellow"); ControlMainLamp(1, false); });
+            buttonMainLampYellowOff.Location = new Point(128, 52);
+
+            AddTimedOnOffControls(group, 198, 52, "MainLamp_Yellow", "3색 황색",
+                () => ControlMainLamp(1, true), () => ControlMainLamp(1, false), compact: true);
 
             // 녹색 램프
             var labelGreen = new Label();
             labelGreen.Text = "녹색:";
             labelGreen.ForeColor = Color.FromArgb(76, 175, 80);
-            labelGreen.Location = new Point(468, 25);
+            labelGreen.Location = new Point(400, 25);
             labelGreen.Size = new Size(50, 20);
 
-            buttonMainLampGreenOn = CreateControlButton("ON", new Size(70, 28), Color.FromArgb(76, 175, 80), () => ControlMainLamp(2, true));
-            buttonMainLampGreenOn.Location = new Point(526, 22);
+            buttonMainLampGreenOn = CreateControlButton("ON", new Size(60, 28), Color.FromArgb(76, 175, 80), () => ControlMainLamp(2, true));
+            buttonMainLampGreenOn.Location = new Point(448, 22);
 
-            buttonMainLampGreenOff = CreateControlButton("OFF", new Size(70, 28), Color.FromArgb(158, 158, 158), () => ControlMainLamp(2, false));
-            buttonMainLampGreenOff.Location = new Point(606, 22);
+            buttonMainLampGreenOff = CreateControlButton("OFF", new Size(60, 28), Color.FromArgb(158, 158, 158),
+                () => { CancelTimedAction("MainLamp_Green"); ControlMainLamp(2, false); });
+            buttonMainLampGreenOff.Location = new Point(516, 22);
+
+            AddTimedOnOffControls(group, 586, 22, "MainLamp_Green", "3색 녹색",
+                () => ControlMainLamp(2, true), () => ControlMainLamp(2, false), compact: true);
 
             group.Controls.Add(labelRed);
             group.Controls.Add(buttonMainLampRedOn);
@@ -327,7 +363,7 @@ namespace SemiconductorUi.Forms
             group.BackColor = Color.FromArgb(240, 240, 245);
             group.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
             group.Location = new Point(16, yPos);
-            group.Size = new Size(760, 120);
+            group.Size = new Size(780, 160);
             group.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
 
             // 서보 ON/OFF
@@ -347,12 +383,18 @@ namespace SemiconductorUi.Forms
             buttonServoHome = CreateControlButton("원점복귀", new Size(90, 28), Color.FromArgb(255, 152, 0), ControlServoHome);
             buttonServoHome.Location = new Point(260, 22);
 
+            var buttonTeaching = CreateControlButton("티칭 위치", new Size(90, 28), Color.FromArgb(55, 95, 140), () =>
+            {
+                OnTeachingRequested?.Invoke();
+            });
+            buttonTeaching.Location = new Point(360, 22);
+
             // 서보 상태 표시
             labelServoStatus = new Label();
             labelServoStatus.ForeColor = Color.FromArgb(40, 40, 40);
             labelServoStatus.Font = new Font("Segoe UI", 8F);
-            labelServoStatus.Location = new Point(370, 27);
-            labelServoStatus.Size = new Size(150, 20);
+            labelServoStatus.Location = new Point(460, 27);
+            labelServoStatus.Size = new Size(200, 20);
             // 초기 상태: 현재 서보 상태 확인
             UpdateServoStatusFromDevice();
 
@@ -379,19 +421,47 @@ namespace SemiconductorUi.Forms
             buttonVacuumOn = CreateControlButton("진공 ON", new Size(80, 28), Color.FromArgb(76, 175, 80), ControlVacuumOn);
             buttonVacuumOn.Location = new Point(340, 57);
 
-            buttonVacuumOff = CreateControlButton("진공 OFF", new Size(80, 28), Color.FromArgb(158, 158, 158), ControlVacuumOff);
+            buttonVacuumOff = CreateControlButton("진공 OFF", new Size(80, 28), Color.FromArgb(158, 158, 158),
+                () => { CancelTimedAction("Vacuum"); ControlVacuumOff(); });
             buttonVacuumOff.Location = new Point(430, 57);
 
             buttonExhaustOn = CreateControlButton("배기 ON", new Size(80, 28), Color.FromArgb(156, 39, 176), ControlExhaustOn);
             buttonExhaustOn.Location = new Point(520, 57);
 
-            buttonExhaustOff = CreateControlButton("배기 OFF", new Size(80, 28), Color.FromArgb(158, 158, 158), ControlExhaustOff);
+            buttonExhaustOff = CreateControlButton("배기 OFF", new Size(80, 28), Color.FromArgb(158, 158, 158),
+                () => { CancelTimedAction("Exhaust"); ControlExhaustOff(); });
             buttonExhaustOff.Location = new Point(610, 57);
+
+            // 진공/배기 타이머 (ON 유지 후 OFF)
+            var labelVacuumTimer = new Label();
+            labelVacuumTimer.Text = "진공 타이머:";
+            labelVacuumTimer.ForeColor = Color.FromArgb(40, 40, 40);
+            labelVacuumTimer.Location = new Point(12, 100);
+            labelVacuumTimer.Size = new Size(80, 20);
+            group.Controls.Add(labelVacuumTimer);
+            AddTimedOnOffControls(group, 100, 97, "Vacuum", "진공", ControlVacuumOn, ControlVacuumOff);
+
+            var labelExhaustTimer = new Label();
+            labelExhaustTimer.Text = "배기 타이머:";
+            labelExhaustTimer.ForeColor = Color.FromArgb(40, 40, 40);
+            labelExhaustTimer.Location = new Point(360, 100);
+            labelExhaustTimer.Size = new Size(80, 20);
+            group.Controls.Add(labelExhaustTimer);
+            AddTimedOnOffControls(group, 448, 97, "Exhaust", "배기", ControlExhaustOn, ControlExhaustOff);
+
+            var hint = new Label();
+            hint.Text = "타이머: 초 입력 후 [실행] → 해당 시간만큼 ON(열림) 후 자동 OFF(닫힘)";
+            hint.ForeColor = Color.FromArgb(100, 100, 110);
+            hint.Font = new Font("Segoe UI", 8F, FontStyle.Regular);
+            hint.Location = new Point(12, 132);
+            hint.Size = new Size(750, 18);
+            group.Controls.Add(hint);
 
             group.Controls.Add(labelServo);
             group.Controls.Add(buttonServoOn);
             group.Controls.Add(buttonServoOff);
             group.Controls.Add(buttonServoHome);
+            group.Controls.Add(buttonTeaching);
             group.Controls.Add(labelServoStatus);
             group.Controls.Add(labelCylinder);
             group.Controls.Add(buttonCylinderExtend);
@@ -413,7 +483,7 @@ namespace SemiconductorUi.Forms
             group.BackColor = Color.FromArgb(240, 240, 245);
             group.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
             group.Location = new Point(16, yPos);
-            group.Size = new Size(760, 90);
+            group.Size = new Size(780, 90);
             group.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
 
             // 모든 문 제어
@@ -466,6 +536,160 @@ namespace SemiconductorUi.Forms
             return button;
         }
 
+        /// <summary>
+        /// 초 입력 + [실행] 버튼. 실행 시 ON(열기) 후 지정 초 뒤 자동 OFF(닫기).
+        /// </summary>
+        private void AddTimedOnOffControls(Control parent, int x, int y, string key, string displayName,
+            Action onAction, Action offAction, bool compact = false)
+        {
+            int nudWidth = compact ? 48 : 56;
+            int btnWidth = compact ? 52 : 60;
+
+            var nud = new NumericUpDown();
+            nud.Minimum = 1;
+            nud.Maximum = 3600;
+            nud.Value = 5;
+            nud.DecimalPlaces = 0;
+            nud.Location = new Point(x, y);
+            nud.Size = new Size(nudWidth, 28);
+            nud.Font = new Font("Segoe UI", 9F);
+            nud.Tag = key;
+
+            var labelSec = new Label();
+            labelSec.Text = "초";
+            labelSec.ForeColor = Color.FromArgb(40, 40, 40);
+            labelSec.Font = new Font("Segoe UI", 8F);
+            labelSec.Location = new Point(x + nudWidth + 2, y + 5);
+            labelSec.Size = new Size(20, 18);
+            labelSec.AutoSize = true;
+
+            var btnRun = CreateControlButton("실행", new Size(btnWidth, 28), Color.FromArgb(255, 152, 0), () =>
+            {
+                int seconds = (int)nud.Value;
+                StartTimedAction(key, seconds, onAction, offAction, displayName);
+            });
+            btnRun.Location = new Point(x + nudWidth + 24, y);
+            btnRun.Name = "btnTimed_" + key;
+
+            parent.Controls.Add(nud);
+            parent.Controls.Add(labelSec);
+            parent.Controls.Add(btnRun);
+        }
+
+        private bool EnsureManualIoAllowed(string actionName)
+        {
+            if (IsAutoProcessActive != null && IsAutoProcessActive())
+            {
+                MessageBox.Show(
+                    $"자동 공정 실행/일시정지 중에는 '{actionName}' 수동 제어를 할 수 없습니다.\n" +
+                    "공정 정지 후 장비 점검용으로 사용해 주세요.\n" +
+                    "(공정 중 수동 램프·도어 제어는 자동 시퀀스와 충돌합니다.)",
+                    "수동 제어 제한",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
+                return false;
+            }
+            return true;
+        }
+
+        private void StartTimedAction(string key, int seconds, Action onAction, Action offAction, string displayName)
+        {
+            if (!EnsureManualIoAllowed(displayName + " 타이머"))
+            {
+                return;
+            }
+
+            if (!isConnected || ethercatDevice == null)
+            {
+                MessageBox.Show("EtherCAT이 연결되지 않았습니다.", "오류", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            if (seconds < 1)
+            {
+                MessageBox.Show("1초 이상으로 입력하세요.", "입력 오류", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            CancelTimedAction(key);
+
+            try
+            {
+                onAction?.Invoke();
+            }
+            catch (Exception ex)
+            {
+                labelStatus.Text = $"타이머 ON 실패: {ex.Message}";
+                labelStatus.ForeColor = Color.Red;
+                return;
+            }
+
+            var timer = new System.Windows.Forms.Timer();
+            timer.Interval = seconds * 1000;
+            timer.Tick += (s, e) =>
+            {
+                CancelTimedAction(key);
+                try
+                {
+                    offAction?.Invoke();
+                    if (labelStatus != null && !labelStatus.IsDisposed)
+                    {
+                        labelStatus.Text = $"{displayName} 타이머 완료 → OFF ({seconds}초)";
+                        labelStatus.ForeColor = Color.Orange;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    if (labelStatus != null && !labelStatus.IsDisposed)
+                    {
+                        labelStatus.Text = $"{displayName} 타이머 OFF 오류: {ex.Message}";
+                        labelStatus.ForeColor = Color.Red;
+                    }
+                }
+            };
+
+            timedActionTimers[key] = timer;
+            timer.Start();
+
+            if (labelStatus != null)
+            {
+                labelStatus.Text = $"{displayName} ON — {seconds}초 후 자동 OFF";
+                labelStatus.ForeColor = Color.FromArgb(255, 152, 0);
+            }
+        }
+
+        private void CancelTimedAction(string key)
+        {
+            if (string.IsNullOrEmpty(key))
+            {
+                return;
+            }
+
+            System.Windows.Forms.Timer timer;
+            if (timedActionTimers.TryGetValue(key, out timer))
+            {
+                timedActionTimers.Remove(key);
+                if (timer != null)
+                {
+                    timer.Stop();
+                    timer.Dispose();
+                }
+            }
+        }
+
+        private void DisposeAllTimedActions()
+        {
+            foreach (var pair in timedActionTimers)
+            {
+                if (pair.Value != null)
+                {
+                    pair.Value.Stop();
+                    pair.Value.Dispose();
+                }
+            }
+            timedActionTimers.Clear();
+        }
+
         private void UpdateButtonStates()
         {
             bool enabled = isConnected && ethercatDevice != null;
@@ -503,12 +727,7 @@ namespace SemiconductorUi.Forms
             if (buttonExhaustOn != null) buttonExhaustOn.Enabled = enabled;
             if (buttonExhaustOff != null) buttonExhaustOff.Enabled = enabled;
 
-            // 일괄 제어 버튼들도 활성화 상태 업데이트
-            var allDoorsOpen = this.Controls.Find("buttonAllDoorsOpen", true);
-            var allDoorsClose = this.Controls.Find("buttonAllDoorsClose", true);
-            var allLampsOn = this.Controls.Find("buttonAllLampsOn", true);
-            var allLampsOff = this.Controls.Find("buttonAllLampsOff", true);
-
+            // 일괄 제어 / 타이머 실행 버튼 활성화
             foreach (Control ctrl in this.Controls)
             {
                 if (ctrl is GroupBox)
@@ -518,11 +737,16 @@ namespace SemiconductorUi.Forms
                         if (child is Button)
                         {
                             var btn = child as Button;
-                            if (btn != null && (btn.Text == "모두 열기" || btn.Text == "모두 닫기" || 
-                                btn.Text == "모두 켜기" || btn.Text == "모두 끄기"))
+                            if (btn != null && (btn.Text == "모두 열기" || btn.Text == "모두 닫기" ||
+                                btn.Text == "모두 켜기" || btn.Text == "모두 끄기" ||
+                                btn.Text == "실행" || (btn.Name != null && btn.Name.StartsWith("btnTimed_"))))
                             {
                                 btn.Enabled = enabled;
                             }
+                        }
+                        else if (child is NumericUpDown)
+                        {
+                            child.Enabled = enabled;
                         }
                     }
                 }
@@ -531,6 +755,12 @@ namespace SemiconductorUi.Forms
 
         private void ControlChamberLamp(int outputIndex, bool on)
         {
+            // ON만 차단 — OFF는 공정 중에도 허용(수동 안전 해제)
+            if (on && !EnsureManualIoAllowed("챔버 램프 ON"))
+            {
+                return;
+            }
+
             if (!isConnected || ethercatDevice == null)
             {
                 MessageBox.Show("EtherCAT이 연결되지 않았습니다.", "오류", MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -565,6 +795,12 @@ namespace SemiconductorUi.Forms
 
         private void ControlChamberDoor(int outputIndex1, int outputIndex2, bool open)
         {
+            // 열기만 차단 — 닫기는 공정 중에도 허용
+            if (open && !EnsureManualIoAllowed("챔버 도어 열기"))
+            {
+                return;
+            }
+
             if (!isConnected || ethercatDevice == null)
             {
                 MessageBox.Show("EtherCAT이 연결되지 않았습니다.", "오류", MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -678,6 +914,11 @@ namespace SemiconductorUi.Forms
 
         private void ControlAllDoorsOpen()
         {
+            if (!EnsureManualIoAllowed("모든 문 열기"))
+            {
+                return;
+            }
+
             if (!isConnected || ethercatDevice == null)
             {
                 MessageBox.Show("EtherCAT이 연결되지 않았습니다.", "오류", MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -760,6 +1001,11 @@ namespace SemiconductorUi.Forms
 
         private void ControlAllLampsOn()
         {
+            if (!EnsureManualIoAllowed("모든 램프 켜기"))
+            {
+                return;
+            }
+
             if (!isConnected || ethercatDevice == null)
             {
                 MessageBox.Show("EtherCAT이 연결되지 않았습니다.", "오류", MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -942,85 +1188,92 @@ namespace SemiconductorUi.Forms
                 return;
             }
 
-            try
+            labelStatus.Text = "서보 ON 중...";
+            labelStatus.ForeColor = Color.Yellow;
+            var device = ethercatDevice;
+            long velocity = 300000;
+            long maxVelocity = 500000;
+            long deceleration = 100000000;
+            long acceleration = 1000000;
+
+            System.Threading.Tasks.Task.Run(() =>
             {
-                // 파라미터 설정 (velocity, maxVelocity, deceleration, acceleration)
-                long velocity = 300000;
-                long maxVelocity = 500000;
-                long deceleration = 100000000;
-                long acceleration = 1000000;
-                
-                ethercatDevice.Axis1_UD_Config_Update(velocity, maxVelocity, deceleration, acceleration);
-                ethercatDevice.Axis2_LR_Config_Update(velocity, maxVelocity, deceleration, acceleration);
-                
-                // 서보 ON
-                ethercatDevice.Axis1_ON();
-                ethercatDevice.Axis2_ON();
-                
-                // 서보 ON 완료 대기 (최대 2초)
-                System.Threading.Thread.Sleep(500); // 초기 안정화 대기
-                bool servoOnConfirmed = false;
-                var servoCheckTimeout = DateTime.Now.AddSeconds(2);
-                while (DateTime.Now < servoCheckTimeout)
+                try
                 {
-                    try
+                    device.Axis1_UD_Config_Update(velocity, maxVelocity, deceleration, acceleration);
+                    device.Axis2_LR_Config_Update(velocity, maxVelocity, deceleration, acceleration);
+                    device.Axis1_ON();
+                    device.Axis2_ON();
+
+                    System.Threading.Thread.Sleep(500);
+                    bool servoOnConfirmed = false;
+                    var servoCheckTimeout = DateTime.Now.AddSeconds(2);
+                    while (DateTime.Now < servoCheckTimeout)
                     {
-                        // 서보 ON 상태 확인 (위치 데이터가 있으면 서보 ON으로 간주)
-                        string axis1Pos = ethercatDevice.Axis1_is_PosData();
-                        string axis2Pos = ethercatDevice.Axis2_is_PosData();
-                        bool hasPosition = !string.IsNullOrEmpty(axis1Pos) && axis1Pos != "-" &&
-                                          !string.IsNullOrEmpty(axis2Pos) && axis2Pos != "-";
-                        
-                        if (hasPosition)
+                        try
                         {
-                            servoOnConfirmed = true;
-                            break;
+                            string axis1Pos = device.Axis1_is_PosData();
+                            string axis2Pos = device.Axis2_is_PosData();
+                            bool hasPosition = !string.IsNullOrEmpty(axis1Pos) && axis1Pos != "-" &&
+                                              !string.IsNullOrEmpty(axis2Pos) && axis2Pos != "-";
+                            if (hasPosition)
+                            {
+                                servoOnConfirmed = true;
+                                break;
+                            }
                         }
+                        catch (Exception checkEx)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"서보 ON 상태 확인 오류: {checkEx.Message}");
+                        }
+                        System.Threading.Thread.Sleep(100);
                     }
-                    catch (Exception checkEx)
+
+                    SafeUi(() =>
                     {
-                        // 상태 확인 오류는 무시하고 계속 시도
-                        System.Diagnostics.Debug.WriteLine($"서보 ON 상태 확인 오류: {checkEx.Message}");
-                    }
-                    System.Threading.Thread.Sleep(100);
+                        if (IsDisposed) return;
+                        if (servoOnConfirmed)
+                        {
+                            labelStatus.Text = "서보 모터 ON";
+                            labelStatus.ForeColor = Color.LimeGreen;
+                            if (labelServoStatus != null)
+                            {
+                                labelServoStatus.Text = "서보 상태: ON";
+                                labelServoStatus.ForeColor = Color.LimeGreen;
+                            }
+                            OnServoStateChanged?.Invoke(true);
+                        }
+                        else
+                        {
+                            labelStatus.Text = "서보 ON 명령 전송 완료, 상태 확인 실패";
+                            labelStatus.ForeColor = Color.Orange;
+                            if (labelServoStatus != null)
+                            {
+                                labelServoStatus.Text = "서보 상태: 확인 불가";
+                                labelServoStatus.ForeColor = Color.Orange;
+                            }
+                            MessageBox.Show(
+                                "서보 ON 명령을 전송했지만 상태 확인에 실패했습니다.\n\n" +
+                                "확인 사항:\n" +
+                                "1. 서보 모터 전원 확인\n" +
+                                "2. EtherCAT 연결 상태 확인\n" +
+                                "3. 서보 모터 상태 수동 확인",
+                                "서보 ON 확인", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                            OnServoStateChanged?.Invoke(false);
+                        }
+                    });
                 }
-                
-                if (servoOnConfirmed)
+                catch (Exception ex)
                 {
-                    labelStatus.Text = "서보 모터 ON";
-                    labelStatus.ForeColor = Color.LimeGreen;
-                    if (labelServoStatus != null)
+                    SafeUi(() =>
                     {
-                        labelServoStatus.Text = "서보 상태: ON";
-                        labelServoStatus.ForeColor = Color.LimeGreen;
-                    }
-                    OnServoStateChanged?.Invoke(true);
+                        if (IsDisposed) return;
+                        MessageBox.Show($"서보 ON 오류: {ex.Message}", "오류", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        labelStatus.Text = $"오류: {ex.Message}";
+                        labelStatus.ForeColor = Color.Red;
+                    });
                 }
-                else
-                {
-                    labelStatus.Text = "서보 ON 명령 전송 완료, 상태 확인 실패";
-                    labelStatus.ForeColor = Color.Orange;
-                    if (labelServoStatus != null)
-                    {
-                        labelServoStatus.Text = "서보 상태: 확인 불가";
-                        labelServoStatus.ForeColor = Color.Orange;
-                    }
-                    MessageBox.Show(
-                        "서보 ON 명령을 전송했지만 상태 확인에 실패했습니다.\n\n" +
-                        "확인 사항:\n" +
-                        "1. 서보 모터 전원 확인\n" +
-                        "2. EtherCAT 연결 상태 확인\n" +
-                        "3. 서보 모터 상태 수동 확인",
-                        "서보 ON 확인", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                    OnServoStateChanged?.Invoke(false);
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"서보 ON 오류: {ex.Message}", "오류", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                labelStatus.Text = $"오류: {ex.Message}";
-                labelStatus.ForeColor = Color.Red;
-            }
+            });
         }
 
         private void ControlServoOff()
@@ -1062,7 +1315,6 @@ namespace SemiconductorUi.Forms
                 return;
             }
 
-            // 실린더 후진 상태 확인
             try
             {
                 bool cylinderRetracted = ethercatDevice.Digital_Input(12);
@@ -1077,132 +1329,133 @@ namespace SemiconductorUi.Forms
                 MessageBox.Show($"실린더 상태 확인 오류: {ex.Message}\n원점복귀를 진행합니다.", "경고", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
 
-            try
+            labelStatus.Text = "원점복귀 시작 - 1단계: 상하(Axis1)";
+            labelStatus.ForeColor = Color.Yellow;
+            if (labelServoStatus != null)
             {
-                // 원점복귀 시작
-                labelStatus.Text = "원점복귀 시작 - 1단계: 상하(Axis1)";
-                labelStatus.ForeColor = Color.Yellow;
-                if (labelServoStatus != null)
-                {
-                    labelServoStatus.Text = "원점복귀 중 (1/2)...";
-                    labelServoStatus.ForeColor = Color.Yellow;
-                }
-
-                // 1단계: Axis1 (상하) 원점복귀
-                ethercatDevice.Axis1_UD_Homming();
-
-                // Axis1 원점복귀 완료 대기 (최대 120초)
-                var timeout = DateTime.Now.AddSeconds(120);
-                bool axis1Homed = false;
-                while (DateTime.Now < timeout)
-                {
-                    try
-                    {
-                        if (ethercatDevice.Axis1_Status("HOME_D"))
-                        {
-                            axis1Homed = true;
-                            break;
-                        }
-                    }
-                    catch (Exception checkEx)
-                    {
-                        System.Diagnostics.Debug.WriteLine($"Axis1 상태 확인 오류: {checkEx.Message}");
-                    }
-                    System.Threading.Thread.Sleep(100);
- // UI 응답성 유지
-                }
-
-                if (!axis1Homed)
-                {
-                    labelStatus.Text = "원점복귀 실패: Axis1 타임아웃";
-                    labelStatus.ForeColor = Color.Red;
-                    if (labelServoStatus != null)
-                    {
-                        labelServoStatus.Text = "원점복귀 실패";
-                        labelServoStatus.ForeColor = Color.Red;
-                    }
-                    MessageBox.Show(
-                        "상하(Axis1) 원점복귀가 타임아웃되었습니다.\n\n" +
-                        "확인 사항:\n" +
-                        "1. 서보 모터 전원 확인\n" +
-                        "2. Axis1 하드웨어 상태 확인\n" +
-                        "3. EtherCAT 연결 상태 확인",
-                        "원점복귀 실패", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    return;
-                }
-
-                // 2단계: Axis2 (좌우) 원점복귀
-                labelStatus.Text = "원점복귀 - 2단계: 좌우(Axis2)";
-                if (labelServoStatus != null)
-                {
-                    labelServoStatus.Text = "원점복귀 중 (2/2)...";
-                }
-
-                ethercatDevice.Axis2_LR_Homming();
-
-                // Axis2 원점복귀 완료 대기 (최대 120초)
-                timeout = DateTime.Now.AddSeconds(120);
-                bool axis2Homed = false;
-                while (DateTime.Now < timeout)
-                {
-                    try
-                    {
-                        if (ethercatDevice.Axis2_Status("HOME_D"))
-                        {
-                            axis2Homed = true;
-                            break;
-                        }
-                    }
-                    catch (Exception checkEx)
-                    {
-                        System.Diagnostics.Debug.WriteLine($"Axis2 상태 확인 오류: {checkEx.Message}");
-                    }
-                    System.Threading.Thread.Sleep(100);
- // UI 응답성 유지
-                }
-
-                if (!axis2Homed)
-                {
-                    labelStatus.Text = "원점복귀 실패: Axis2 타임아웃";
-                    labelStatus.ForeColor = Color.Red;
-                    if (labelServoStatus != null)
-                    {
-                        labelServoStatus.Text = "원점복귀 실패";
-                        labelServoStatus.ForeColor = Color.Red;
-                    }
-                    MessageBox.Show(
-                        "좌우(Axis2) 원점복귀가 타임아웃되었습니다.\n\n" +
-                        "확인 사항:\n" +
-                        "1. 서보 모터 전원 확인\n" +
-                        "2. Axis2 하드웨어 상태 확인\n" +
-                        "3. 실린더 후진 상태 확인\n" +
-                        "4. EtherCAT 연결 상태 확인",
-                        "원점복귀 실패", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    return;
-                }
-
-                // 원점복귀 완료
-                labelStatus.Text = "원점복귀 완료!";
-                labelStatus.ForeColor = Color.LimeGreen;
-                if (labelServoStatus != null)
-                {
-                    labelServoStatus.Text = "원점복귀 완료";
-                    labelServoStatus.ForeColor = Color.LimeGreen;
-                }
-
-                OnHomingRequested?.Invoke();
-                MessageBox.Show("원점복귀가 완료되었습니다.\n(상하 → 좌우 순서)", "완료", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                labelServoStatus.Text = "원점복귀 중 (1/2)...";
+                labelServoStatus.ForeColor = Color.Yellow;
             }
-            catch (Exception ex)
+
+            var device = ethercatDevice;
+            System.Threading.Tasks.Task.Run(() =>
             {
-                MessageBox.Show($"원점복귀 오류: {ex.Message}", "오류", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                labelStatus.Text = $"오류: {ex.Message}";
-                labelStatus.ForeColor = Color.Red;
-                if (labelServoStatus != null)
+                try
                 {
-                    labelServoStatus.Text = "원점복귀 오류";
-                    labelServoStatus.ForeColor = Color.Red;
+                    device.Axis1_UD_Homming();
+                    var timeout = DateTime.Now.AddSeconds(120);
+                    bool axis1Homed = false;
+                    while (DateTime.Now < timeout)
+                    {
+                        try
+                        {
+                            if (device.Axis1_Status("HOME_D")) { axis1Homed = true; break; }
+                        }
+                        catch { }
+                        System.Threading.Thread.Sleep(100);
+                    }
+
+                    if (!axis1Homed)
+                    {
+                        SafeUi(() =>
+                        {
+                            if (IsDisposed) return;
+                            labelStatus.Text = "원점복귀 실패: Axis1 타임아웃";
+                            labelStatus.ForeColor = Color.Red;
+                            if (labelServoStatus != null)
+                            {
+                                labelServoStatus.Text = "원점복귀 실패";
+                                labelServoStatus.ForeColor = Color.Red;
+                            }
+                            MessageBox.Show(
+                                "상하(Axis1) 원점복귀가 타임아웃되었습니다.\n\n" +
+                                "확인 사항:\n1. 서보 모터 전원 확인\n2. Axis1 하드웨어 상태 확인\n3. EtherCAT 연결 상태 확인",
+                                "원점복귀 실패", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        });
+                        return;
+                    }
+
+                    SafeUi(() =>
+                    {
+                        if (IsDisposed) return;
+                        labelStatus.Text = "원점복귀 - 2단계: 좌우(Axis2)";
+                        if (labelServoStatus != null) labelServoStatus.Text = "원점복귀 중 (2/2)...";
+                    });
+
+                    device.Axis2_LR_Homming();
+                    timeout = DateTime.Now.AddSeconds(120);
+                    bool axis2Homed = false;
+                    while (DateTime.Now < timeout)
+                    {
+                        try
+                        {
+                            if (device.Axis2_Status("HOME_D")) { axis2Homed = true; break; }
+                        }
+                        catch { }
+                        System.Threading.Thread.Sleep(100);
+                    }
+
+                    SafeUi(() =>
+                    {
+                        if (IsDisposed) return;
+                        if (!axis2Homed)
+                        {
+                            labelStatus.Text = "원점복귀 실패: Axis2 타임아웃";
+                            labelStatus.ForeColor = Color.Red;
+                            if (labelServoStatus != null)
+                            {
+                                labelServoStatus.Text = "원점복귀 실패";
+                                labelServoStatus.ForeColor = Color.Red;
+                            }
+                            MessageBox.Show(
+                                "좌우(Axis2) 원점복귀가 타임아웃되었습니다.\n\n" +
+                                "확인 사항:\n1. 서보 모터 전원 확인\n2. Axis2 하드웨어 상태 확인\n3. 실린더 후진 상태 확인\n4. EtherCAT 연결 상태 확인",
+                                "원점복귀 실패", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            return;
+                        }
+
+                        labelStatus.Text = "원점복귀 완료!";
+                        labelStatus.ForeColor = Color.LimeGreen;
+                        if (labelServoStatus != null)
+                        {
+                            labelServoStatus.Text = "원점복귀 완료";
+                            labelServoStatus.ForeColor = Color.LimeGreen;
+                        }
+                        OnHomingRequested?.Invoke();
+                        MessageBox.Show("원점복귀가 완료되었습니다.\n(상하 → 좌우 순서)", "완료", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    });
                 }
+                catch (Exception ex)
+                {
+                    SafeUi(() =>
+                    {
+                        if (IsDisposed) return;
+                        MessageBox.Show($"원점복귀 오류: {ex.Message}", "오류", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        labelStatus.Text = $"오류: {ex.Message}";
+                        labelStatus.ForeColor = Color.Red;
+                        if (labelServoStatus != null)
+                        {
+                            labelServoStatus.Text = "원점복귀 오류";
+                            labelServoStatus.ForeColor = Color.Red;
+                        }
+                    });
+                }
+            });
+        }
+
+        private void SafeUi(Action action)
+        {
+            if (IsDisposed || !IsHandleCreated)
+            {
+                return;
+            }
+            if (InvokeRequired)
+            {
+                BeginInvoke(action);
+            }
+            else
+            {
+                action();
             }
         }
 
@@ -1258,6 +1511,11 @@ namespace SemiconductorUi.Forms
 
         private void ControlVacuumOn()
         {
+            if (!EnsureManualIoAllowed("진공 ON"))
+            {
+                return;
+            }
+
             if (!isConnected || ethercatDevice == null)
             {
                 MessageBox.Show("EtherCAT이 연결되지 않았습니다.", "연결 필요", MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -1307,6 +1565,11 @@ namespace SemiconductorUi.Forms
 
         private void ControlExhaustOn()
         {
+            if (!EnsureManualIoAllowed("배기 ON"))
+            {
+                return;
+            }
+
             if (!isConnected || ethercatDevice == null)
             {
                 MessageBox.Show("EtherCAT이 연결되지 않았습니다.", "연결 필요", MessageBoxButtons.OK, MessageBoxIcon.Warning);
