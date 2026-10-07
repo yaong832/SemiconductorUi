@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Windows.Forms;
+using SemiconductorUi.Helpers;
 
 namespace SemiconductorUi.Controls
 {
@@ -15,7 +16,7 @@ namespace SemiconductorUi.Controls
         private bool doorClosed = true;
         private Color bodyStart = Color.FromArgb(92, 104, 148);
         private Color bodyEnd = Color.FromArgb(54, 61, 96);
-        private Color waferColor = Color.FromArgb(108, 196, 255);
+        private Color waferColor = Color.FromArgb(120, 170, 235);
 
         public FoupVisualizationControl()
         {
@@ -25,9 +26,9 @@ namespace SemiconductorUi.Controls
                      ControlStyles.UserPaint |
                      ControlStyles.OptimizedDoubleBuffer |
                      ControlStyles.ResizeRedraw, true);
-            Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point);
-            ForeColor = Color.White;
-            BackColor = Color.FromArgb(40, 43, 52);
+            Font = new Font("Segoe UI", 8.5F, FontStyle.Regular, GraphicsUnit.Point);
+            ForeColor = EquipmentCanvasStyler.CardTitle;
+            BackColor = EquipmentCanvasStyler.CanvasBack;
         }
 
         [Category("FOUP"), DefaultValue("FOUP")]
@@ -165,18 +166,17 @@ namespace SemiconductorUi.Controls
 
             var g = e.Graphics;
             g.SmoothingMode = SmoothingMode.AntiAlias;
-            g.Clear(BackColor);
+            g.Clear(Parent?.BackColor ?? BackColor);
 
-            var bounds = ClientRectangle;
-            bounds.Inflate(-2, -2);
-            if (bounds.Width <= 0 || bounds.Height <= 0)
+            var bounds = new Rectangle(1, 1, ClientSize.Width - 3, ClientSize.Height - 3);
+            if (bounds.Width <= 20 || bounds.Height <= 20)
             {
                 return;
             }
 
-            using (var bodyPath = CreateRoundedRectangle(bounds, 18f))
-            using (var bodyBrush = new LinearGradientBrush(bounds, bodyStart, bodyEnd, LinearGradientMode.Vertical))
-            using (var borderPen = new Pen(Color.FromArgb(150, Color.Black), 1.5f))
+            using (var bodyPath = CreateRoundedRectangle(bounds, EquipmentCanvasStyler.CardRadius))
+            using (var bodyBrush = new SolidBrush(EquipmentCanvasStyler.CardFill))
+            using (var borderPen = new Pen(EquipmentCanvasStyler.CardBorder, 1f))
             {
                 g.FillPath(bodyBrush, bodyPath);
                 g.DrawPath(borderPen, bodyPath);
@@ -184,146 +184,85 @@ namespace SemiconductorUi.Controls
 
             DrawTitle(g, bounds);
             DrawLamp(g, bounds);
-            DrawDoor(g, bounds);
+            DrawSlots(g, bounds);
             DrawStatus(g, bounds);
         }
 
         private void DrawTitle(Graphics g, Rectangle bounds)
         {
-            var titleRect = new Rectangle(bounds.X + 16, bounds.Y + 10, bounds.Width - 80, 24);
-            using (var titleFont = new Font(Font.FontFamily, Font.Size + 2f, FontStyle.Bold))
+            var titleRect = new Rectangle(bounds.X + 12, bounds.Y, bounds.Width - 44, EquipmentCanvasStyler.HeaderHeight);
+            using (var titleFont = new Font(Font.FontFamily, 10F, FontStyle.Bold))
             {
-                TextRenderer.DrawText(g, title, titleFont, Rectangle.Round(titleRect), Color.White,
-                    TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis);
+                TextRenderer.DrawText(g, title, titleFont, titleRect, EquipmentCanvasStyler.CardTitle,
+                    TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPadding);
+            }
+
+            using (var divider = new Pen(Color.FromArgb(232, 236, 242)))
+            {
+                int y = bounds.Y + EquipmentCanvasStyler.HeaderHeight;
+                g.DrawLine(divider, bounds.Left + 10, y, bounds.Right - 10, y);
             }
         }
 
         private void DrawLamp(Graphics g, Rectangle bounds)
         {
-            var lampRect = new RectangleF(bounds.Right - 34, bounds.Y + 10, 18, 18);
-            var lampColor = doorClosed ? Color.FromArgb(80, 210, 125) : Color.FromArgb(150, 70, 70);
-
-            using (var lampBrush = new SolidBrush(lampColor))
-            using (var lampPen = new Pen(Color.FromArgb(200, Color.Black), 1.2f))
-            {
-                g.FillEllipse(lampBrush, lampRect);
-                g.DrawEllipse(lampPen, lampRect);
-            }
-
-            using (var glareBrush = new SolidBrush(Color.FromArgb(120, Color.White)))
-            {
-                var glareRect = new RectangleF(lampRect.X + 3, lampRect.Y + 3, lampRect.Width / 2.5f, lampRect.Height / 2.5f);
-                g.FillEllipse(glareBrush, glareRect);
-            }
+            // 도어 닫힘(장착/잠금) = 녹색, 열림 = 꺼짐
+            var lampRect = new Rectangle(bounds.Right - 24, bounds.Y + (EquipmentCanvasStyler.HeaderHeight - 12) / 2, 12, 12);
+            EquipmentCanvasStyler.DrawLampDot(g, lampRect, doorClosed ? Color.FromArgb(64, 170, 100) : EquipmentCanvasStyler.LampOff);
         }
 
-        private void DrawDoor(Graphics g, Rectangle bounds)
+        /// <summary>
+        /// 카세트 슬롯. 아래가 1번 슬롯이며, 웨이퍼는 1번부터 채워진다.
+        /// </summary>
+        private void DrawSlots(Graphics g, Rectangle bounds)
         {
-            var doorRect = new RectangleF(bounds.X + 18, bounds.Y + 44, bounds.Width - 36, bounds.Height - 96);
-            if (doorRect.Height < 40 || doorRect.Width < 40)
+            int slotCount = Math.Max(1, capacity);
+            var rack = new RectangleF(bounds.X + 18, bounds.Y + EquipmentCanvasStyler.HeaderHeight + 7, bounds.Width - 36, bounds.Height - EquipmentCanvasStyler.HeaderHeight - 32);
+            if (rack.Height < 10)
             {
                 return;
             }
 
-            using (var doorBrush = new LinearGradientBrush(doorRect, Color.FromArgb(54, 60, 84), Color.FromArgb(28, 32, 48), LinearGradientMode.Vertical))
-            using (var doorPen = new Pen(Color.FromArgb(180, Color.Black), 1f))
-            {
-                g.FillRectangle(doorBrush, doorRect);
-                g.DrawRectangle(doorPen, doorRect.X, doorRect.Y, doorRect.Width, doorRect.Height);
-            }
+            float pitch = rack.Height / slotCount;
+            float barHeight = Math.Max(2f, Math.Min(6f, pitch * 0.55f));
+            int filled = Math.Max(0, Math.Min(waferCount, slotCount));
 
-            var innerRect = RectangleF.Inflate(doorRect, -8, -10);
-            
-            // 실제 웨이퍼 슬롯 개수 (capacity와 동일)
-            int slotCount = capacity;
-            float slotHeight = innerRect.Height / slotCount;
-            
-            // 슬롯 구분선 그리기
-            using (var slotPen = new Pen(Color.FromArgb(70, Color.White), 1f))
+            using (var emptyBrush = new SolidBrush(Color.FromArgb(233, 237, 243)))
+            using (var waferBrush = new SolidBrush(waferColor))
+            using (var waferPen = new Pen(ControlPaint.Dark(waferColor, 0.15f), 1f))
             {
-                for (int i = 1; i < slotCount; i++)
+                for (int slot = 1; slot <= slotCount; slot++)
                 {
-                    float y = innerRect.Top + i * slotHeight;
-                    g.DrawLine(slotPen, innerRect.Left, y, innerRect.Right, y);
-                }
-            }
-            
-            // 개별 웨이퍼 슬롯 표시 (1층부터 아래로, 1층이 맨 아래)
-            // Queue에서 1층부터 빼가므로, waferCount가 줄어들면 1층부터 사라지도록 표시
-            // 1층이 사라지면 2층이 아래로 내려오는 것처럼 보이도록 함
-            using (var waferBrush = new SolidBrush(Color.FromArgb(180, waferColor)))
-            using (var waferPen = new Pen(Color.FromArgb(150, waferColor), 1f))
-            {
-                int actualWaferCount = Math.Min(waferCount, slotCount);
-                // 각 웨이퍼를 고정된 층 위치에 개별 칸으로 표시
-                // 1층이 사라지면 나머지 웨이퍼는 각자의 층 위치를 유지 (아래로 내려오지 않음)
-                // waferCount=5일 때: 1층(24), 2층(23), 3층(22), 4층(21), 5층(20)
-                // waferCount=4일 때: 1층 사라짐, 2층(23, 그 자리 유지), 3층(22), 4층(21), 5층(20)
-                // 즉, 각 웨이퍼는 항상 자신의 층 위치에 고정되어 있음
-                // Queue에서 1층부터 빼가므로, waferCount가 줄어들면 아래쪽 층부터 사라짐
-                // 하지만 나머지 웨이퍼는 각자의 층 위치를 유지
-                // 따라서 각 층을 개별적으로 확인하여 웨이퍼가 있는지 표시
-                for (int layer = 1; layer <= slotCount; layer++)
-                {
-                    // 각 층을 확인: 1층부터 위로 올라가며
-                    // 해당 층에 웨이퍼가 있는지 확인 (waferCount와 비교)
-                    // 예: waferCount=5일 때 1~5층에 웨이퍼 있음, waferCount=4일 때 2~5층에 웨이퍼 있음
-                    // 즉, layer가 (slotCount - actualWaferCount + 1) 이상이면 웨이퍼가 있음
-                    // 또는 더 간단하게: layer > (slotCount - actualWaferCount)이면 웨이퍼가 있음
-                    int slotIndex = slotCount - layer; // 1층 = slotCount - 1, 2층 = slotCount - 2, ...
-                    
-                    // 해당 층에 웨이퍼가 있는지 확인
-                    // Queue에서 1층부터 빼가므로, waferCount가 줄어들면 아래쪽 층부터 사라짐
-                    // 예: 원래 5개(1,2,3,4,5층), 현재 4개 → 1층 사라짐, 2,3,4,5층은 그 자리 유지
-                    // 즉, 아래쪽부터 actualWaferCount개만큼 웨이퍼가 있음
-                    // slotCount=25, actualWaferCount=5일 때: 1~5층에 웨이퍼 있음
-                    // slotCount=25, actualWaferCount=4일 때: 2~5층에 웨이퍼 있음 (1층 사라짐)
-                    // slotCount=25, actualWaferCount=3일 때: 3~5층에 웨이퍼 있음 (1,2층 사라짐)
-                    // 따라서 layer가 (slotCount - actualWaferCount + 1) 이상이면 웨이퍼가 있음
-                    // 1층부터 actualWaferCount개만큼 웨이퍼가 있음
-                    // slotCount=25, actualWaferCount=3일 때: 1~3층에 웨이퍼 있음
-                    // slotCount=25, actualWaferCount=5일 때: 1~5층에 웨이퍼 있음
-                    bool hasWafer = layer <= actualWaferCount;
-                    
-                    if (!hasWafer)
+                    float y = rack.Bottom - slot * pitch + (pitch - barHeight) / 2f;
+                    var bar = new RectangleF(rack.X, y, rack.Width, barHeight);
+                    if (slot <= filled)
                     {
-                        continue; // 해당 층에 웨이퍼가 없으면 표시하지 않음
+                        g.FillRectangle(waferBrush, bar);
+                        g.DrawRectangle(waferPen, bar.X, bar.Y, bar.Width, bar.Height);
                     }
-                    
-                    // 해당 층에 웨이퍼가 있으면 개별 칸으로 표시 (실제 웨이퍼처럼 좌우로 길고 상하로 얇게)
-                    float slotY = innerRect.Top + slotIndex * slotHeight;
-                    // 웨이퍼 높이를 줄이고 좌우 여백을 줄여서 실제 웨이퍼처럼 표시
-                    float waferHeight = slotHeight * 0.3f; // 높이를 30%로 줄임
-                    float waferY = slotY + (slotHeight - waferHeight) / 2f; // 수직 중앙 정렬
-                    float horizontalMargin = innerRect.Width * 0.05f; // 좌우 여백을 5%로 줄임
-                    var slotRect = new RectangleF(
-                        innerRect.X + horizontalMargin,
-                        waferY,
-                        innerRect.Width - horizontalMargin * 2,
-                        waferHeight
-                    );
-                    
-                    // 웨이퍼 슬롯 채우기 (개별 칸)
-                    g.FillRectangle(waferBrush, slotRect);
-                    g.DrawRectangle(waferPen, slotRect.X, slotRect.Y, slotRect.Width, slotRect.Height);
+                    else
+                    {
+                        g.FillRectangle(emptyBrush, bar);
+                    }
                 }
             }
 
-            using (var framePen = new Pen(Color.FromArgb(120, Color.White), 1f))
+            using (var railPen = new Pen(Color.FromArgb(196, 204, 216), 2f))
             {
-                g.DrawRectangle(framePen, innerRect.X, innerRect.Y, innerRect.Width, innerRect.Height);
+                g.DrawLine(railPen, rack.X - 5, rack.Y, rack.X - 5, rack.Bottom);
+                g.DrawLine(railPen, rack.Right + 5, rack.Y, rack.Right + 5, rack.Bottom);
             }
         }
 
         private void DrawStatus(Graphics g, Rectangle bounds)
         {
-            var statusRect = new Rectangle(bounds.X + 14, bounds.Bottom - 38, bounds.Width - 28, 26);
+            var statusRect = new Rectangle(bounds.X + 10, bounds.Bottom - 24, bounds.Width - 20, 20);
             var display = string.IsNullOrWhiteSpace(statusText) ? "-" : statusText;
-            var waferDisplay = $"{Math.Max(0, waferCount)}장";
-            var combined = $"{display} · {waferDisplay}";
+            // 상태 문구에 이미 매수가 들어 있으면 중복해서 붙이지 않는다.
+            var combined = display.Contains("장") ? display : $"{display} · {Math.Max(0, waferCount)}장";
 
-            TextRenderer.DrawText(g, combined, Font, Rectangle.Round(statusRect), ForeColor,
-                TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis);
+            TextRenderer.DrawText(g, combined, Font, statusRect, EquipmentCanvasStyler.CardSubText,
+                TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPadding);
         }
 
         private static GraphicsPath CreateRoundedRectangle(Rectangle rect, float radius)

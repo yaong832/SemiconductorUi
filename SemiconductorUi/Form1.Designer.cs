@@ -321,7 +321,7 @@ namespace SemiconductorUi
             // 
             // panelHeader
             // 
-            this.panelHeader.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(190)))), ((int)(((byte)(190)))), ((int)(((byte)(200)))));
+            this.panelHeader.BackColor = System.Drawing.Color.White;
             this.panelHeader.Controls.Add(this.tableLayoutHeader);
             this.panelHeader.Dock = System.Windows.Forms.DockStyle.Fill;
             this.panelHeader.Location = new System.Drawing.Point(3, 3);
@@ -354,7 +354,7 @@ namespace SemiconductorUi
             // 
             this.flowHeaderLogin.AutoSize = true;
             this.flowHeaderLogin.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
-            this.flowHeaderLogin.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(180)))), ((int)(((byte)(180)))), ((int)(((byte)(190)))));
+            this.flowHeaderLogin.BackColor = System.Drawing.Color.White;
             this.flowHeaderLogin.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.flowHeaderLogin.Controls.Add(this.flowLoginTopRow);
             this.flowHeaderLogin.Controls.Add(this.flowLoginBottomRow);
@@ -387,7 +387,7 @@ namespace SemiconductorUi
             // 
             // buttonLogin
             // 
-            this.buttonLogin.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(76)))), ((int)(((byte)(175)))), ((int)(((byte)(80)))));
+            this.buttonLogin.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(36)))), ((int)(((byte)(150)))), ((int)(((byte)(90)))));
             this.buttonLogin.FlatAppearance.BorderSize = 0;
             this.buttonLogin.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.buttonLogin.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
@@ -402,12 +402,12 @@ namespace SemiconductorUi
             // 
             // buttonLogout
             // 
-            this.buttonLogout.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(160)))), ((int)(((byte)(160)))), ((int)(((byte)(170)))));
+            this.buttonLogout.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(232)))), ((int)(((byte)(237)))), ((int)(((byte)(244)))));
             this.buttonLogout.Enabled = false;
             this.buttonLogout.FlatAppearance.BorderSize = 0;
             this.buttonLogout.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.buttonLogout.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
-            this.buttonLogout.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(40)))));
+            this.buttonLogout.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(41)))), ((int)(((byte)(54)))));
             this.buttonLogout.Location = new System.Drawing.Point(113, 3);
             this.buttonLogout.Margin = new System.Windows.Forms.Padding(0, 3, 10, 3);
             this.buttonLogout.Name = "buttonLogout";
@@ -418,7 +418,7 @@ namespace SemiconductorUi
             // 
             // buttonEthercatConnect
             // 
-            this.buttonEthercatConnect.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(150)))), ((int)(((byte)(243)))));
+            this.buttonEthercatConnect.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(45)))), ((int)(((byte)(98)))), ((int)(((byte)(196)))));
             this.buttonEthercatConnect.FlatAppearance.BorderSize = 0;
             this.buttonEthercatConnect.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.buttonEthercatConnect.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
@@ -433,11 +433,11 @@ namespace SemiconductorUi
             // 
             // buttonEthercatDisconnect
             // 
-            this.buttonEthercatDisconnect.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(160)))), ((int)(((byte)(160)))), ((int)(((byte)(170)))));
+            this.buttonEthercatDisconnect.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(232)))), ((int)(((byte)(237)))), ((int)(((byte)(244)))));
             this.buttonEthercatDisconnect.FlatAppearance.BorderSize = 0;
             this.buttonEthercatDisconnect.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.buttonEthercatDisconnect.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
-            this.buttonEthercatDisconnect.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(40)))));
+            this.buttonEthercatDisconnect.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(41)))), ((int)(((byte)(54)))));
             this.buttonEthercatDisconnect.Location = new System.Drawing.Point(354, 3);
             this.buttonEthercatDisconnect.Margin = new System.Windows.Forms.Padding(10, 3, 0, 0);
             this.buttonEthercatDisconnect.Name = "buttonEthercatDisconnect";
@@ -448,7 +448,7 @@ namespace SemiconductorUi
             // 
             // buttonServoOn
             // 
-            this.buttonServoOn.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(66)))), ((int)(((byte)(133)))), ((int)(((byte)(244)))));
+            this.buttonServoOn.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(45)))), ((int)(((byte)(98)))), ((int)(((byte)(196)))));
             this.buttonServoOn.FlatAppearance.BorderSize = 0;
             this.buttonServoOn.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.buttonServoOn.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
@@ -463,11 +463,11 @@ namespace SemiconductorUi
             // 
             // buttonServoOff
             // 
-            this.buttonServoOff.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(160)))), ((int)(((byte)(160)))), ((int)(((byte)(170)))));
+            this.buttonServoOff.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(232)))), ((int)(((byte)(237)))), ((int)(((byte)(244)))));
             this.buttonServoOff.FlatAppearance.BorderSize = 0;
             this.buttonServoOff.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.buttonServoOff.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
-            this.buttonServoOff.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(40)))));
+            this.buttonServoOff.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(41)))), ((int)(((byte)(54)))));
             this.buttonServoOff.Location = new System.Drawing.Point(562, 3);
             this.buttonServoOff.Margin = new System.Windows.Forms.Padding(10, 3, 0, 0);
             this.buttonServoOff.Name = "buttonServoOff";
@@ -492,10 +492,10 @@ namespace SemiconductorUi
             // 
             // labelLoginStatus
             // 
-            this.labelLoginStatus.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(170)))), ((int)(((byte)(170)))), ((int)(((byte)(180)))));
+            this.labelLoginStatus.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(242)))), ((int)(((byte)(245)))), ((int)(((byte)(249)))));
             this.labelLoginStatus.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.labelLoginStatus.Font = new System.Drawing.Font("Segoe UI", 9F);
-            this.labelLoginStatus.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(40)))));
+            this.labelLoginStatus.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(41)))), ((int)(((byte)(54)))));
             this.labelLoginStatus.Location = new System.Drawing.Point(0, 3);
             this.labelLoginStatus.Margin = new System.Windows.Forms.Padding(0, 3, 0, 0);
             this.labelLoginStatus.Name = "labelLoginStatus";
@@ -507,10 +507,10 @@ namespace SemiconductorUi
             // 
             // labelEthercatStatus
             // 
-            this.labelEthercatStatus.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(170)))), ((int)(((byte)(170)))), ((int)(((byte)(180)))));
+            this.labelEthercatStatus.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(242)))), ((int)(((byte)(245)))), ((int)(((byte)(249)))));
             this.labelEthercatStatus.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.labelEthercatStatus.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
-            this.labelEthercatStatus.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(40)))));
+            this.labelEthercatStatus.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(41)))), ((int)(((byte)(54)))));
             this.labelEthercatStatus.Location = new System.Drawing.Point(230, 3);
             this.labelEthercatStatus.Margin = new System.Windows.Forms.Padding(10, 3, 0, 0);
             this.labelEthercatStatus.MaximumSize = new System.Drawing.Size(200, 26);
@@ -524,10 +524,10 @@ namespace SemiconductorUi
             // 
             // labelServoStatus
             // 
-            this.labelServoStatus.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(170)))), ((int)(((byte)(170)))), ((int)(((byte)(180)))));
+            this.labelServoStatus.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(242)))), ((int)(((byte)(245)))), ((int)(((byte)(249)))));
             this.labelServoStatus.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.labelServoStatus.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
-            this.labelServoStatus.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(40)))));
+            this.labelServoStatus.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(41)))), ((int)(((byte)(54)))));
             this.labelServoStatus.Location = new System.Drawing.Point(440, 3);
             this.labelServoStatus.Margin = new System.Windows.Forms.Padding(10, 3, 0, 0);
             this.labelServoStatus.MaximumSize = new System.Drawing.Size(200, 26);
@@ -541,7 +541,7 @@ namespace SemiconductorUi
             // 
             // panelHeaderStatusSummary
             // 
-            this.panelHeaderStatusSummary.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(180)))), ((int)(((byte)(180)))), ((int)(((byte)(190)))));
+            this.panelHeaderStatusSummary.BackColor = System.Drawing.Color.White;
             this.panelHeaderStatusSummary.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.panelHeaderStatusSummary.Controls.Add(this.labelHeaderStatusTitle);
             this.panelHeaderStatusSummary.Controls.Add(this.tableHeaderStatus);
@@ -557,7 +557,7 @@ namespace SemiconductorUi
             // 
             this.labelHeaderStatusTitle.AutoSize = true;
             this.labelHeaderStatusTitle.Font = new System.Drawing.Font("Segoe UI", 8F, System.Drawing.FontStyle.Bold);
-            this.labelHeaderStatusTitle.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(40)))));
+            this.labelHeaderStatusTitle.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(41)))), ((int)(((byte)(54)))));
             this.labelHeaderStatusTitle.Location = new System.Drawing.Point(18, 8);
             this.labelHeaderStatusTitle.Margin = new System.Windows.Forms.Padding(0);
             this.labelHeaderStatusTitle.Name = "labelHeaderStatusTitle";
@@ -607,10 +607,10 @@ namespace SemiconductorUi
             // 
             // labelHeaderLotTitle
             // 
-            this.labelHeaderLotTitle.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(200)))), ((int)(((byte)(200)))), ((int)(((byte)(210)))));
+            this.labelHeaderLotTitle.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(242)))), ((int)(((byte)(245)))), ((int)(((byte)(249)))));
             this.labelHeaderLotTitle.Dock = System.Windows.Forms.DockStyle.Fill;
             this.labelHeaderLotTitle.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
-            this.labelHeaderLotTitle.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(40)))));
+            this.labelHeaderLotTitle.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(41)))), ((int)(((byte)(54)))));
             this.labelHeaderLotTitle.Location = new System.Drawing.Point(2, 2);
             this.labelHeaderLotTitle.Margin = new System.Windows.Forms.Padding(2);
             this.labelHeaderLotTitle.Name = "labelHeaderLotTitle";
@@ -621,10 +621,10 @@ namespace SemiconductorUi
             // 
             // labelHeaderFoupATitle
             // 
-            this.labelHeaderFoupATitle.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(180)))), ((int)(((byte)(200)))), ((int)(((byte)(220)))));
+            this.labelHeaderFoupATitle.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(242)))), ((int)(((byte)(245)))), ((int)(((byte)(249)))));
             this.labelHeaderFoupATitle.Dock = System.Windows.Forms.DockStyle.Fill;
             this.labelHeaderFoupATitle.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
-            this.labelHeaderFoupATitle.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(40)))));
+            this.labelHeaderFoupATitle.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(41)))), ((int)(((byte)(54)))));
             this.labelHeaderFoupATitle.Location = new System.Drawing.Point(121, 2);
             this.labelHeaderFoupATitle.Margin = new System.Windows.Forms.Padding(2);
             this.labelHeaderFoupATitle.Name = "labelHeaderFoupATitle";
@@ -635,10 +635,10 @@ namespace SemiconductorUi
             // 
             // labelHeaderFoupBTitle
             // 
-            this.labelHeaderFoupBTitle.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(180)))), ((int)(((byte)(200)))), ((int)(((byte)(220)))));
+            this.labelHeaderFoupBTitle.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(242)))), ((int)(((byte)(245)))), ((int)(((byte)(249)))));
             this.labelHeaderFoupBTitle.Dock = System.Windows.Forms.DockStyle.Fill;
             this.labelHeaderFoupBTitle.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
-            this.labelHeaderFoupBTitle.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(40)))));
+            this.labelHeaderFoupBTitle.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(41)))), ((int)(((byte)(54)))));
             this.labelHeaderFoupBTitle.Location = new System.Drawing.Point(248, 2);
             this.labelHeaderFoupBTitle.Margin = new System.Windows.Forms.Padding(2);
             this.labelHeaderFoupBTitle.Name = "labelHeaderFoupBTitle";
@@ -649,10 +649,10 @@ namespace SemiconductorUi
             // 
             // labelHeaderPM1Title
             // 
-            this.labelHeaderPM1Title.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(190)))), ((int)(((byte)(190)))), ((int)(((byte)(200)))));
+            this.labelHeaderPM1Title.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(242)))), ((int)(((byte)(245)))), ((int)(((byte)(249)))));
             this.labelHeaderPM1Title.Dock = System.Windows.Forms.DockStyle.Fill;
             this.labelHeaderPM1Title.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
-            this.labelHeaderPM1Title.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(40)))));
+            this.labelHeaderPM1Title.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(41)))), ((int)(((byte)(54)))));
             this.labelHeaderPM1Title.Location = new System.Drawing.Point(375, 2);
             this.labelHeaderPM1Title.Margin = new System.Windows.Forms.Padding(2);
             this.labelHeaderPM1Title.Name = "labelHeaderPM1Title";
@@ -663,10 +663,10 @@ namespace SemiconductorUi
             // 
             // labelHeaderPM2Title
             // 
-            this.labelHeaderPM2Title.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(190)))), ((int)(((byte)(190)))), ((int)(((byte)(200)))));
+            this.labelHeaderPM2Title.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(242)))), ((int)(((byte)(245)))), ((int)(((byte)(249)))));
             this.labelHeaderPM2Title.Dock = System.Windows.Forms.DockStyle.Fill;
             this.labelHeaderPM2Title.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
-            this.labelHeaderPM2Title.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(40)))));
+            this.labelHeaderPM2Title.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(41)))), ((int)(((byte)(54)))));
             this.labelHeaderPM2Title.Location = new System.Drawing.Point(468, 2);
             this.labelHeaderPM2Title.Margin = new System.Windows.Forms.Padding(2);
             this.labelHeaderPM2Title.Name = "labelHeaderPM2Title";
@@ -677,10 +677,10 @@ namespace SemiconductorUi
             // 
             // labelHeaderPM3Title
             // 
-            this.labelHeaderPM3Title.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(190)))), ((int)(((byte)(190)))), ((int)(((byte)(200)))));
+            this.labelHeaderPM3Title.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(242)))), ((int)(((byte)(245)))), ((int)(((byte)(249)))));
             this.labelHeaderPM3Title.Dock = System.Windows.Forms.DockStyle.Fill;
             this.labelHeaderPM3Title.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
-            this.labelHeaderPM3Title.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(40)))));
+            this.labelHeaderPM3Title.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(41)))), ((int)(((byte)(54)))));
             this.labelHeaderPM3Title.Location = new System.Drawing.Point(561, 2);
             this.labelHeaderPM3Title.Margin = new System.Windows.Forms.Padding(2);
             this.labelHeaderPM3Title.Name = "labelHeaderPM3Title";
@@ -691,10 +691,10 @@ namespace SemiconductorUi
             // 
             // labelHeaderTMTitle
             // 
-            this.labelHeaderTMTitle.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(190)))), ((int)(((byte)(190)))), ((int)(((byte)(200)))));
+            this.labelHeaderTMTitle.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(242)))), ((int)(((byte)(245)))), ((int)(((byte)(249)))));
             this.labelHeaderTMTitle.Dock = System.Windows.Forms.DockStyle.Fill;
             this.labelHeaderTMTitle.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
-            this.labelHeaderTMTitle.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(40)))));
+            this.labelHeaderTMTitle.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(41)))), ((int)(((byte)(54)))));
             this.labelHeaderTMTitle.Location = new System.Drawing.Point(654, 2);
             this.labelHeaderTMTitle.Margin = new System.Windows.Forms.Padding(2);
             this.labelHeaderTMTitle.Name = "labelHeaderTMTitle";
@@ -705,7 +705,7 @@ namespace SemiconductorUi
             // 
             // labelHeaderAlarmTitle
             // 
-            this.labelHeaderAlarmTitle.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(170)))), ((int)(((byte)(70)))), ((int)(((byte)(70)))));
+            this.labelHeaderAlarmTitle.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(206)))), ((int)(((byte)(56)))), ((int)(((byte)(66)))));
             this.labelHeaderAlarmTitle.Dock = System.Windows.Forms.DockStyle.Fill;
             this.labelHeaderAlarmTitle.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
             this.labelHeaderAlarmTitle.ForeColor = System.Drawing.Color.White;
@@ -719,10 +719,10 @@ namespace SemiconductorUi
             // 
             // labelHeaderLotStatus
             // 
-            this.labelHeaderLotStatus.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(210)))), ((int)(((byte)(210)))), ((int)(((byte)(220)))));
+            this.labelHeaderLotStatus.BackColor = System.Drawing.Color.White;
             this.labelHeaderLotStatus.Dock = System.Windows.Forms.DockStyle.Fill;
             this.labelHeaderLotStatus.Font = new System.Drawing.Font("Segoe UI", 9F);
-            this.labelHeaderLotStatus.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(40)))));
+            this.labelHeaderLotStatus.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(41)))), ((int)(((byte)(54)))));
             this.labelHeaderLotStatus.Location = new System.Drawing.Point(2, 38);
             this.labelHeaderLotStatus.Margin = new System.Windows.Forms.Padding(2);
             this.labelHeaderLotStatus.Name = "labelHeaderLotStatus";
@@ -733,10 +733,10 @@ namespace SemiconductorUi
             // 
             // labelHeaderFoupAStatus
             // 
-            this.labelHeaderFoupAStatus.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(170)))), ((int)(((byte)(190)))), ((int)(((byte)(210)))));
+            this.labelHeaderFoupAStatus.BackColor = System.Drawing.Color.White;
             this.labelHeaderFoupAStatus.Dock = System.Windows.Forms.DockStyle.Fill;
             this.labelHeaderFoupAStatus.Font = new System.Drawing.Font("Segoe UI", 8.5F);
-            this.labelHeaderFoupAStatus.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(40)))));
+            this.labelHeaderFoupAStatus.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(41)))), ((int)(((byte)(54)))));
             this.labelHeaderFoupAStatus.Location = new System.Drawing.Point(121, 38);
             this.labelHeaderFoupAStatus.Margin = new System.Windows.Forms.Padding(2);
             this.labelHeaderFoupAStatus.Name = "labelHeaderFoupAStatus";
@@ -747,10 +747,10 @@ namespace SemiconductorUi
             // 
             // labelHeaderFoupBStatus
             // 
-            this.labelHeaderFoupBStatus.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(170)))), ((int)(((byte)(190)))), ((int)(((byte)(210)))));
+            this.labelHeaderFoupBStatus.BackColor = System.Drawing.Color.White;
             this.labelHeaderFoupBStatus.Dock = System.Windows.Forms.DockStyle.Fill;
             this.labelHeaderFoupBStatus.Font = new System.Drawing.Font("Segoe UI", 8.5F);
-            this.labelHeaderFoupBStatus.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(40)))));
+            this.labelHeaderFoupBStatus.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(41)))), ((int)(((byte)(54)))));
             this.labelHeaderFoupBStatus.Location = new System.Drawing.Point(248, 38);
             this.labelHeaderFoupBStatus.Margin = new System.Windows.Forms.Padding(2);
             this.labelHeaderFoupBStatus.Name = "labelHeaderFoupBStatus";
@@ -761,10 +761,10 @@ namespace SemiconductorUi
             // 
             // labelHeaderPM1Status
             // 
-            this.labelHeaderPM1Status.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(170)))), ((int)(((byte)(180)))), ((int)(((byte)(200)))));
+            this.labelHeaderPM1Status.BackColor = System.Drawing.Color.White;
             this.labelHeaderPM1Status.Dock = System.Windows.Forms.DockStyle.Fill;
             this.labelHeaderPM1Status.Font = new System.Drawing.Font("Segoe UI", 8.5F);
-            this.labelHeaderPM1Status.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(40)))));
+            this.labelHeaderPM1Status.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(41)))), ((int)(((byte)(54)))));
             this.labelHeaderPM1Status.Location = new System.Drawing.Point(375, 38);
             this.labelHeaderPM1Status.Margin = new System.Windows.Forms.Padding(2);
             this.labelHeaderPM1Status.Name = "labelHeaderPM1Status";
@@ -775,10 +775,10 @@ namespace SemiconductorUi
             // 
             // labelHeaderPM2Status
             // 
-            this.labelHeaderPM2Status.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(170)))), ((int)(((byte)(180)))), ((int)(((byte)(200)))));
+            this.labelHeaderPM2Status.BackColor = System.Drawing.Color.White;
             this.labelHeaderPM2Status.Dock = System.Windows.Forms.DockStyle.Fill;
             this.labelHeaderPM2Status.Font = new System.Drawing.Font("Segoe UI", 8.5F);
-            this.labelHeaderPM2Status.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(40)))));
+            this.labelHeaderPM2Status.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(41)))), ((int)(((byte)(54)))));
             this.labelHeaderPM2Status.Location = new System.Drawing.Point(468, 38);
             this.labelHeaderPM2Status.Margin = new System.Windows.Forms.Padding(2);
             this.labelHeaderPM2Status.Name = "labelHeaderPM2Status";
@@ -789,10 +789,10 @@ namespace SemiconductorUi
             // 
             // labelHeaderPM3Status
             // 
-            this.labelHeaderPM3Status.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(170)))), ((int)(((byte)(180)))), ((int)(((byte)(200)))));
+            this.labelHeaderPM3Status.BackColor = System.Drawing.Color.White;
             this.labelHeaderPM3Status.Dock = System.Windows.Forms.DockStyle.Fill;
             this.labelHeaderPM3Status.Font = new System.Drawing.Font("Segoe UI", 8.5F);
-            this.labelHeaderPM3Status.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(40)))));
+            this.labelHeaderPM3Status.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(41)))), ((int)(((byte)(54)))));
             this.labelHeaderPM3Status.Location = new System.Drawing.Point(561, 38);
             this.labelHeaderPM3Status.Margin = new System.Windows.Forms.Padding(2);
             this.labelHeaderPM3Status.Name = "labelHeaderPM3Status";
@@ -803,10 +803,10 @@ namespace SemiconductorUi
             // 
             // labelHeaderTMStatus
             // 
-            this.labelHeaderTMStatus.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(170)))), ((int)(((byte)(180)))), ((int)(((byte)(200)))));
+            this.labelHeaderTMStatus.BackColor = System.Drawing.Color.White;
             this.labelHeaderTMStatus.Dock = System.Windows.Forms.DockStyle.Fill;
             this.labelHeaderTMStatus.Font = new System.Drawing.Font("Segoe UI", 8.5F);
-            this.labelHeaderTMStatus.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(40)))));
+            this.labelHeaderTMStatus.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(41)))), ((int)(((byte)(54)))));
             this.labelHeaderTMStatus.Location = new System.Drawing.Point(654, 38);
             this.labelHeaderTMStatus.Margin = new System.Windows.Forms.Padding(2);
             this.labelHeaderTMStatus.Name = "labelHeaderTMStatus";
@@ -817,10 +817,10 @@ namespace SemiconductorUi
             // 
             // labelHeaderAlarmStatus
             // 
-            this.labelHeaderAlarmStatus.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(170)))), ((int)(((byte)(70)))), ((int)(((byte)(70)))));
+            this.labelHeaderAlarmStatus.BackColor = System.Drawing.Color.White;
             this.labelHeaderAlarmStatus.Dock = System.Windows.Forms.DockStyle.Fill;
             this.labelHeaderAlarmStatus.Font = new System.Drawing.Font("Segoe UI", 8.5F, System.Drawing.FontStyle.Bold);
-            this.labelHeaderAlarmStatus.ForeColor = System.Drawing.Color.White;
+            this.labelHeaderAlarmStatus.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(36)))), ((int)(((byte)(150)))), ((int)(((byte)(90)))));
             this.labelHeaderAlarmStatus.Location = new System.Drawing.Point(747, 38);
             this.labelHeaderAlarmStatus.Margin = new System.Windows.Forms.Padding(2);
             this.labelHeaderAlarmStatus.Name = "labelHeaderAlarmStatus";
@@ -831,7 +831,7 @@ namespace SemiconductorUi
             // 
             // flowHeaderStatus
             // 
-            this.flowHeaderStatus.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(180)))), ((int)(((byte)(180)))), ((int)(((byte)(190)))));
+            this.flowHeaderStatus.BackColor = System.Drawing.Color.White;
             this.flowHeaderStatus.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.flowHeaderStatus.Controls.Add(this.panelHeaderCardTM);
             this.flowHeaderStatus.Controls.Add(this.panelHeaderCardPMA);
@@ -848,7 +848,7 @@ namespace SemiconductorUi
             // 
             // panelHeaderCardTM
             // 
-            this.panelHeaderCardTM.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(225)))), ((int)(((byte)(225)))), ((int)(((byte)(235)))));
+            this.panelHeaderCardTM.BackColor = System.Drawing.Color.White;
             this.panelHeaderCardTM.Controls.Add(this.labelHeaderCardTMStatus);
             this.panelHeaderCardTM.Controls.Add(this.labelHeaderCardTMTitle);
             this.panelHeaderCardTM.Location = new System.Drawing.Point(8, 6);
@@ -862,7 +862,7 @@ namespace SemiconductorUi
             // 
             this.labelHeaderCardTMStatus.AutoSize = true;
             this.labelHeaderCardTMStatus.Font = new System.Drawing.Font("Segoe UI", 8F);
-            this.labelHeaderCardTMStatus.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(50)))), ((int)(((byte)(50)))), ((int)(((byte)(50)))));
+            this.labelHeaderCardTMStatus.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(41)))), ((int)(((byte)(54)))));
             this.labelHeaderCardTMStatus.Location = new System.Drawing.Point(56, 10);
             this.labelHeaderCardTMStatus.Name = "labelHeaderCardTMStatus";
             this.labelHeaderCardTMStatus.Size = new System.Drawing.Size(26, 13);
@@ -874,7 +874,7 @@ namespace SemiconductorUi
             // 
             this.labelHeaderCardTMTitle.AutoSize = true;
             this.labelHeaderCardTMTitle.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
-            this.labelHeaderCardTMTitle.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(50)))), ((int)(((byte)(50)))), ((int)(((byte)(50)))));
+            this.labelHeaderCardTMTitle.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(41)))), ((int)(((byte)(54)))));
             this.labelHeaderCardTMTitle.Location = new System.Drawing.Point(8, 9);
             this.labelHeaderCardTMTitle.Name = "labelHeaderCardTMTitle";
             this.labelHeaderCardTMTitle.Size = new System.Drawing.Size(25, 15);
@@ -883,7 +883,7 @@ namespace SemiconductorUi
             // 
             // panelHeaderCardPMA
             // 
-            this.panelHeaderCardPMA.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(220)))), ((int)(((byte)(220)))), ((int)(((byte)(230)))));
+            this.panelHeaderCardPMA.BackColor = System.Drawing.Color.White;
             this.panelHeaderCardPMA.Controls.Add(this.labelHeaderCardPMAStatus);
             this.panelHeaderCardPMA.Controls.Add(this.labelHeaderCardPMATitle);
             this.panelHeaderCardPMA.Location = new System.Drawing.Point(136, 6);
@@ -897,7 +897,7 @@ namespace SemiconductorUi
             // 
             this.labelHeaderCardPMAStatus.AutoSize = true;
             this.labelHeaderCardPMAStatus.Font = new System.Drawing.Font("Segoe UI", 8F);
-            this.labelHeaderCardPMAStatus.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(50)))), ((int)(((byte)(50)))), ((int)(((byte)(50)))));
+            this.labelHeaderCardPMAStatus.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(41)))), ((int)(((byte)(54)))));
             this.labelHeaderCardPMAStatus.Location = new System.Drawing.Point(56, 10);
             this.labelHeaderCardPMAStatus.Name = "labelHeaderCardPMAStatus";
             this.labelHeaderCardPMAStatus.Size = new System.Drawing.Size(49, 13);
@@ -909,7 +909,7 @@ namespace SemiconductorUi
             // 
             this.labelHeaderCardPMATitle.AutoSize = true;
             this.labelHeaderCardPMATitle.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
-            this.labelHeaderCardPMATitle.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(50)))), ((int)(((byte)(50)))), ((int)(((byte)(50)))));
+            this.labelHeaderCardPMATitle.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(41)))), ((int)(((byte)(54)))));
             this.labelHeaderCardPMATitle.Location = new System.Drawing.Point(8, 9);
             this.labelHeaderCardPMATitle.Name = "labelHeaderCardPMATitle";
             this.labelHeaderCardPMATitle.Size = new System.Drawing.Size(33, 15);
@@ -918,7 +918,7 @@ namespace SemiconductorUi
             // 
             // panelHeaderCardPMB
             // 
-            this.panelHeaderCardPMB.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(220)))), ((int)(((byte)(220)))), ((int)(((byte)(230)))));
+            this.panelHeaderCardPMB.BackColor = System.Drawing.Color.White;
             this.panelHeaderCardPMB.Controls.Add(this.labelHeaderCardPMBStatus);
             this.panelHeaderCardPMB.Controls.Add(this.labelHeaderCardPMBTitle);
             this.panelHeaderCardPMB.Location = new System.Drawing.Point(264, 6);
@@ -932,7 +932,7 @@ namespace SemiconductorUi
             // 
             this.labelHeaderCardPMBStatus.AutoSize = true;
             this.labelHeaderCardPMBStatus.Font = new System.Drawing.Font("Segoe UI", 8F);
-            this.labelHeaderCardPMBStatus.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(50)))), ((int)(((byte)(50)))), ((int)(((byte)(50)))));
+            this.labelHeaderCardPMBStatus.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(41)))), ((int)(((byte)(54)))));
             this.labelHeaderCardPMBStatus.Location = new System.Drawing.Point(56, 10);
             this.labelHeaderCardPMBStatus.Name = "labelHeaderCardPMBStatus";
             this.labelHeaderCardPMBStatus.Size = new System.Drawing.Size(62, 13);
@@ -944,7 +944,7 @@ namespace SemiconductorUi
             // 
             this.labelHeaderCardPMBTitle.AutoSize = true;
             this.labelHeaderCardPMBTitle.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
-            this.labelHeaderCardPMBTitle.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(50)))), ((int)(((byte)(50)))), ((int)(((byte)(50)))));
+            this.labelHeaderCardPMBTitle.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(41)))), ((int)(((byte)(54)))));
             this.labelHeaderCardPMBTitle.Location = new System.Drawing.Point(8, 9);
             this.labelHeaderCardPMBTitle.Name = "labelHeaderCardPMBTitle";
             this.labelHeaderCardPMBTitle.Size = new System.Drawing.Size(33, 15);
@@ -953,7 +953,7 @@ namespace SemiconductorUi
             // 
             // panelHeaderCardPMC
             // 
-            this.panelHeaderCardPMC.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(220)))), ((int)(((byte)(220)))), ((int)(((byte)(230)))));
+            this.panelHeaderCardPMC.BackColor = System.Drawing.Color.White;
             this.panelHeaderCardPMC.Controls.Add(this.labelHeaderCardPMCStatus);
             this.panelHeaderCardPMC.Controls.Add(this.labelHeaderCardPMCTitle);
             this.panelHeaderCardPMC.Location = new System.Drawing.Point(392, 6);
@@ -967,7 +967,7 @@ namespace SemiconductorUi
             // 
             this.labelHeaderCardPMCStatus.AutoSize = true;
             this.labelHeaderCardPMCStatus.Font = new System.Drawing.Font("Segoe UI", 8F);
-            this.labelHeaderCardPMCStatus.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(50)))), ((int)(((byte)(50)))), ((int)(((byte)(50)))));
+            this.labelHeaderCardPMCStatus.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(41)))), ((int)(((byte)(54)))));
             this.labelHeaderCardPMCStatus.Location = new System.Drawing.Point(56, 10);
             this.labelHeaderCardPMCStatus.Name = "labelHeaderCardPMCStatus";
             this.labelHeaderCardPMCStatus.Size = new System.Drawing.Size(74, 13);
@@ -979,7 +979,7 @@ namespace SemiconductorUi
             // 
             this.labelHeaderCardPMCTitle.AutoSize = true;
             this.labelHeaderCardPMCTitle.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
-            this.labelHeaderCardPMCTitle.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(50)))), ((int)(((byte)(50)))), ((int)(((byte)(50)))));
+            this.labelHeaderCardPMCTitle.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(41)))), ((int)(((byte)(54)))));
             this.labelHeaderCardPMCTitle.Location = new System.Drawing.Point(8, 9);
             this.labelHeaderCardPMCTitle.Name = "labelHeaderCardPMCTitle";
             this.labelHeaderCardPMCTitle.Size = new System.Drawing.Size(32, 15);
@@ -990,7 +990,7 @@ namespace SemiconductorUi
             // 
             this.panelHeaderAlarm.AutoSize = true;
             this.panelHeaderAlarm.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
-            this.panelHeaderAlarm.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(190)))), ((int)(((byte)(190)))), ((int)(((byte)(200)))));
+            this.panelHeaderAlarm.BackColor = System.Drawing.Color.White;
             this.panelHeaderAlarm.ColumnCount = 1;
             this.panelHeaderAlarm.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
             this.panelHeaderAlarm.Controls.Add(this.flowAlarmIndicator, 0, 0);
@@ -1007,7 +1007,7 @@ namespace SemiconductorUi
             // flowAlarmIndicator
             // 
             this.flowAlarmIndicator.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
-            this.flowAlarmIndicator.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(170)))), ((int)(((byte)(170)))), ((int)(((byte)(180)))));
+            this.flowAlarmIndicator.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(242)))), ((int)(((byte)(245)))), ((int)(((byte)(249)))));
             this.flowAlarmIndicator.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.flowAlarmIndicator.Controls.Add(this.panelHeaderMessageAccent);
             this.flowAlarmIndicator.Controls.Add(this.tableHeaderMessageText);
@@ -1052,7 +1052,7 @@ namespace SemiconductorUi
             this.labelHeaderEventTitle.AutoSize = true;
             this.labelHeaderEventTitle.Dock = System.Windows.Forms.DockStyle.Fill;
             this.labelHeaderEventTitle.Font = new System.Drawing.Font("Segoe UI Semibold", 9.75F, System.Drawing.FontStyle.Bold);
-            this.labelHeaderEventTitle.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(40)))));
+            this.labelHeaderEventTitle.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(41)))), ((int)(((byte)(54)))));
             this.labelHeaderEventTitle.Location = new System.Drawing.Point(0, 0);
             this.labelHeaderEventTitle.Margin = new System.Windows.Forms.Padding(0, 0, 8, 4);
             this.labelHeaderEventTitle.Name = "labelHeaderEventTitle";
@@ -1084,7 +1084,7 @@ namespace SemiconductorUi
             this.tableHeaderMessageText.SetColumnSpan(this.labelHeaderEventMessage, 2);
             this.labelHeaderEventMessage.Dock = System.Windows.Forms.DockStyle.Fill;
             this.labelHeaderEventMessage.Font = new System.Drawing.Font("Segoe UI", 9F);
-            this.labelHeaderEventMessage.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(40)))));
+            this.labelHeaderEventMessage.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(41)))), ((int)(((byte)(54)))));
             this.labelHeaderEventMessage.Location = new System.Drawing.Point(0, 25);
             this.labelHeaderEventMessage.Margin = new System.Windows.Forms.Padding(0);
             this.labelHeaderEventMessage.Name = "labelHeaderEventMessage";
@@ -1095,7 +1095,7 @@ namespace SemiconductorUi
             // 
             // flowHeaderTabs
             // 
-            this.flowHeaderTabs.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(180)))), ((int)(((byte)(180)))), ((int)(((byte)(190)))));
+            this.flowHeaderTabs.BackColor = System.Drawing.Color.White;
             this.tableLayoutHeader.SetColumnSpan(this.flowHeaderTabs, 2);
             this.flowHeaderTabs.Controls.Add(this.buttonTabMain);
             this.flowHeaderTabs.Controls.Add(this.buttonTabVerification);
@@ -1177,10 +1177,10 @@ namespace SemiconductorUi
             // 
             // labelHeaderCurrentTime
             // 
-            this.labelHeaderCurrentTime.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(190)))), ((int)(((byte)(190)))), ((int)(((byte)(200)))));
+            this.labelHeaderCurrentTime.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(242)))), ((int)(((byte)(245)))), ((int)(((byte)(249)))));
             this.labelHeaderCurrentTime.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.labelHeaderCurrentTime.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
-            this.labelHeaderCurrentTime.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(40)))));
+            this.labelHeaderCurrentTime.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(41)))), ((int)(((byte)(54)))));
             this.labelHeaderCurrentTime.Location = new System.Drawing.Point(12, 6);
             this.labelHeaderCurrentTime.Margin = new System.Windows.Forms.Padding(0, 0, 8, 0);
             this.labelHeaderCurrentTime.MaximumSize = new System.Drawing.Size(220, 26);
@@ -1194,11 +1194,11 @@ namespace SemiconductorUi
             // 
             // buttonUserManagement
             // 
-            this.buttonUserManagement.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(100)))), ((int)(((byte)(120)))), ((int)(((byte)(130)))));
+            this.buttonUserManagement.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(232)))), ((int)(((byte)(237)))), ((int)(((byte)(244)))));
             this.buttonUserManagement.FlatAppearance.BorderSize = 0;
             this.buttonUserManagement.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.buttonUserManagement.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
-            this.buttonUserManagement.ForeColor = System.Drawing.Color.White;
+            this.buttonUserManagement.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(41)))), ((int)(((byte)(54)))));
             this.buttonUserManagement.Location = new System.Drawing.Point(240, 6);
             this.buttonUserManagement.Margin = new System.Windows.Forms.Padding(0);
             this.buttonUserManagement.Name = "buttonUserManagement";
@@ -1224,7 +1224,7 @@ namespace SemiconductorUi
             // 
             // panelMainProcess
             // 
-            this.panelMainProcess.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(210)))), ((int)(((byte)(210)))), ((int)(((byte)(220)))));
+            this.panelMainProcess.BackColor = System.Drawing.Color.White;
             this.panelMainProcess.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.panelMainProcess.Controls.Add(this.tableLayoutMainProcess);
             this.panelMainProcess.Dock = System.Windows.Forms.DockStyle.Fill;
@@ -1254,7 +1254,7 @@ namespace SemiconductorUi
             this.labelMainProcessTitle.AutoSize = true;
             this.labelMainProcessTitle.Dock = System.Windows.Forms.DockStyle.Fill;
             this.labelMainProcessTitle.Font = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold);
-            this.labelMainProcessTitle.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(40)))));
+            this.labelMainProcessTitle.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(41)))), ((int)(((byte)(54)))));
             this.labelMainProcessTitle.Location = new System.Drawing.Point(3, 0);
             this.labelMainProcessTitle.Name = "labelMainProcessTitle";
             this.labelMainProcessTitle.Size = new System.Drawing.Size(1321, 32);
@@ -1281,7 +1281,7 @@ namespace SemiconductorUi
             // 
             // panelEquipment
             // 
-            this.panelEquipment.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(210)))), ((int)(((byte)(210)))), ((int)(((byte)(220)))));
+            this.panelEquipment.BackColor = System.Drawing.Color.White;
             this.panelEquipment.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.panelEquipment.Controls.Add(this.tableLayoutEquipmentArea);
             this.panelEquipment.Dock = System.Windows.Forms.DockStyle.Fill;
@@ -1335,7 +1335,7 @@ namespace SemiconductorUi
             // 
             // panelEquipmentCanvas
             // 
-            this.panelEquipmentCanvas.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(230)))), ((int)(((byte)(230)))), ((int)(((byte)(240)))));
+            this.panelEquipmentCanvas.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(236)))), ((int)(((byte)(239)))), ((int)(((byte)(244)))));
             this.panelEquipmentCanvas.Dock = System.Windows.Forms.DockStyle.Fill;
             this.panelEquipmentCanvas.Location = new System.Drawing.Point(0, 0);
             this.panelEquipmentCanvas.Margin = new System.Windows.Forms.Padding(0);
@@ -1346,7 +1346,7 @@ namespace SemiconductorUi
             // 
             // panelPmStatus
             // 
-            this.panelPmStatus.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(220)))), ((int)(((byte)(220)))), ((int)(((byte)(230)))));
+            this.panelPmStatus.BackColor = System.Drawing.Color.White;
             this.panelPmStatus.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.panelPmStatus.Controls.Add(this.tableLayoutPmStatus);
             this.panelPmStatus.Controls.Add(this.labelPmStatusTitle);
@@ -1379,7 +1379,7 @@ namespace SemiconductorUi
             // 
             // panelSummaryPMA
             // 
-            this.panelSummaryPMA.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(250)))), ((int)(((byte)(250)))), ((int)(((byte)(255)))));
+            this.panelSummaryPMA.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(248)))), ((int)(((byte)(250)))), ((int)(((byte)(252)))));
             this.panelSummaryPMA.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.panelSummaryPMA.Dock = System.Windows.Forms.DockStyle.Fill;
             this.panelSummaryPMA.Location = new System.Drawing.Point(12, 0);
@@ -1392,7 +1392,7 @@ namespace SemiconductorUi
             // 
             // panelSummaryPMB
             // 
-            this.panelSummaryPMB.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(250)))), ((int)(((byte)(250)))), ((int)(((byte)(255)))));
+            this.panelSummaryPMB.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(248)))), ((int)(((byte)(250)))), ((int)(((byte)(252)))));
             this.panelSummaryPMB.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.panelSummaryPMB.Dock = System.Windows.Forms.DockStyle.Fill;
             this.panelSummaryPMB.Location = new System.Drawing.Point(12, 199);
@@ -1405,7 +1405,7 @@ namespace SemiconductorUi
             // 
             // panelSummaryPMC
             // 
-            this.panelSummaryPMC.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(250)))), ((int)(((byte)(250)))), ((int)(((byte)(255)))));
+            this.panelSummaryPMC.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(248)))), ((int)(((byte)(250)))), ((int)(((byte)(252)))));
             this.panelSummaryPMC.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.panelSummaryPMC.Dock = System.Windows.Forms.DockStyle.Fill;
             this.panelSummaryPMC.Location = new System.Drawing.Point(12, 398);
@@ -1421,7 +1421,7 @@ namespace SemiconductorUi
             this.labelPmStatusTitle.AutoSize = true;
             this.labelPmStatusTitle.Dock = System.Windows.Forms.DockStyle.Top;
             this.labelPmStatusTitle.Font = new System.Drawing.Font("Segoe UI", 11F, System.Drawing.FontStyle.Bold);
-            this.labelPmStatusTitle.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(40)))));
+            this.labelPmStatusTitle.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(41)))), ((int)(((byte)(54)))));
             this.labelPmStatusTitle.Location = new System.Drawing.Point(12, 12);
             this.labelPmStatusTitle.Name = "labelPmStatusTitle";
             this.labelPmStatusTitle.Padding = new System.Windows.Forms.Padding(0, 0, 0, 6);
@@ -1448,7 +1448,7 @@ namespace SemiconductorUi
             // 
             // panelFoupStatusA
             // 
-            this.panelFoupStatusA.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(220)))), ((int)(((byte)(220)))), ((int)(((byte)(230)))));
+            this.panelFoupStatusA.BackColor = System.Drawing.Color.White;
             this.panelFoupStatusA.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.panelFoupStatusA.Controls.Add(this.tableFoupACard);
             this.panelFoupStatusA.Dock = System.Windows.Forms.DockStyle.Fill;
@@ -1486,7 +1486,7 @@ namespace SemiconductorUi
             // 
             // panelFoupALevelTrack
             // 
-            this.panelFoupALevelTrack.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(230)))), ((int)(((byte)(230)))), ((int)(((byte)(240)))));
+            this.panelFoupALevelTrack.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(242)))), ((int)(((byte)(245)))), ((int)(((byte)(249)))));
             this.panelFoupALevelTrack.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.panelFoupALevelTrack.Controls.Add(this.panelFoupALevelFill);
             this.panelFoupALevelTrack.Dock = System.Windows.Forms.DockStyle.Fill;
@@ -1547,7 +1547,7 @@ namespace SemiconductorUi
             // 
             this.labelFoupAFieldPath.Dock = System.Windows.Forms.DockStyle.Fill;
             this.labelFoupAFieldPath.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
-            this.labelFoupAFieldPath.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(60)))), ((int)(((byte)(60)))), ((int)(((byte)(60)))));
+            this.labelFoupAFieldPath.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(41)))), ((int)(((byte)(54)))));
             this.labelFoupAFieldPath.Location = new System.Drawing.Point(0, 0);
             this.labelFoupAFieldPath.Margin = new System.Windows.Forms.Padding(0);
             this.labelFoupAFieldPath.Name = "labelFoupAFieldPath";
@@ -1559,7 +1559,7 @@ namespace SemiconductorUi
             // 
             this.labelFoupAPathValue.Dock = System.Windows.Forms.DockStyle.Fill;
             this.labelFoupAPathValue.Font = new System.Drawing.Font("Segoe UI", 9F);
-            this.labelFoupAPathValue.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(40)))));
+            this.labelFoupAPathValue.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(41)))), ((int)(((byte)(54)))));
             this.labelFoupAPathValue.Location = new System.Drawing.Point(70, 0);
             this.labelFoupAPathValue.Margin = new System.Windows.Forms.Padding(0);
             this.labelFoupAPathValue.Name = "labelFoupAPathValue";
@@ -1571,7 +1571,7 @@ namespace SemiconductorUi
             // 
             this.labelFoupAFieldPPID.Dock = System.Windows.Forms.DockStyle.Fill;
             this.labelFoupAFieldPPID.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
-            this.labelFoupAFieldPPID.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(60)))), ((int)(((byte)(60)))), ((int)(((byte)(60)))));
+            this.labelFoupAFieldPPID.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(41)))), ((int)(((byte)(54)))));
             this.labelFoupAFieldPPID.Location = new System.Drawing.Point(0, 24);
             this.labelFoupAFieldPPID.Margin = new System.Windows.Forms.Padding(0);
             this.labelFoupAFieldPPID.Name = "labelFoupAFieldPPID";
@@ -1583,7 +1583,7 @@ namespace SemiconductorUi
             // 
             this.labelFoupAPPIDValue.Dock = System.Windows.Forms.DockStyle.Fill;
             this.labelFoupAPPIDValue.Font = new System.Drawing.Font("Segoe UI", 9F);
-            this.labelFoupAPPIDValue.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(40)))));
+            this.labelFoupAPPIDValue.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(41)))), ((int)(((byte)(54)))));
             this.labelFoupAPPIDValue.Location = new System.Drawing.Point(70, 24);
             this.labelFoupAPPIDValue.Margin = new System.Windows.Forms.Padding(0);
             this.labelFoupAPPIDValue.Name = "labelFoupAPPIDValue";
@@ -1595,7 +1595,7 @@ namespace SemiconductorUi
             // 
             this.labelFoupAFieldLotId.Dock = System.Windows.Forms.DockStyle.Fill;
             this.labelFoupAFieldLotId.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
-            this.labelFoupAFieldLotId.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(60)))), ((int)(((byte)(60)))), ((int)(((byte)(60)))));
+            this.labelFoupAFieldLotId.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(41)))), ((int)(((byte)(54)))));
             this.labelFoupAFieldLotId.Location = new System.Drawing.Point(0, 48);
             this.labelFoupAFieldLotId.Margin = new System.Windows.Forms.Padding(0);
             this.labelFoupAFieldLotId.Name = "labelFoupAFieldLotId";
@@ -1607,7 +1607,7 @@ namespace SemiconductorUi
             // 
             this.labelFoupALotIdValue.Dock = System.Windows.Forms.DockStyle.Fill;
             this.labelFoupALotIdValue.Font = new System.Drawing.Font("Segoe UI", 9F);
-            this.labelFoupALotIdValue.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(40)))));
+            this.labelFoupALotIdValue.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(41)))), ((int)(((byte)(54)))));
             this.labelFoupALotIdValue.Location = new System.Drawing.Point(70, 48);
             this.labelFoupALotIdValue.Margin = new System.Windows.Forms.Padding(0);
             this.labelFoupALotIdValue.Name = "labelFoupALotIdValue";
@@ -1619,7 +1619,7 @@ namespace SemiconductorUi
             // 
             this.labelFoupAFieldMid.Dock = System.Windows.Forms.DockStyle.Fill;
             this.labelFoupAFieldMid.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
-            this.labelFoupAFieldMid.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(60)))), ((int)(((byte)(60)))), ((int)(((byte)(60)))));
+            this.labelFoupAFieldMid.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(41)))), ((int)(((byte)(54)))));
             this.labelFoupAFieldMid.Location = new System.Drawing.Point(0, 72);
             this.labelFoupAFieldMid.Margin = new System.Windows.Forms.Padding(0);
             this.labelFoupAFieldMid.Name = "labelFoupAFieldMid";
@@ -1631,7 +1631,7 @@ namespace SemiconductorUi
             // 
             this.labelFoupAMidValue.Dock = System.Windows.Forms.DockStyle.Fill;
             this.labelFoupAMidValue.Font = new System.Drawing.Font("Segoe UI", 9F);
-            this.labelFoupAMidValue.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(40)))));
+            this.labelFoupAMidValue.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(41)))), ((int)(((byte)(54)))));
             this.labelFoupAMidValue.Location = new System.Drawing.Point(70, 72);
             this.labelFoupAMidValue.Margin = new System.Windows.Forms.Padding(0);
             this.labelFoupAMidValue.Name = "labelFoupAMidValue";
@@ -1643,7 +1643,7 @@ namespace SemiconductorUi
             // 
             this.labelFoupAFieldLock.Dock = System.Windows.Forms.DockStyle.Fill;
             this.labelFoupAFieldLock.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
-            this.labelFoupAFieldLock.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(60)))), ((int)(((byte)(60)))), ((int)(((byte)(60)))));
+            this.labelFoupAFieldLock.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(41)))), ((int)(((byte)(54)))));
             this.labelFoupAFieldLock.Location = new System.Drawing.Point(0, 96);
             this.labelFoupAFieldLock.Margin = new System.Windows.Forms.Padding(0);
             this.labelFoupAFieldLock.Name = "labelFoupAFieldLock";
@@ -1655,7 +1655,7 @@ namespace SemiconductorUi
             // 
             this.labelFoupALockValue.Dock = System.Windows.Forms.DockStyle.Fill;
             this.labelFoupALockValue.Font = new System.Drawing.Font("Segoe UI", 9F);
-            this.labelFoupALockValue.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(40)))));
+            this.labelFoupALockValue.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(41)))), ((int)(((byte)(54)))));
             this.labelFoupALockValue.Location = new System.Drawing.Point(70, 96);
             this.labelFoupALockValue.Margin = new System.Windows.Forms.Padding(0);
             this.labelFoupALockValue.Name = "labelFoupALockValue";
@@ -1667,7 +1667,7 @@ namespace SemiconductorUi
             // 
             this.labelFoupAStatusHeadline.Dock = System.Windows.Forms.DockStyle.Top;
             this.labelFoupAStatusHeadline.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
-            this.labelFoupAStatusHeadline.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(60)))), ((int)(((byte)(60)))), ((int)(((byte)(60)))));
+            this.labelFoupAStatusHeadline.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(41)))), ((int)(((byte)(54)))));
             this.labelFoupAStatusHeadline.Location = new System.Drawing.Point(0, 24);
             this.labelFoupAStatusHeadline.Name = "labelFoupAStatusHeadline";
             this.labelFoupAStatusHeadline.Size = new System.Drawing.Size(306, 24);
@@ -1679,7 +1679,7 @@ namespace SemiconductorUi
             // 
             this.labelFoupInfoATitle.Dock = System.Windows.Forms.DockStyle.Top;
             this.labelFoupInfoATitle.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold);
-            this.labelFoupInfoATitle.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(40)))));
+            this.labelFoupInfoATitle.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(41)))), ((int)(((byte)(54)))));
             this.labelFoupInfoATitle.Location = new System.Drawing.Point(0, 0);
             this.labelFoupInfoATitle.Name = "labelFoupInfoATitle";
             this.labelFoupInfoATitle.Size = new System.Drawing.Size(306, 24);
@@ -1689,7 +1689,7 @@ namespace SemiconductorUi
             // 
             // panelFoupStatusB
             // 
-            this.panelFoupStatusB.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(220)))), ((int)(((byte)(220)))), ((int)(((byte)(230)))));
+            this.panelFoupStatusB.BackColor = System.Drawing.Color.White;
             this.panelFoupStatusB.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.panelFoupStatusB.Controls.Add(this.tableFoupBCard);
             this.panelFoupStatusB.Dock = System.Windows.Forms.DockStyle.Fill;
@@ -1727,7 +1727,7 @@ namespace SemiconductorUi
             // 
             // panelFoupBLevelTrack
             // 
-            this.panelFoupBLevelTrack.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(230)))), ((int)(((byte)(230)))), ((int)(((byte)(240)))));
+            this.panelFoupBLevelTrack.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(242)))), ((int)(((byte)(245)))), ((int)(((byte)(249)))));
             this.panelFoupBLevelTrack.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.panelFoupBLevelTrack.Controls.Add(this.panelFoupBLevelFill);
             this.panelFoupBLevelTrack.Dock = System.Windows.Forms.DockStyle.Fill;
@@ -1788,7 +1788,7 @@ namespace SemiconductorUi
             // 
             this.labelFoupBFieldPath.Dock = System.Windows.Forms.DockStyle.Fill;
             this.labelFoupBFieldPath.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
-            this.labelFoupBFieldPath.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(60)))), ((int)(((byte)(60)))), ((int)(((byte)(60)))));
+            this.labelFoupBFieldPath.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(41)))), ((int)(((byte)(54)))));
             this.labelFoupBFieldPath.Location = new System.Drawing.Point(0, 0);
             this.labelFoupBFieldPath.Margin = new System.Windows.Forms.Padding(0);
             this.labelFoupBFieldPath.Name = "labelFoupBFieldPath";
@@ -1800,7 +1800,7 @@ namespace SemiconductorUi
             // 
             this.labelFoupBPathValue.Dock = System.Windows.Forms.DockStyle.Fill;
             this.labelFoupBPathValue.Font = new System.Drawing.Font("Segoe UI", 9F);
-            this.labelFoupBPathValue.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(40)))));
+            this.labelFoupBPathValue.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(41)))), ((int)(((byte)(54)))));
             this.labelFoupBPathValue.Location = new System.Drawing.Point(70, 0);
             this.labelFoupBPathValue.Margin = new System.Windows.Forms.Padding(0);
             this.labelFoupBPathValue.Name = "labelFoupBPathValue";
@@ -1812,7 +1812,7 @@ namespace SemiconductorUi
             // 
             this.labelFoupBFieldPPID.Dock = System.Windows.Forms.DockStyle.Fill;
             this.labelFoupBFieldPPID.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
-            this.labelFoupBFieldPPID.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(60)))), ((int)(((byte)(60)))), ((int)(((byte)(60)))));
+            this.labelFoupBFieldPPID.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(41)))), ((int)(((byte)(54)))));
             this.labelFoupBFieldPPID.Location = new System.Drawing.Point(0, 24);
             this.labelFoupBFieldPPID.Margin = new System.Windows.Forms.Padding(0);
             this.labelFoupBFieldPPID.Name = "labelFoupBFieldPPID";
@@ -1824,7 +1824,7 @@ namespace SemiconductorUi
             // 
             this.labelFoupBPPIDValue.Dock = System.Windows.Forms.DockStyle.Fill;
             this.labelFoupBPPIDValue.Font = new System.Drawing.Font("Segoe UI", 9F);
-            this.labelFoupBPPIDValue.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(40)))));
+            this.labelFoupBPPIDValue.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(41)))), ((int)(((byte)(54)))));
             this.labelFoupBPPIDValue.Location = new System.Drawing.Point(70, 24);
             this.labelFoupBPPIDValue.Margin = new System.Windows.Forms.Padding(0);
             this.labelFoupBPPIDValue.Name = "labelFoupBPPIDValue";
@@ -1836,7 +1836,7 @@ namespace SemiconductorUi
             // 
             this.labelFoupBFieldLotId.Dock = System.Windows.Forms.DockStyle.Fill;
             this.labelFoupBFieldLotId.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
-            this.labelFoupBFieldLotId.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(60)))), ((int)(((byte)(60)))), ((int)(((byte)(60)))));
+            this.labelFoupBFieldLotId.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(41)))), ((int)(((byte)(54)))));
             this.labelFoupBFieldLotId.Location = new System.Drawing.Point(0, 48);
             this.labelFoupBFieldLotId.Margin = new System.Windows.Forms.Padding(0);
             this.labelFoupBFieldLotId.Name = "labelFoupBFieldLotId";
@@ -1848,7 +1848,7 @@ namespace SemiconductorUi
             // 
             this.labelFoupBLotIdValue.Dock = System.Windows.Forms.DockStyle.Fill;
             this.labelFoupBLotIdValue.Font = new System.Drawing.Font("Segoe UI", 9F);
-            this.labelFoupBLotIdValue.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(40)))));
+            this.labelFoupBLotIdValue.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(41)))), ((int)(((byte)(54)))));
             this.labelFoupBLotIdValue.Location = new System.Drawing.Point(70, 48);
             this.labelFoupBLotIdValue.Margin = new System.Windows.Forms.Padding(0);
             this.labelFoupBLotIdValue.Name = "labelFoupBLotIdValue";
@@ -1860,7 +1860,7 @@ namespace SemiconductorUi
             // 
             this.labelFoupBFieldMid.Dock = System.Windows.Forms.DockStyle.Fill;
             this.labelFoupBFieldMid.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
-            this.labelFoupBFieldMid.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(60)))), ((int)(((byte)(60)))), ((int)(((byte)(60)))));
+            this.labelFoupBFieldMid.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(41)))), ((int)(((byte)(54)))));
             this.labelFoupBFieldMid.Location = new System.Drawing.Point(0, 72);
             this.labelFoupBFieldMid.Margin = new System.Windows.Forms.Padding(0);
             this.labelFoupBFieldMid.Name = "labelFoupBFieldMid";
@@ -1872,7 +1872,7 @@ namespace SemiconductorUi
             // 
             this.labelFoupBMidValue.Dock = System.Windows.Forms.DockStyle.Fill;
             this.labelFoupBMidValue.Font = new System.Drawing.Font("Segoe UI", 9F);
-            this.labelFoupBMidValue.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(40)))));
+            this.labelFoupBMidValue.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(41)))), ((int)(((byte)(54)))));
             this.labelFoupBMidValue.Location = new System.Drawing.Point(70, 72);
             this.labelFoupBMidValue.Margin = new System.Windows.Forms.Padding(0);
             this.labelFoupBMidValue.Name = "labelFoupBMidValue";
@@ -1884,7 +1884,7 @@ namespace SemiconductorUi
             // 
             this.labelFoupBFieldLock.Dock = System.Windows.Forms.DockStyle.Fill;
             this.labelFoupBFieldLock.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
-            this.labelFoupBFieldLock.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(60)))), ((int)(((byte)(60)))), ((int)(((byte)(60)))));
+            this.labelFoupBFieldLock.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(41)))), ((int)(((byte)(54)))));
             this.labelFoupBFieldLock.Location = new System.Drawing.Point(0, 96);
             this.labelFoupBFieldLock.Margin = new System.Windows.Forms.Padding(0);
             this.labelFoupBFieldLock.Name = "labelFoupBFieldLock";
@@ -1896,7 +1896,7 @@ namespace SemiconductorUi
             // 
             this.labelFoupBLockValue.Dock = System.Windows.Forms.DockStyle.Fill;
             this.labelFoupBLockValue.Font = new System.Drawing.Font("Segoe UI", 9F);
-            this.labelFoupBLockValue.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(40)))));
+            this.labelFoupBLockValue.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(41)))), ((int)(((byte)(54)))));
             this.labelFoupBLockValue.Location = new System.Drawing.Point(70, 96);
             this.labelFoupBLockValue.Margin = new System.Windows.Forms.Padding(0);
             this.labelFoupBLockValue.Name = "labelFoupBLockValue";
@@ -1908,7 +1908,7 @@ namespace SemiconductorUi
             // 
             this.labelFoupBStatusHeadline.Dock = System.Windows.Forms.DockStyle.Top;
             this.labelFoupBStatusHeadline.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
-            this.labelFoupBStatusHeadline.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(60)))), ((int)(((byte)(60)))), ((int)(((byte)(60)))));
+            this.labelFoupBStatusHeadline.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(41)))), ((int)(((byte)(54)))));
             this.labelFoupBStatusHeadline.Location = new System.Drawing.Point(0, 24);
             this.labelFoupBStatusHeadline.Name = "labelFoupBStatusHeadline";
             this.labelFoupBStatusHeadline.Size = new System.Drawing.Size(306, 24);
@@ -1920,7 +1920,7 @@ namespace SemiconductorUi
             // 
             this.labelFoupInfoBTitle.Dock = System.Windows.Forms.DockStyle.Top;
             this.labelFoupInfoBTitle.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold);
-            this.labelFoupInfoBTitle.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(40)))));
+            this.labelFoupInfoBTitle.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(41)))), ((int)(((byte)(54)))));
             this.labelFoupInfoBTitle.Location = new System.Drawing.Point(0, 0);
             this.labelFoupInfoBTitle.Name = "labelFoupInfoBTitle";
             this.labelFoupInfoBTitle.Size = new System.Drawing.Size(306, 24);
@@ -1934,7 +1934,7 @@ namespace SemiconductorUi
             this.tableProcessMetrics.SetColumnSpan(this.labelFoupSummaryInfo, 2);
             this.labelFoupSummaryInfo.Dock = System.Windows.Forms.DockStyle.Fill;
             this.labelFoupSummaryInfo.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
-            this.labelFoupSummaryInfo.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(40)))));
+            this.labelFoupSummaryInfo.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(41)))), ((int)(((byte)(54)))));
             this.labelFoupSummaryInfo.Location = new System.Drawing.Point(3, 202);
             this.labelFoupSummaryInfo.Name = "labelFoupSummaryInfo";
             this.labelFoupSummaryInfo.Padding = new System.Windows.Forms.Padding(6, 2, 6, 2);
@@ -1946,7 +1946,7 @@ namespace SemiconductorUi
             // panelControlPanel
             // 
             this.panelControlPanel.AutoScroll = true;
-            this.panelControlPanel.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(210)))), ((int)(((byte)(210)))), ((int)(((byte)(220)))));
+            this.panelControlPanel.BackColor = System.Drawing.Color.White;
             this.panelControlPanel.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.panelControlPanel.Controls.Add(this.flowControlPanelStack);
             this.panelControlPanel.Dock = System.Windows.Forms.DockStyle.Fill;
@@ -1977,7 +1977,7 @@ namespace SemiconductorUi
             // 
             this.labelControlTitle.AutoSize = true;
             this.labelControlTitle.Font = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold);
-            this.labelControlTitle.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(40)))));
+            this.labelControlTitle.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(41)))), ((int)(((byte)(54)))));
             this.labelControlTitle.Location = new System.Drawing.Point(3, 0);
             this.labelControlTitle.Margin = new System.Windows.Forms.Padding(3, 0, 3, 12);
             this.labelControlTitle.Name = "labelControlTitle";
@@ -2236,7 +2236,7 @@ namespace SemiconductorUi
             // 
             this.labelRecipe.AutoSize = true;
             this.labelRecipe.Font = new System.Drawing.Font("Segoe UI", 10F);
-            this.labelRecipe.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(40)))));
+            this.labelRecipe.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(41)))), ((int)(((byte)(54)))));
             this.labelRecipe.Location = new System.Drawing.Point(12, 32);
             this.labelRecipe.Name = "labelRecipe";
             this.labelRecipe.Size = new System.Drawing.Size(151, 19);
@@ -2245,7 +2245,7 @@ namespace SemiconductorUi
             // 
             // panelAlarmArea
             // 
-            this.panelAlarmArea.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(180)))), ((int)(((byte)(180)))), ((int)(((byte)(190)))));
+            this.panelAlarmArea.BackColor = System.Drawing.Color.White;
             this.panelAlarmArea.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.panelAlarmArea.Controls.Add(this.flowBottomNavigation);
             this.panelAlarmArea.Dock = System.Windows.Forms.DockStyle.Fill;
@@ -2379,7 +2379,7 @@ namespace SemiconductorUi
             // 
             // buttonServoHome
             // 
-            this.buttonServoHome.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(152)))), ((int)(((byte)(0)))));
+            this.buttonServoHome.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(214)))), ((int)(((byte)(138)))), ((int)(((byte)(20)))));
             this.buttonServoHome.FlatAppearance.BorderSize = 0;
             this.buttonServoHome.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.buttonServoHome.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
@@ -2395,7 +2395,7 @@ namespace SemiconductorUi
             // panelMainLamp
             // 
             this.panelMainLamp.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.panelMainLamp.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(230)))), ((int)(((byte)(230)))), ((int)(((byte)(240)))));
+            this.panelMainLamp.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(236)))), ((int)(((byte)(239)))), ((int)(((byte)(244)))));
             this.panelMainLamp.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.panelMainLamp.Controls.Add(this.labelMainLampRed);
             this.panelMainLamp.Controls.Add(this.labelMainLampYellow);
@@ -2416,7 +2416,7 @@ namespace SemiconductorUi
             // 
             this.labelMainLampRed.AutoSize = true;
             this.labelMainLampRed.Font = new System.Drawing.Font("Segoe UI", 9F);
-            this.labelMainLampRed.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(40)))));
+            this.labelMainLampRed.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(41)))), ((int)(((byte)(54)))));
             this.labelMainLampRed.Location = new System.Drawing.Point(56, 19);
             this.labelMainLampRed.Name = "labelMainLampRed";
             this.labelMainLampRed.Size = new System.Drawing.Size(117, 15);
@@ -2427,7 +2427,7 @@ namespace SemiconductorUi
             // 
             this.labelMainLampYellow.AutoSize = true;
             this.labelMainLampYellow.Font = new System.Drawing.Font("Segoe UI", 9F);
-            this.labelMainLampYellow.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(40)))));
+            this.labelMainLampYellow.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(41)))), ((int)(((byte)(54)))));
             this.labelMainLampYellow.Location = new System.Drawing.Point(56, 43);
             this.labelMainLampYellow.Name = "labelMainLampYellow";
             this.labelMainLampYellow.Size = new System.Drawing.Size(88, 15);
@@ -2438,7 +2438,7 @@ namespace SemiconductorUi
             // 
             this.labelMainLampGreen.AutoSize = true;
             this.labelMainLampGreen.Font = new System.Drawing.Font("Segoe UI", 9F);
-            this.labelMainLampGreen.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(40)))));
+            this.labelMainLampGreen.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(41)))), ((int)(((byte)(54)))));
             this.labelMainLampGreen.Location = new System.Drawing.Point(56, 67);
             this.labelMainLampGreen.Name = "labelMainLampGreen";
             this.labelMainLampGreen.Size = new System.Drawing.Size(88, 15);
@@ -2476,7 +2476,7 @@ namespace SemiconductorUi
             // 
             this.labelMainLamp.AutoSize = true;
             this.labelMainLamp.Font = new System.Drawing.Font("Segoe UI", 11F, System.Drawing.FontStyle.Bold);
-            this.labelMainLamp.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(40)))));
+            this.labelMainLamp.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(41)))), ((int)(((byte)(54)))));
             this.labelMainLamp.Location = new System.Drawing.Point(12, -1);
             this.labelMainLamp.Name = "labelMainLamp";
             this.labelMainLamp.Size = new System.Drawing.Size(107, 20);
@@ -2679,7 +2679,7 @@ namespace SemiconductorUi
             // 
             // flowProcessSummary
             // 
-            this.flowProcessSummary.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(180)))), ((int)(((byte)(180)))), ((int)(((byte)(190)))));
+            this.flowProcessSummary.BackColor = System.Drawing.Color.White;
             this.flowProcessSummary.Controls.Add(this.panelSummaryFoupA);
             this.flowProcessSummary.Controls.Add(this.panelSummaryFoupB);
             this.flowProcessSummary.Controls.Add(this.panelSummaryProcess);
@@ -2696,7 +2696,7 @@ namespace SemiconductorUi
             // 
             // panelSummaryFoupA
             // 
-            this.panelSummaryFoupA.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(250)))), ((int)(((byte)(250)))), ((int)(((byte)(255)))));
+            this.panelSummaryFoupA.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(248)))), ((int)(((byte)(250)))), ((int)(((byte)(252)))));
             this.panelSummaryFoupA.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.panelSummaryFoupA.Controls.Add(this.labelSummaryFoupAStatus);
             this.panelSummaryFoupA.Controls.Add(this.labelSummaryFoupATitle);
@@ -2711,7 +2711,7 @@ namespace SemiconductorUi
             // 
             this.labelSummaryFoupAStatus.Dock = System.Windows.Forms.DockStyle.Fill;
             this.labelSummaryFoupAStatus.Font = new System.Drawing.Font("Segoe UI", 9F);
-            this.labelSummaryFoupAStatus.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(60)))), ((int)(((byte)(60)))), ((int)(((byte)(60)))));
+            this.labelSummaryFoupAStatus.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(41)))), ((int)(((byte)(54)))));
             this.labelSummaryFoupAStatus.Location = new System.Drawing.Point(8, 28);
             this.labelSummaryFoupAStatus.Name = "labelSummaryFoupAStatus";
             this.labelSummaryFoupAStatus.Size = new System.Drawing.Size(132, 30);
@@ -2722,7 +2722,7 @@ namespace SemiconductorUi
             // 
             this.labelSummaryFoupATitle.Dock = System.Windows.Forms.DockStyle.Top;
             this.labelSummaryFoupATitle.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
-            this.labelSummaryFoupATitle.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(40)))));
+            this.labelSummaryFoupATitle.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(41)))), ((int)(((byte)(54)))));
             this.labelSummaryFoupATitle.Location = new System.Drawing.Point(8, 8);
             this.labelSummaryFoupATitle.Name = "labelSummaryFoupATitle";
             this.labelSummaryFoupATitle.Size = new System.Drawing.Size(132, 20);
@@ -2731,7 +2731,7 @@ namespace SemiconductorUi
             // 
             // panelSummaryFoupB
             // 
-            this.panelSummaryFoupB.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(250)))), ((int)(((byte)(250)))), ((int)(((byte)(255)))));
+            this.panelSummaryFoupB.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(248)))), ((int)(((byte)(250)))), ((int)(((byte)(252)))));
             this.panelSummaryFoupB.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.panelSummaryFoupB.Controls.Add(this.labelSummaryFoupBStatus);
             this.panelSummaryFoupB.Controls.Add(this.labelSummaryFoupBTitle);
@@ -2746,7 +2746,7 @@ namespace SemiconductorUi
             // 
             this.labelSummaryFoupBStatus.Dock = System.Windows.Forms.DockStyle.Fill;
             this.labelSummaryFoupBStatus.Font = new System.Drawing.Font("Segoe UI", 9F);
-            this.labelSummaryFoupBStatus.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(60)))), ((int)(((byte)(60)))), ((int)(((byte)(60)))));
+            this.labelSummaryFoupBStatus.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(41)))), ((int)(((byte)(54)))));
             this.labelSummaryFoupBStatus.Location = new System.Drawing.Point(8, 28);
             this.labelSummaryFoupBStatus.Name = "labelSummaryFoupBStatus";
             this.labelSummaryFoupBStatus.Size = new System.Drawing.Size(132, 30);
@@ -2757,7 +2757,7 @@ namespace SemiconductorUi
             // 
             this.labelSummaryFoupBTitle.Dock = System.Windows.Forms.DockStyle.Top;
             this.labelSummaryFoupBTitle.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
-            this.labelSummaryFoupBTitle.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(40)))));
+            this.labelSummaryFoupBTitle.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(41)))), ((int)(((byte)(54)))));
             this.labelSummaryFoupBTitle.Location = new System.Drawing.Point(8, 8);
             this.labelSummaryFoupBTitle.Name = "labelSummaryFoupBTitle";
             this.labelSummaryFoupBTitle.Size = new System.Drawing.Size(132, 20);
@@ -2766,7 +2766,7 @@ namespace SemiconductorUi
             // 
             // panelSummaryProcess
             // 
-            this.panelSummaryProcess.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(250)))), ((int)(((byte)(250)))), ((int)(((byte)(255)))));
+            this.panelSummaryProcess.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(248)))), ((int)(((byte)(250)))), ((int)(((byte)(252)))));
             this.panelSummaryProcess.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.panelSummaryProcess.Controls.Add(this.labelProcessValue);
             this.panelSummaryProcess.Controls.Add(this.labelSummaryProcessTitle);
@@ -2781,7 +2781,7 @@ namespace SemiconductorUi
             // 
             this.labelProcessValue.Dock = System.Windows.Forms.DockStyle.Fill;
             this.labelProcessValue.Font = new System.Drawing.Font("Segoe UI", 9F);
-            this.labelProcessValue.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(60)))), ((int)(((byte)(60)))), ((int)(((byte)(60)))));
+            this.labelProcessValue.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(41)))), ((int)(((byte)(54)))));
             this.labelProcessValue.Location = new System.Drawing.Point(8, 32);
             this.labelProcessValue.Name = "labelProcessValue";
             this.labelProcessValue.Size = new System.Drawing.Size(132, 26);
@@ -2793,7 +2793,7 @@ namespace SemiconductorUi
             // 
             this.labelSummaryProcessTitle.Dock = System.Windows.Forms.DockStyle.Top;
             this.labelSummaryProcessTitle.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
-            this.labelSummaryProcessTitle.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(40)))));
+            this.labelSummaryProcessTitle.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(41)))), ((int)(((byte)(54)))));
             this.labelSummaryProcessTitle.Location = new System.Drawing.Point(8, 8);
             this.labelSummaryProcessTitle.Name = "labelSummaryProcessTitle";
             this.labelSummaryProcessTitle.Size = new System.Drawing.Size(132, 24);
@@ -2803,7 +2803,7 @@ namespace SemiconductorUi
             // 
             // panelSummaryPressure
             // 
-            this.panelSummaryPressure.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(250)))), ((int)(((byte)(250)))), ((int)(((byte)(255)))));
+            this.panelSummaryPressure.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(248)))), ((int)(((byte)(250)))), ((int)(((byte)(252)))));
             this.panelSummaryPressure.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.panelSummaryPressure.Controls.Add(this.labelPressureValue);
             this.panelSummaryPressure.Controls.Add(this.labelSummaryPressureTitle);
@@ -2818,7 +2818,7 @@ namespace SemiconductorUi
             // 
             this.labelPressureValue.Dock = System.Windows.Forms.DockStyle.Fill;
             this.labelPressureValue.Font = new System.Drawing.Font("Segoe UI", 9F);
-            this.labelPressureValue.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(60)))), ((int)(((byte)(60)))), ((int)(((byte)(60)))));
+            this.labelPressureValue.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(41)))), ((int)(((byte)(54)))));
             this.labelPressureValue.Location = new System.Drawing.Point(8, 32);
             this.labelPressureValue.Name = "labelPressureValue";
             this.labelPressureValue.Size = new System.Drawing.Size(132, 26);
@@ -2830,7 +2830,7 @@ namespace SemiconductorUi
             // 
             this.labelSummaryPressureTitle.Dock = System.Windows.Forms.DockStyle.Top;
             this.labelSummaryPressureTitle.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
-            this.labelSummaryPressureTitle.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(40)))));
+            this.labelSummaryPressureTitle.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(41)))), ((int)(((byte)(54)))));
             this.labelSummaryPressureTitle.Location = new System.Drawing.Point(8, 8);
             this.labelSummaryPressureTitle.Name = "labelSummaryPressureTitle";
             this.labelSummaryPressureTitle.Size = new System.Drawing.Size(132, 24);
@@ -2840,7 +2840,7 @@ namespace SemiconductorUi
             // 
             // panelSummaryTemperature
             // 
-            this.panelSummaryTemperature.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(250)))), ((int)(((byte)(250)))), ((int)(((byte)(255)))));
+            this.panelSummaryTemperature.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(248)))), ((int)(((byte)(250)))), ((int)(((byte)(252)))));
             this.panelSummaryTemperature.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.panelSummaryTemperature.Controls.Add(this.labelTemperatureValue);
             this.panelSummaryTemperature.Controls.Add(this.labelSummaryTemperatureTitle);
@@ -2855,7 +2855,7 @@ namespace SemiconductorUi
             // 
             this.labelTemperatureValue.Dock = System.Windows.Forms.DockStyle.Fill;
             this.labelTemperatureValue.Font = new System.Drawing.Font("Segoe UI", 9F);
-            this.labelTemperatureValue.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(60)))), ((int)(((byte)(60)))), ((int)(((byte)(60)))));
+            this.labelTemperatureValue.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(41)))), ((int)(((byte)(54)))));
             this.labelTemperatureValue.Location = new System.Drawing.Point(8, 32);
             this.labelTemperatureValue.Name = "labelTemperatureValue";
             this.labelTemperatureValue.Size = new System.Drawing.Size(132, 26);
@@ -2867,7 +2867,7 @@ namespace SemiconductorUi
             // 
             this.labelSummaryTemperatureTitle.Dock = System.Windows.Forms.DockStyle.Top;
             this.labelSummaryTemperatureTitle.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
-            this.labelSummaryTemperatureTitle.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(40)))));
+            this.labelSummaryTemperatureTitle.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(41)))), ((int)(((byte)(54)))));
             this.labelSummaryTemperatureTitle.Location = new System.Drawing.Point(8, 8);
             this.labelSummaryTemperatureTitle.Name = "labelSummaryTemperatureTitle";
             this.labelSummaryTemperatureTitle.Size = new System.Drawing.Size(132, 24);
@@ -3083,11 +3083,11 @@ namespace SemiconductorUi
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(200)))), ((int)(((byte)(200)))), ((int)(((byte)(210)))));
+            this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(226)))), ((int)(((byte)(231)))), ((int)(((byte)(238)))));
             this.ClientSize = new System.Drawing.Size(1701, 976);
             this.Controls.Add(this.tableLayoutRoot);
             this.Font = new System.Drawing.Font("Segoe UI", 9F);
-            this.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(40)))));
+            this.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(41)))), ((int)(((byte)(54)))));
             this.MinimumSize = new System.Drawing.Size(1300, 840);
             this.Name = "Form1";
             this.Text = "반도체 장비 제어 UI";
@@ -3182,38 +3182,38 @@ namespace SemiconductorUi
             this.ResumeLayout(false);
 
         }
-        private System.Windows.Forms.Panel panelEquipment;
+        internal System.Windows.Forms.Panel panelEquipment;
         private System.Windows.Forms.TableLayoutPanel tableLayoutEquipment;
         private System.Windows.Forms.TableLayoutPanel tableLayoutChamberCluster;
         internal System.Windows.Forms.Panel panelEquipmentCanvas;
         private System.Windows.Forms.TableLayoutPanel tableLayoutEquipmentArea;
-        private System.Windows.Forms.Panel panelPmStatus;
+        internal System.Windows.Forms.Panel panelPmStatus;
         internal System.Windows.Forms.Label labelPmStatusTitle;
         internal System.Windows.Forms.TableLayoutPanel tableLayoutPmStatus;
         internal System.Windows.Forms.Panel panelMainLamp;
-        private System.Windows.Forms.Label labelMainLamp;
+        internal System.Windows.Forms.Label labelMainLamp;
         internal System.Windows.Forms.Panel panelMainLampRed;
         internal System.Windows.Forms.Panel panelMainLampYellow;
         internal System.Windows.Forms.Panel panelMainLampGreen;
-        private System.Windows.Forms.Label labelMainLampGreen;
-        private System.Windows.Forms.Label labelMainLampYellow;
-        private System.Windows.Forms.Label labelMainLampRed;
+        internal System.Windows.Forms.Label labelMainLampGreen;
+        internal System.Windows.Forms.Label labelMainLampYellow;
+        internal System.Windows.Forms.Label labelMainLampRed;
         internal SemiconductorUi.Controls.TmVisualizationControl tmVisualizationControl;
         internal System.Windows.Forms.Panel panelChamberA;
         internal System.Windows.Forms.Panel panelLampChamberA;
         internal System.Windows.Forms.Panel panelDoorChamberA;
         internal System.Windows.Forms.Panel panelWaferChamberA;
-        private System.Windows.Forms.Label labelChamberA;
+        internal System.Windows.Forms.Label labelChamberA;
         internal System.Windows.Forms.Panel panelChamberB;
         internal System.Windows.Forms.Panel panelLampChamberB;
         internal System.Windows.Forms.Panel panelDoorChamberB;
         internal System.Windows.Forms.Panel panelWaferChamberB;
-        private System.Windows.Forms.Label labelChamberB;
+        internal System.Windows.Forms.Label labelChamberB;
         internal System.Windows.Forms.Panel panelChamberC;
         internal System.Windows.Forms.Panel panelLampChamberC;
         internal System.Windows.Forms.Panel panelDoorChamberC;
         internal System.Windows.Forms.Panel panelWaferChamberC;
-        private System.Windows.Forms.Label labelChamberC;
+        internal System.Windows.Forms.Label labelChamberC;
         internal System.Windows.Forms.Panel panelFoupA;
         internal SemiconductorUi.Controls.FoupVisualizationControl foupVisualizationControlA;
         internal System.Windows.Forms.Panel panelFoupB;
@@ -3221,13 +3221,13 @@ namespace SemiconductorUi
         private System.Windows.Forms.TableLayoutPanel tableLayoutRoot;
         private System.Windows.Forms.Panel panelHeader;
         private System.Windows.Forms.TableLayoutPanel tableLayoutHeader;
-        private System.Windows.Forms.FlowLayoutPanel flowHeaderLogin;
+        internal System.Windows.Forms.FlowLayoutPanel flowHeaderLogin;
         private System.Windows.Forms.Button buttonLogin;
         private System.Windows.Forms.Button buttonLogout;
         private System.Windows.Forms.Button buttonUserManagement;
         internal System.Windows.Forms.Label labelLoginStatus;
-        private System.Windows.Forms.Panel panelHeaderStatusSummary;
-        private System.Windows.Forms.FlowLayoutPanel flowHeaderStatus;
+        internal System.Windows.Forms.Panel panelHeaderStatusSummary;
+        internal System.Windows.Forms.FlowLayoutPanel flowHeaderStatus;
         private System.Windows.Forms.FlowLayoutPanel flowLoginTopRow;
         private System.Windows.Forms.FlowLayoutPanel flowLoginBottomRow;
         private System.Windows.Forms.Label labelHeaderStatusTitle;
@@ -3261,7 +3261,7 @@ namespace SemiconductorUi
         internal System.Windows.Forms.Label labelHeaderTMStatus;
         private System.Windows.Forms.Label labelHeaderAlarmStatus;
         private System.Windows.Forms.TableLayoutPanel panelHeaderAlarm;
-        private System.Windows.Forms.FlowLayoutPanel flowAlarmIndicator;
+        internal System.Windows.Forms.FlowLayoutPanel flowAlarmIndicator;
         internal System.Windows.Forms.Panel panelHeaderMessageAccent;
         private System.Windows.Forms.TableLayoutPanel tableHeaderMessageText;
         private System.Windows.Forms.Label labelHeaderEventLevel;
@@ -3292,7 +3292,7 @@ namespace SemiconductorUi
         private System.Windows.Forms.Panel panelStatusDoorPressure;
         private System.Windows.Forms.Panel panelStatusLampProcess;
         private System.Windows.Forms.Panel panelStatusDoorProcess;
-        private System.Windows.Forms.Panel panelMainProcess;
+        internal System.Windows.Forms.Panel panelMainProcess;
         private System.Windows.Forms.TableLayoutPanel tableLayoutMainProcess;
         private System.Windows.Forms.TableLayoutPanel tableLayoutMainContent;
         private System.Windows.Forms.Label labelMainProcessTitle;
@@ -3361,10 +3361,10 @@ namespace SemiconductorUi
         private System.Windows.Forms.Label labelFoupBFieldLock;
         internal System.Windows.Forms.Label labelFoupBLockValue;
         internal System.Windows.Forms.Label labelFoupSummaryInfo;
-        private System.Windows.Forms.Panel panelControlPanel;
+        internal System.Windows.Forms.Panel panelControlPanel;
         private System.Windows.Forms.FlowLayoutPanel flowControlPanelStack;
-        private System.Windows.Forms.Label labelControlTitle;
-        private System.Windows.Forms.GroupBox groupBoxControlButtons;
+        internal System.Windows.Forms.Label labelControlTitle;
+        internal System.Windows.Forms.GroupBox groupBoxControlButtons;
         private System.Windows.Forms.FlowLayoutPanel flowLayoutControlButtons;
         internal System.Windows.Forms.Button buttonStart;
         internal System.Windows.Forms.Button buttonPause;
@@ -3372,7 +3372,7 @@ namespace SemiconductorUi
         internal System.Windows.Forms.Button buttonResetAlarm;
         internal System.Windows.Forms.Button buttonResetProcess;
         internal System.Windows.Forms.Button buttonEquipmentControl;
-        private System.Windows.Forms.GroupBox groupBoxRecipe;
+        internal System.Windows.Forms.GroupBox groupBoxRecipe;
         internal System.Windows.Forms.GroupBox groupBoxFoupReady;
         internal System.Windows.Forms.FlowLayoutPanel flowLayoutFoupReadyButtons;
         internal System.Windows.Forms.Button buttonToggleFoupMount;
@@ -3381,7 +3381,7 @@ namespace SemiconductorUi
         internal System.Windows.Forms.Button buttonApplyRecipe;
         internal System.Windows.Forms.ComboBox comboRecipeSelect;
         private System.Windows.Forms.Label labelRecipe;
-        private System.Windows.Forms.Panel panelAlarmArea;
+        internal System.Windows.Forms.Panel panelAlarmArea;
         private System.Windows.Forms.FlowLayoutPanel flowBottomNavigation;
         internal System.Windows.Forms.Button buttonNavOperate;
         internal System.Windows.Forms.Button buttonNavRecipe;

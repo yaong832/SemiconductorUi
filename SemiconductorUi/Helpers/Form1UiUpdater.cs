@@ -55,7 +55,7 @@ namespace SemiconductorUi.Helpers
                 if (!form.EthercatConnected)
                 {
                     form.labelServoStatus.Text = "서보: - | Home: -";
-                    form.labelServoStatus.ForeColor = Color.Gainsboro;
+                    form.labelServoStatus.ForeColor = UiTheme.TextSecondary;
                     return;
                 }
 
@@ -111,7 +111,7 @@ namespace SemiconductorUi.Helpers
                 if (isServoOn && isHomed)
                 {
                     statusText = "서보: ON | Home: 완료";
-                    form.labelServoStatus.ForeColor = Color.LimeGreen;
+                    form.labelServoStatus.ForeColor = UiTheme.Success;
                 }
                 else if (isServoOn)
                 {
@@ -132,7 +132,7 @@ namespace SemiconductorUi.Helpers
                     {
                         statusText = "서보: ON | Home: 미완료";
                     }
-                    form.labelServoStatus.ForeColor = Color.Orange;
+                    form.labelServoStatus.ForeColor = UiTheme.Warning;
                 }
                 else
                 {
@@ -145,7 +145,7 @@ namespace SemiconductorUi.Helpers
             catch (Exception ex)
             {
                 form.labelServoStatus.Text = "서보: 오류";
-                form.labelServoStatus.ForeColor = Color.Red;
+                form.labelServoStatus.ForeColor = UiTheme.Danger;
                 form.AddLogMessage($"서보 상태 확인 오류: {ex.Message}", "WARN");
             }
         }
@@ -156,22 +156,17 @@ namespace SemiconductorUi.Helpers
         /// <param name="selectedTab">선택된 탭 이름</param>
         public void UpdateTabButtonStates(string selectedTab)
         {
-            // 기본 색상 (비선택)
-            Color inactiveColor = Color.FromArgb(100, 120, 130);
-            // 선택된 색상 (더 밝게)
-            Color activeColor = Color.FromArgb(130, 150, 160);
-
             if (form.buttonTabMain != null)
             {
-                form.buttonTabMain.BackColor = selectedTab == "Main" ? activeColor : inactiveColor;
+                UiTheme.ApplyToggleButton(form.buttonTabMain, selectedTab == "Main");
             }
             if (form.buttonTabVerification != null)
             {
-                form.buttonTabVerification.BackColor = selectedTab == "Verification" ? activeColor : inactiveColor;
+                UiTheme.ApplyToggleButton(form.buttonTabVerification, selectedTab == "Verification");
             }
             if (form.buttonTabTransfer != null)
             {
-                form.buttonTabTransfer.BackColor = selectedTab == "Transfer" ? activeColor : inactiveColor;
+                UiTheme.ApplyToggleButton(form.buttonTabTransfer, selectedTab == "Transfer");
             }
         }
 
@@ -181,38 +176,33 @@ namespace SemiconductorUi.Helpers
         /// <param name="selectedNav">선택된 네비게이션 이름</param>
         public void UpdateNavButtonStates(string selectedNav)
         {
-            // 기본 색상 (비선택)
-            Color inactiveColor = Color.FromArgb(100, 120, 130);
-            // 선택된 색상 (더 밝게)
-            Color activeColor = Color.FromArgb(130, 150, 160);
-
             if (form.buttonNavOperate != null)
             {
-                form.buttonNavOperate.BackColor = selectedNav == "Operate" ? activeColor : inactiveColor;
+                UiTheme.ApplyToggleButton(form.buttonNavOperate, selectedNav == "Operate");
             }
             if (form.buttonNavRecipe != null)
             {
-                form.buttonNavRecipe.BackColor = selectedNav == "Recipe" ? activeColor : inactiveColor;
+                UiTheme.ApplyToggleButton(form.buttonNavRecipe, selectedNav == "Recipe");
             }
             if (form.buttonNavMaintenance != null)
             {
-                form.buttonNavMaintenance.BackColor = selectedNav == "Maintenance" ? activeColor : inactiveColor;
+                UiTheme.ApplyToggleButton(form.buttonNavMaintenance, selectedNav == "Maintenance");
             }
             if (form.buttonNavConfig != null)
             {
-                form.buttonNavConfig.BackColor = selectedNav == "Config" ? activeColor : inactiveColor;
+                UiTheme.ApplyToggleButton(form.buttonNavConfig, selectedNav == "Config");
             }
             if (form.buttonNavTrend != null)
             {
-                form.buttonNavTrend.BackColor = selectedNav == "Trend" ? activeColor : inactiveColor;
+                UiTheme.ApplyToggleButton(form.buttonNavTrend, selectedNav == "Trend");
             }
             if (form.buttonNavReport != null)
             {
-                form.buttonNavReport.BackColor = selectedNav == "Report" ? activeColor : inactiveColor;
+                UiTheme.ApplyToggleButton(form.buttonNavReport, selectedNav == "Report");
             }
             if (form.buttonNavSystem != null)
             {
-                form.buttonNavSystem.BackColor = selectedNav == "System" ? activeColor : inactiveColor;
+                UiTheme.ApplyToggleButton(form.buttonNavSystem, selectedNav == "System");
             }
         }
 
@@ -463,8 +453,7 @@ namespace SemiconductorUi.Helpers
             }
 
             button.Text = active ? activeText : inactiveText;
-            button.BackColor = active ? Color.FromArgb(100, 120, 130) : Color.FromArgb(100, 120, 130);
-            button.ForeColor = Color.White;
+            UiTheme.StyleSecondaryButton(button);
         }
 
         /// <summary>

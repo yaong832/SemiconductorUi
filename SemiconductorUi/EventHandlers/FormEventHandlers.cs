@@ -86,8 +86,8 @@ namespace SemiconductorUi.EventHandlers
                         if (form.labelEthercatStatus != null)
                         {
                             form.labelEthercatStatus.Text = "EtherCAT: Disconnected";
-                            form.labelEthercatStatus.ForeColor = System.Drawing.Color.FromArgb(40, 40, 40);
-                            form.labelEthercatStatus.BackColor = System.Drawing.Color.FromArgb(170, 170, 180);
+                            form.labelEthercatStatus.ForeColor = Helpers.UiTheme.TextPrimary;
+                            form.labelEthercatStatus.BackColor = Helpers.UiTheme.SurfaceAlt;
                         }
                         
                         form.UpdateServoStatusLabel();
@@ -113,8 +113,8 @@ namespace SemiconductorUi.EventHandlers
                         if (form.labelEthercatStatus != null)
                         {
                             form.labelEthercatStatus.Text = "EtherCAT: Disconnected";
-                            form.labelEthercatStatus.ForeColor = System.Drawing.Color.FromArgb(40, 40, 40);
-                            form.labelEthercatStatus.BackColor = System.Drawing.Color.FromArgb(170, 170, 180);
+                            form.labelEthercatStatus.ForeColor = Helpers.UiTheme.TextPrimary;
+                            form.labelEthercatStatus.BackColor = Helpers.UiTheme.SurfaceAlt;
                         }
                         
                         form.UpdateServoStatusLabel();

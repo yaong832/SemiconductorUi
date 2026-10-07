@@ -56,7 +56,7 @@ namespace SemiconductorUi.EventHandlers
             var textHeight = textSize.Height;
 
             // 테두리 그리기
-            using (var pen = new Pen(Color.Black, 1))
+            using (var pen = new Pen(Helpers.UiTheme.Border, 1))
             {
                 // 상단 선 (텍스트 왼쪽)
                 e.Graphics.DrawLine(pen, 0, textHeight / 2, textX, textHeight / 2);
