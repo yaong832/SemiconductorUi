@@ -59,17 +59,17 @@ namespace SemiconductorUi
         /// <summary>
         /// FOUP 패널 로딩 색상 (연한 녹색)
         /// </summary>
-        public static Color FoupPanelLoadingColor => GetColorSetting("FoupPanelLoadingColor", 180, 220, 180);
+        public static Color FoupPanelLoadingColor => GetColorSetting("FoupPanelLoadingColor", 226, 244, 232);
 
         /// <summary>
         /// FOUP 패널 언로딩 색상 (연한 파란색)
         /// </summary>
-        public static Color FoupPanelUnloadingColor => GetColorSetting("FoupPanelUnloadingColor", 180, 200, 230);
+        public static Color FoupPanelUnloadingColor => GetColorSetting("FoupPanelUnloadingColor", 224, 234, 250);
 
         /// <summary>
         /// FOUP 패널 경고 색상 (연한 주황색)
         /// </summary>
-        public static Color FoupPanelAlertColor => GetColorSetting("FoupPanelAlertColor", 255, 220, 180);
+        public static Color FoupPanelAlertColor => GetColorSetting("FoupPanelAlertColor", 253, 239, 224);
 
         /// <summary>
         /// 다이얼로그 배경 색상 (매우 밝은 회색)
@@ -105,12 +105,12 @@ namespace SemiconductorUi
         /// 웨이퍼 브러시 색상 (MediumBlue RGB 0,0,205 + Alpha 180)
         /// GetColorSetting(key, R, G, B, A?)
         /// </summary>
-        public static Color WaferBrushColor => GetColorSetting("WaferBrushColor", 0, 0, 205, 180);
+        public static Color WaferBrushColor => GetColorSetting("WaferBrushColor", 95, 140, 215, 220);
 
         /// <summary>
         /// 웨이퍼 펜 색상 (MediumBlue RGB 0,0,205 + Alpha 150)
         /// </summary>
-        public static Color WaferPenColor => GetColorSetting("WaferPenColor", 0, 0, 205, 150);
+        public static Color WaferPenColor => GetColorSetting("WaferPenColor", 70, 110, 185, 200);
 
         /// <summary>
         /// 테두리 색상 (밝은 회색)

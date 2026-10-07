@@ -147,6 +147,60 @@ namespace SemiconductorUi.Helpers
             }
 
             ApplyEquipmentCanvasStyle();
+            ApplyControlPanelTheme();
+        }
+
+        /// <summary>
+        /// 오른쪽 제어 패널 버튼과 그룹 박스를 밝은 톤으로 맞춥니다.
+        /// 공정 시작은 주 동작(파랑), 긴급 정지는 위험(빨강), 나머지는 보조 버튼입니다.
+        /// </summary>
+        private void ApplyControlPanelTheme()
+        {
+            UiTheme.StylePrimaryButton(form.buttonStart);
+            UiTheme.StyleDangerButton(form.buttonStop);
+            foreach (var button in new[]
+            {
+                form.buttonPause, form.buttonResetAlarm, form.buttonResetProcess, form.buttonEquipmentControl,
+                form.buttonToggleFoupMount, form.buttonWaferLoading, form.buttonWaferUnloading, form.buttonApplyRecipe
+            })
+            {
+                UiTheme.StyleSecondaryButton(button);
+            }
+
+            foreach (var button in new[]
+            {
+                form.buttonNavOperate, form.buttonNavRecipe, form.buttonNavMaintenance, form.buttonNavConfig,
+                form.buttonNavTrend, form.buttonNavReport, form.buttonNavSystem
+            })
+            {
+                UiTheme.StyleSecondaryButton(button);
+            }
+            form.UpdateTabButtonStates("Main");
+
+            foreach (var groupBox in new[] { form.groupBoxControlButtons, form.groupBoxFoupReady, form.groupBoxRecipe })
+            {
+                if (groupBox != null)
+                {
+                    groupBox.ForeColor = UiTheme.TextSecondary;
+                }
+            }
+
+            foreach (Control control in new Control[]
+            {
+                form.flowHeaderLogin, form.labelLoginStatus, form.labelEthercatStatus, form.labelServoStatus,
+                form.panelHeaderStatusSummary, form.flowHeaderStatus, form.flowAlarmIndicator, form.labelHeaderCurrentTime,
+                form.panelMainProcess, form.panelEquipment, form.panelPmStatus,
+                form.panelSummaryPMA, form.panelSummaryPMB, form.panelSummaryPMC,
+                form.panelFoupStatusA, form.panelFoupStatusB, form.panelControlPanel, form.panelAlarmArea
+            })
+            {
+                UiTheme.ApplySoftBorder(control);
+            }
+
+            if (form.labelControlTitle != null)
+            {
+                form.labelControlTitle.ForeColor = UiTheme.TextPrimary;
+            }
         }
 
         /// <summary>
@@ -185,9 +239,7 @@ namespace SemiconductorUi.Helpers
                 Margin = new Padding(0, 0, 0, 10),
                 FlatStyle = FlatStyle.Flat,
             };
-            form.buttonMountFoupA.FlatAppearance.BorderSize = 0;
-            form.buttonMountFoupA.BackColor = Color.FromArgb(200, 220, 240);  // 밝은 파란색 계열
-            form.buttonMountFoupA.ForeColor = Color.FromArgb(40, 40, 40);  // 어두운 회색 텍스트
+            UiTheme.StyleSecondaryButton(form.buttonMountFoupA);
             form.buttonMountFoupA.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
             form.buttonMountFoupA.Click += (s, e) =>
             {
@@ -206,9 +258,7 @@ namespace SemiconductorUi.Helpers
                 Margin = new Padding(0, 0, 0, 10),
                 FlatStyle = FlatStyle.Flat,
             };
-            form.buttonMountFoupB.FlatAppearance.BorderSize = 0;
-            form.buttonMountFoupB.BackColor = Color.FromArgb(200, 220, 240);  // 밝은 파란색 계열
-            form.buttonMountFoupB.ForeColor = Color.FromArgb(40, 40, 40);  // 어두운 회색 텍스트
+            UiTheme.StyleSecondaryButton(form.buttonMountFoupB);
             form.buttonMountFoupB.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
             form.buttonMountFoupB.Click += (s, e) =>
             {

@@ -125,6 +125,7 @@
     <Compile Include="Helpers\ChamberHardwareHelper.cs" />
     <Compile Include="Helpers\ChamberStatusTexts.cs" />
     <Compile Include="Helpers\EquipmentCanvasStyler.cs" />
+    <Compile Include="Helpers\UiTheme.cs" />
     <Compile Include="Helpers\Form1UiUpdater.cs" />
     <Compile Include="Helpers\Form1Initializer.cs" />
     <Compile Include="Helpers\Form1Configurator.cs" />
