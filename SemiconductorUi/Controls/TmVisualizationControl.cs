@@ -1,7 +1,9 @@
 using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Windows.Forms;
+using SemiconductorUi.Helpers;
 
 namespace SemiconductorUi.Controls
 {
@@ -16,6 +18,16 @@ namespace SemiconductorUi.Controls
         private float targetAngleRad = (float)(Math.PI / 2);
         private readonly Timer animationTimer;
         private bool isSimulationMode = true; // 기본값: 시뮬레이션 모드
+        private readonly Dictionary<EquipmentRegion, PointF> anchors = new Dictionary<EquipmentRegion, PointF>();
+        private PointF hubCenter;
+        private bool hasLayout;
+
+        private const float HubRadius = 26f;
+        private const float TransferChamberRadius = 64f;
+        private const float CorridorWidth = 46f;
+        private const float RetractedLength = 42f;
+        private const float RetractedFactor = 0.7f;
+        private const float ExtendedFactor = 1.3f;
 
         public TmVisualizationControl()
         {
@@ -51,167 +63,171 @@ namespace SemiconductorUi.Controls
             Invalidate();
         }
 
+        /// <summary>
+        /// 캔버스 배치 결과를 받아 TM 중심과 각 모듈의 블레이드 목표점을 갱신한다.
+        /// 좌표는 이 컨트롤의 클라이언트 좌표 기준이다.
+        /// </summary>
+        public void SetLayout(PointF center, IDictionary<EquipmentRegion, PointF> moduleAnchors)
+        {
+            hubCenter = center;
+            anchors.Clear();
+            if (moduleAnchors != null)
+            {
+                foreach (var pair in moduleAnchors)
+                {
+                    anchors[pair.Key] = pair.Value;
+                }
+            }
+
+            hasLayout = true;
+            targetAngleRad = GetBladeAngle(targetRegion, isSimulationMode);
+            currentAngleRad = targetAngleRad;
+            Invalidate();
+        }
+
         protected override void OnPaint(PaintEventArgs e)
         {
             base.OnPaint(e);
 
             var g = e.Graphics;
             g.SmoothingMode = SmoothingMode.AntiAlias;
-            
-            // 투명 배경인 경우 부모 컨트롤의 배경을 그리기
-            if (BackColor == Color.Transparent)
-            {
-                // 부모 컨트롤의 배경색 사용
-                if (Parent != null)
-                {
-                    using (var brush = new SolidBrush(Parent.BackColor))
-                    {
-                        g.FillRectangle(brush, ClientRectangle);
-                    }
-                }
-            }
-            else
-            {
-                g.Clear(BackColor);
-            }
+            g.Clear(Parent?.BackColor ?? EquipmentCanvasStyler.CanvasBack);
 
-            var center = new PointF(ClientSize.Width / 2f, ClientSize.Height / 2f);
-            // TM 본체 크기는 고정 (컨트롤 크기와 무관하게 일정한 크기 유지)
-            // 컨트롤이 크게 설정되어도 TM 본체는 적절한 크기로 표시
-            var radius = 40f; // TM 본체 반지름 고정 (80x80 크기)
-            var bodyRect = new RectangleF(center.X - radius, center.Y - radius, radius * 2f, radius * 2f);
+            var center = hasLayout ? hubCenter : new PointF(ClientSize.Width / 2f, ClientSize.Height / 2f);
 
-            // 블레이드를 먼저 그리기 (TM 본체 뒤에 표시되도록)
-            DrawBlade(g, center, radius);
-
-            // 웨이퍼를 블레이드 위에 그리기 (carryingWafer가 true일 때)
+            DrawCorridors(g, center);
+            DrawTransferChamber(g, center);
+            DrawBlade(g, center);
             if (carryingWafer)
             {
-                DrawWaferOnBlade(g, center, radius);
+                DrawWaferOnBlade(g, center);
+            }
+            DrawHub(g, center);
+        }
+
+        private void DrawCorridors(Graphics g, PointF center)
+        {
+            if (anchors.Count == 0)
+            {
+                return;
             }
 
-            // TM 본체 (원형) - 나중에 그리기 (블레이드 위에 표시되도록)
-            // 밝은 색상으로 변경
-            using (var brush = new LinearGradientBrush(bodyRect,
-                       Color.FromArgb(120, 180, 255),  // 더 밝은 파란색
-                       Color.FromArgb(60, 120, 220),   // 더 밝은 파란색
-                       LinearGradientMode.Vertical))
-            using (var outline = new Pen(Color.FromArgb(255, 255, 255), 2.5f))  // 더 밝은 흰색 테두리
+            using (var edgePen = new Pen(EquipmentCanvasStyler.CorridorEdge, CorridorWidth + 2f) { StartCap = LineCap.Flat, EndCap = LineCap.Flat })
+            using (var fillPen = new Pen(EquipmentCanvasStyler.CorridorFill, CorridorWidth) { StartCap = LineCap.Flat, EndCap = LineCap.Flat })
             {
-                g.FillEllipse(brush, bodyRect);
-                g.DrawEllipse(outline, bodyRect);
+                foreach (var anchor in anchors.Values)
+                {
+                    g.DrawLine(edgePen, center, anchor);
+                }
+                foreach (var anchor in anchors.Values)
+                {
+                    g.DrawLine(fillPen, center, anchor);
+                }
             }
         }
 
-        private void DrawBlade(Graphics g, PointF center, float radius)
+        private static void DrawTransferChamber(Graphics g, PointF center)
         {
-            var angleRad = currentAngleRad;
-            var minSide = Math.Min(ClientSize.Width, ClientSize.Height);
+            // 팔각형 이송 챔버
+            var points = new PointF[8];
+            for (int i = 0; i < 8; i++)
+            {
+                double angle = Math.PI / 8 + i * Math.PI / 4;
+                points[i] = new PointF(
+                    center.X + TransferChamberRadius * (float)Math.Cos(angle),
+                    center.Y + TransferChamberRadius * (float)Math.Sin(angle));
+            }
 
-            // 블레이드 길이를 확대/축소하는 방식으로 변경
-            // extensionFactor에 따라 길이가 변함
-            // TM 본체 크기는 고정이므로, 블레이드 길이도 적절한 고정값 사용
-            var baseLength = radius * 1.2f;  // 기본 길이 (TM 본체 근처, 48px)
-            var maxLength = 180f;  // 최대 길이 (전진 시, 고정값으로 적절한 길이 유지)
-            
-            // extensionFactor 0.4~1.6을 0~1로 정규화
-            var norm = (currentExtensionFactor - 0.4f) / (1.6f - 0.4f);
+            using (var fill = new SolidBrush(EquipmentCanvasStyler.TransferChamberFill))
+            using (var pen = new Pen(EquipmentCanvasStyler.TransferChamberEdge, 1.5f))
+            {
+                g.FillPolygon(fill, points);
+                g.DrawPolygon(pen, points);
+            }
+        }
+
+        private void DrawHub(Graphics g, PointF center)
+        {
+            var hubRect = new RectangleF(center.X - HubRadius, center.Y - HubRadius, HubRadius * 2f, HubRadius * 2f);
+            using (var brush = new LinearGradientBrush(hubRect, Color.FromArgb(92, 108, 132), Color.FromArgb(52, 63, 80), LinearGradientMode.Vertical))
+            using (var outline = new Pen(Color.FromArgb(235, 239, 245), 2f))
+            {
+                g.FillEllipse(brush, hubRect);
+                g.DrawEllipse(outline, hubRect);
+            }
+
+            using (var font = new Font("Segoe UI", 9F, FontStyle.Bold))
+            {
+                TextRenderer.DrawText(g, "TM", font, Rectangle.Round(hubRect), Color.White,
+                    TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding);
+            }
+        }
+
+        /// <summary>
+        /// extensionFactor(0.55 대기 ~ 1.3 최대 전진)를 블레이드 길이로 바꾼다.
+        /// 최대 전진 시 블레이드 끝(웨이퍼 중심)이 목표 모듈의 스테이지 중심에 닿는다.
+        /// </summary>
+        private float GetBladeLength()
+        {
+            float reach = RetractedLength + 120f;
+            if (anchors.TryGetValue(targetRegion, out var anchor))
+            {
+                var center = hubCenter;
+                reach = (float)Math.Sqrt((anchor.X - center.X) * (anchor.X - center.X) + (anchor.Y - center.Y) * (anchor.Y - center.Y));
+            }
+
+            var norm = (currentExtensionFactor - RetractedFactor) / (ExtendedFactor - RetractedFactor);
             norm = Math.Max(0f, Math.Min(1f, norm));
-            
-            // 전진할수록 길이가 길어짐
-            var bladeLength = baseLength + norm * (maxLength - baseLength);
-            var bladeWidth = 35f + norm * 10f;  // 전진할수록 약간 더 두껍게
+            return RetractedLength + norm * Math.Max(0f, reach - RetractedLength);
+        }
 
-            // 블레이드 시작 위치 (TM 중심에서 시작)
-            var bladeStart = center;
-
-            // 블레이드 방향 벡터
-            var dx = (float)Math.Cos(angleRad);
-            var dy = (float)Math.Sin(angleRad);
-
-            // 블레이드 끝 위치
-            var bladeEnd = new PointF(
-                bladeStart.X + bladeLength * dx,
-                bladeStart.Y + bladeLength * dy);
-
-            // 블레이드 폭 방향(수직 벡터)
+        private void DrawBlade(Graphics g, PointF center)
+        {
+            var bladeLength = GetBladeLength();
+            var dx = (float)Math.Cos(currentAngleRad);
+            var dy = (float)Math.Sin(currentAngleRad);
             var px = -dy;
             var py = dx;
 
-            var halfWidth = bladeWidth / 2f;
-
-            // 직사각형 블레이드의 네 꼭짓점 계산 (TM 중심에서 시작)
-            var p1 = new PointF(
-                bladeEnd.X + px * halfWidth,
-                bladeEnd.Y + py * halfWidth);
-            var p2 = new PointF(
-                bladeEnd.X - px * halfWidth,
-                bladeEnd.Y - py * halfWidth);
-            var p3 = new PointF(
-                bladeStart.X - px * halfWidth,
-                bladeStart.Y - py * halfWidth);
-            var p4 = new PointF(
-                bladeStart.X + px * halfWidth,
-                bladeStart.Y + py * halfWidth);
-
-            using (var path = new GraphicsPath())
+            // 팔(arm)과 끝단(end effector)
+            var armEnd = new PointF(center.X + (bladeLength - 18f) * dx, center.Y + (bladeLength - 18f) * dy);
+            using (var armPen = new Pen(Color.FromArgb(150, 160, 176), 12f) { StartCap = LineCap.Round, EndCap = LineCap.Round })
             {
-                path.AddPolygon(new[] { p1, p2, p3, p4 });
+                g.DrawLine(armPen, center, armEnd);
+            }
 
-                // 블레이드 그라디언트 (전진 방향으로)
-                var bladeRect = new RectangleF(
-                    Math.Min(bladeStart.X, bladeEnd.X) - halfWidth,
-                    Math.Min(bladeStart.Y, bladeEnd.Y) - halfWidth,
-                    bladeLength + bladeWidth,
-                    bladeLength + bladeWidth);
-                using (var bladeBrush = new LinearGradientBrush(
-                           bladeRect,
-                           Color.FromArgb(255, 255, 255),  // 밝은 흰색
-                           Color.FromArgb(200, 200, 220),  // 밝은 회색
-                           LinearGradientMode.ForwardDiagonal))
-                using (var outlinePen = new Pen(Color.FromArgb(150, 150, 170), 2.5f))  // 더 밝은 테두리
-                {
-                    g.FillPath(bladeBrush, path);
-                    g.DrawPath(outlinePen, path);
-                }
+            const float halfWidth = 13f;
+            const float forkLength = 34f;
+            var tip = new PointF(center.X + (bladeLength + 12f) * dx, center.Y + (bladeLength + 12f) * dy);
+            var root = new PointF(tip.X - forkLength * dx, tip.Y - forkLength * dy);
+            var poly = new[]
+            {
+                new PointF(root.X + px * halfWidth, root.Y + py * halfWidth),
+                new PointF(tip.X + px * halfWidth, tip.Y + py * halfWidth),
+                new PointF(tip.X - px * halfWidth, tip.Y - py * halfWidth),
+                new PointF(root.X - px * halfWidth, root.Y - py * halfWidth)
+            };
+
+            using (var fill = new SolidBrush(Color.FromArgb(244, 246, 250)))
+            using (var pen = new Pen(Color.FromArgb(120, 131, 148), 1.5f))
+            {
+                g.FillPolygon(fill, poly);
+                g.DrawPolygon(pen, poly);
             }
         }
 
-        private void DrawWaferOnBlade(Graphics g, PointF center, float radius)
+        private void DrawWaferOnBlade(Graphics g, PointF center)
         {
-            var angleRad = currentAngleRad;
-            var minSide = Math.Min(ClientSize.Width, ClientSize.Height);
-
-            // 블레이드 길이 계산 (DrawBlade와 동일한 로직)
-            var baseLength = radius * 1.2f;
-            var maxLength = 180f;
-            var norm = (currentExtensionFactor - 0.4f) / (1.6f - 0.4f);
-            norm = Math.Max(0f, Math.Min(1f, norm));
-            var bladeLength = baseLength + norm * (maxLength - baseLength);
-
-            // 블레이드 방향 벡터
-            var dx = (float)Math.Cos(angleRad);
-            var dy = (float)Math.Sin(angleRad);
-
-            // 웨이퍼 위치: 블레이드 끝부분 (TM 중심에서 블레이드 길이만큼 떨어진 위치)
+            var bladeLength = GetBladeLength();
             var waferCenter = new PointF(
-                center.X + bladeLength * dx,
-                center.Y + bladeLength * dy);
+                center.X + bladeLength * (float)Math.Cos(currentAngleRad),
+                center.Y + bladeLength * (float)Math.Sin(currentAngleRad));
 
-            // 웨이퍼 크기 (Chamber에서 사용하는 크기와 유사하게)
-            float waferRadius = 20f; // 웨이퍼 반지름
-            var waferRect = new RectangleF(
-                waferCenter.X - waferRadius,
-                waferCenter.Y - waferRadius,
-                waferRadius * 2f,
-                waferRadius * 2f);
-
-            // Chamber에서 사용하는 웨이퍼 스타일로 그리기
-            // Color.FromArgb(200, 220, 255)와 유사한 색상 사용
+            const float waferRadius = 22f;
+            var waferRect = new RectangleF(waferCenter.X - waferRadius, waferCenter.Y - waferRadius, waferRadius * 2f, waferRadius * 2f);
             using (var waferBrush = new SolidBrush(waferColor))
-            using (var waferPen = new Pen(Color.FromArgb(180, 80, 80, 80), 1.2f))
+            using (var waferPen = new Pen(Color.FromArgb(160, 60, 70, 85), 1.2f))
             {
-                g.SmoothingMode = SmoothingMode.AntiAlias;
                 g.FillEllipse(waferBrush, waferRect);
                 g.DrawEllipse(waferPen, waferRect);
             }
@@ -296,8 +312,14 @@ namespace SemiconductorUi.Controls
             }
         }
 
-        private static float GetBladeAngle(EquipmentRegion region, bool isSimulation = true)
+        private float GetBladeAngle(EquipmentRegion region, bool isSimulation = true)
         {
+            // 배치가 정해졌으면 실제 모듈 위치를 향한다.
+            if (hasLayout && anchors.TryGetValue(region, out var anchor))
+            {
+                return (float)Math.Atan2(anchor.Y - hubCenter.Y, anchor.X - hubCenter.X);
+            }
+
             switch (region)
             {
                 case EquipmentRegion.ChamberA:
@@ -329,18 +351,6 @@ namespace SemiconductorUi.Controls
                     }
                     return (float)(Math.PI / 2);       // 하드웨어 모드: down by default
             }
-        }
-
-        private void DrawLabel(Graphics g, PointF center)
-        {
-            var textRect = new RectangleF(center.X - 40, center.Y - 18, 80, 36);
-            TextRenderer.DrawText(
-                g,
-                "TM",
-                new Font(Font.FontFamily, 12f, FontStyle.Bold),
-                Rectangle.Round(textRect),
-                ForeColor,
-                TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
         }
 
         private void AnimationTimer_Tick(object sender, EventArgs e)

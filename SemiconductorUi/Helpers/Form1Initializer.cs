@@ -33,6 +33,8 @@ namespace SemiconductorUi.Helpers
         {
             if (form.panelEquipmentCanvas == null) return;
 
+            form.panelEquipmentCanvas.BackColor = EquipmentCanvasStyler.CanvasBack;
+
             // DoubleBuffered 설정 (리플렉션 사용)
             var doubleBufferedProperty = typeof(Control).GetProperty("DoubleBuffered",
                 System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
@@ -48,10 +50,7 @@ namespace SemiconductorUi.Helpers
                 form.tmVisualizationControl.BackColor = Color.Transparent; // 투명 배경
                 form.tmVisualizationControl.Location = new Point(0, 0);
                 form.tmVisualizationControl.Name = "tmVisualizationControl";
-                // 블레이드가 잘리지 않도록 캔버스보다 크게 설정 (충분한 여유 공간)
-                var canvasSize = form.panelEquipmentCanvas.ClientSize;
-                int tmControlSize = Math.Max(canvasSize.Width, canvasSize.Height) + 300; // 캔버스보다 300px 더 크게
-                form.tmVisualizationControl.Size = new Size(tmControlSize, tmControlSize);
+                form.tmVisualizationControl.Size = form.panelEquipmentCanvas.ClientSize;
                 form.tmVisualizationControl.TabIndex = 0;
                 form.panelEquipmentCanvas.Controls.Add(form.tmVisualizationControl);
                 form.tmVisualizationControl.SendToBack(); // FOUP/Chamber 뒤로 보내기 (가리지 않도록)
@@ -70,6 +69,7 @@ namespace SemiconductorUi.Helpers
                 form.foupVisualizationControlA.Size = new Size(176, 86);
                 form.foupVisualizationControlA.TabIndex = 0;
                 form.foupVisualizationControlA.Title = "FOUP A";
+                form.foupVisualizationControlA.Capacity = AppSettings.MaxFoupCapacity;
                 form.panelFoupA.Controls.Add(form.foupVisualizationControlA);
             }
 
@@ -83,6 +83,7 @@ namespace SemiconductorUi.Helpers
                 form.foupVisualizationControlB.Size = new Size(176, 86);
                 form.foupVisualizationControlB.TabIndex = 0;
                 form.foupVisualizationControlB.Title = "FOUP B";
+                form.foupVisualizationControlB.Capacity = AppSettings.MaxFoupCapacity;
                 form.panelFoupB.Controls.Add(form.foupVisualizationControlB);
             }
 
@@ -144,6 +145,78 @@ namespace SemiconductorUi.Helpers
                 form.panelEquipmentCanvas.Controls.Add(form.panelMainLamp);
                 form.panelMainLamp.BringToFront();
             }
+
+            ApplyEquipmentCanvasStyle();
+            ApplyControlPanelTheme();
+        }
+
+        /// <summary>
+        /// 오른쪽 제어 패널 버튼과 그룹 박스를 밝은 톤으로 맞춥니다.
+        /// 공정 시작은 주 동작(파랑), 긴급 정지는 위험(빨강), 나머지는 보조 버튼입니다.
+        /// </summary>
+        private void ApplyControlPanelTheme()
+        {
+            UiTheme.StylePrimaryButton(form.buttonStart);
+            UiTheme.StyleDangerButton(form.buttonStop);
+            foreach (var button in new[]
+            {
+                form.buttonPause, form.buttonResetAlarm, form.buttonResetProcess, form.buttonEquipmentControl,
+                form.buttonToggleFoupMount, form.buttonWaferLoading, form.buttonWaferUnloading, form.buttonApplyRecipe
+            })
+            {
+                UiTheme.StyleSecondaryButton(button);
+            }
+
+            foreach (var button in new[]
+            {
+                form.buttonNavOperate, form.buttonNavRecipe, form.buttonNavMaintenance, form.buttonNavConfig,
+                form.buttonNavTrend, form.buttonNavReport, form.buttonNavSystem
+            })
+            {
+                UiTheme.StyleSecondaryButton(button);
+            }
+            form.UpdateTabButtonStates("Main");
+
+            foreach (var groupBox in new[] { form.groupBoxControlButtons, form.groupBoxFoupReady, form.groupBoxRecipe })
+            {
+                if (groupBox != null)
+                {
+                    groupBox.ForeColor = UiTheme.TextSecondary;
+                }
+            }
+
+            foreach (Control control in new Control[]
+            {
+                form.flowHeaderLogin, form.labelLoginStatus, form.labelEthercatStatus, form.labelServoStatus,
+                form.panelHeaderStatusSummary, form.flowHeaderStatus, form.flowAlarmIndicator, form.labelHeaderCurrentTime,
+                form.panelMainProcess, form.panelEquipment, form.panelPmStatus,
+                form.panelSummaryPMA, form.panelSummaryPMB, form.panelSummaryPMC,
+                form.panelFoupStatusA, form.panelFoupStatusB, form.panelControlPanel, form.panelAlarmArea
+            })
+            {
+                UiTheme.ApplySoftBorder(control);
+            }
+
+            if (form.labelControlTitle != null)
+            {
+                form.labelControlTitle.ForeColor = UiTheme.TextPrimary;
+            }
+        }
+
+        /// <summary>
+        /// 시뮬레이터 캔버스의 챔버/FOUP/상태 램프를 카드 스타일로 정리합니다.
+        /// 슬릿 밸브는 각 챔버에서 TM을 향한 변에 표시됩니다.
+        /// </summary>
+        private void ApplyEquipmentCanvasStyle()
+        {
+            EquipmentCanvasStyler.ApplyChamberCard(form.panelChamberA, form.labelChamberA, form.panelDoorChamberA, form.panelWaferChamberA, form.panelLampChamberA, AnchorStyles.Right);
+            EquipmentCanvasStyler.ApplyChamberCard(form.panelChamberB, form.labelChamberB, form.panelDoorChamberB, form.panelWaferChamberB, form.panelLampChamberB, AnchorStyles.Bottom);
+            EquipmentCanvasStyler.ApplyChamberCard(form.panelChamberC, form.labelChamberC, form.panelDoorChamberC, form.panelWaferChamberC, form.panelLampChamberC, AnchorStyles.Left);
+            EquipmentCanvasStyler.ApplyFoupHost(form.panelFoupA);
+            EquipmentCanvasStyler.ApplyFoupHost(form.panelFoupB);
+            EquipmentCanvasStyler.ApplyMainLampStyle(form.panelMainLamp, form.labelMainLamp,
+                form.panelMainLampRed, form.panelMainLampYellow, form.panelMainLampGreen,
+                form.labelMainLampRed, form.labelMainLampYellow, form.labelMainLampGreen);
         }
 
         /// <summary>
@@ -166,9 +239,7 @@ namespace SemiconductorUi.Helpers
                 Margin = new Padding(0, 0, 0, 10),
                 FlatStyle = FlatStyle.Flat,
             };
-            form.buttonMountFoupA.FlatAppearance.BorderSize = 0;
-            form.buttonMountFoupA.BackColor = Color.FromArgb(200, 220, 240);  // 밝은 파란색 계열
-            form.buttonMountFoupA.ForeColor = Color.FromArgb(40, 40, 40);  // 어두운 회색 텍스트
+            UiTheme.StyleSecondaryButton(form.buttonMountFoupA);
             form.buttonMountFoupA.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
             form.buttonMountFoupA.Click += (s, e) =>
             {
@@ -187,9 +258,7 @@ namespace SemiconductorUi.Helpers
                 Margin = new Padding(0, 0, 0, 10),
                 FlatStyle = FlatStyle.Flat,
             };
-            form.buttonMountFoupB.FlatAppearance.BorderSize = 0;
-            form.buttonMountFoupB.BackColor = Color.FromArgb(200, 220, 240);  // 밝은 파란색 계열
-            form.buttonMountFoupB.ForeColor = Color.FromArgb(40, 40, 40);  // 어두운 회색 텍스트
+            UiTheme.StyleSecondaryButton(form.buttonMountFoupB);
             form.buttonMountFoupB.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
             form.buttonMountFoupB.Click += (s, e) =>
             {

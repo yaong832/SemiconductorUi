@@ -4501,8 +4501,7 @@ namespace SemiconductorUi
             }
 
             button.Text = active ? activeText : inactiveText;
-            button.BackColor = active ? Color.FromArgb(100, 120, 130) : Color.FromArgb(100, 120, 130);
-            button.ForeColor = Color.White;
+            UiTheme.StyleSecondaryButton(button);
         }
 
         internal void UpdateSimulationUi()
@@ -5896,13 +5895,13 @@ namespace SemiconductorUi
             if (labelHeaderEventLevel != null)
             {
                 labelHeaderEventLevel.Text = "";
-                labelHeaderEventLevel.BackColor = Color.FromArgb(96, 125, 139);
+                labelHeaderEventLevel.BackColor = UiTheme.Border;
                 labelHeaderEventLevel.Invalidate();
                 labelHeaderEventLevel.Update();
             }
             if (panelHeaderMessageAccent != null)
             {
-                panelHeaderMessageAccent.BackColor = Color.FromArgb(96, 125, 139);
+                panelHeaderMessageAccent.BackColor = UiTheme.Border;
                 panelHeaderMessageAccent.Invalidate();
                 panelHeaderMessageAccent.Update();
             }
@@ -6208,8 +6207,8 @@ namespace SemiconductorUi
                     if (labelEthercatStatus != null)
                     {
                         labelEthercatStatus.Text = "EtherCAT: Connected";
-                        labelEthercatStatus.ForeColor = Color.FromArgb(76, 175, 80);
-                        labelEthercatStatus.BackColor = Color.FromArgb(170, 170, 180);
+                        labelEthercatStatus.ForeColor = UiTheme.Success;
+                        labelEthercatStatus.BackColor = UiTheme.SurfaceAlt;
                     }
                     
                     // 연결 성공 시 실제 장비 상태를 읽어서 UI에 반영
@@ -6255,8 +6254,8 @@ namespace SemiconductorUi
                     if (labelEthercatStatus != null)
                     {
                         labelEthercatStatus.Text = "EtherCAT: Connection Failed";
-                        labelEthercatStatus.ForeColor = Color.FromArgb(244, 67, 54);
-                        labelEthercatStatus.BackColor = Color.FromArgb(170, 170, 180);
+                        labelEthercatStatus.ForeColor = UiTheme.Danger;
+                        labelEthercatStatus.BackColor = UiTheme.SurfaceAlt;
                     }
                     MessageBox.Show("EtherCAT 연결에 실패했습니다.\n시뮬레이션 모드로 동작합니다.", "연결 오류", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 }
@@ -6266,8 +6265,8 @@ namespace SemiconductorUi
                 if (labelEthercatStatus != null)
                 {
                     labelEthercatStatus.Text = "EtherCAT: Error";
-                    labelEthercatStatus.ForeColor = Color.FromArgb(244, 67, 54);
-                    labelEthercatStatus.BackColor = Color.FromArgb(170, 170, 180);
+                    labelEthercatStatus.ForeColor = UiTheme.Danger;
+                    labelEthercatStatus.BackColor = UiTheme.SurfaceAlt;
                 }
                 AddLogMessage($"EtherCAT 연결 오류: {ex.Message}", "ERROR");
                 MessageBox.Show($"EtherCAT 연결 중 오류가 발생했습니다: {ex.Message}\n시뮬레이션 모드로 동작합니다.", "연결 오류", MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -6286,8 +6285,8 @@ namespace SemiconductorUi
             if (labelEthercatStatus != null)
             {
                 labelEthercatStatus.Text = "EtherCAT: Disconnected";
-                labelEthercatStatus.ForeColor = Color.FromArgb(40, 40, 40);
-                labelEthercatStatus.BackColor = Color.FromArgb(170, 170, 180);
+                labelEthercatStatus.ForeColor = UiTheme.TextPrimary;
+                labelEthercatStatus.BackColor = UiTheme.SurfaceAlt;
             }
             
             // 서보 상태 라벨 업데이트
@@ -6500,7 +6499,7 @@ namespace SemiconductorUi
                             AddLogMessage("원점복귀 시작 - 1단계: 상하(Axis1) 원점복귀", "INFO");
                         }
                         labelServoStatus.Text = "서보: Homing(1/2)...";
-                        labelServoStatus.ForeColor = Color.Yellow;
+                        labelServoStatus.ForeColor = UiTheme.Warning;
                     }));
 
                     // 1단계: 상하(Axis1) 원점복귀

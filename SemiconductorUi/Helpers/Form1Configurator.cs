@@ -40,69 +40,87 @@ namespace SemiconductorUi.Helpers
                 return;
             }
 
-            // TM 컨트롤 위치 및 크기 설정 (캔버스 중앙, 블레이드가 잘리지 않도록 충분히 크게)
-            // TM 본체 크기는 고정 (radius = 40f, 지름 = 80px)
-            const int tmBodySize = 80; // TM 본체 실제 크기 (챔버 배치에 사용)
-            int tmControlSize = 200; // TM 컨트롤 크기 (기본값)
-            
+            // 배치: Chamber B는 위, A/C는 좌우, FOUP A/B는 아래 양쪽. TM은 그 사이 중앙.
+            const int margin = 14;
+            const int tmClearance = 70; // TM 중심에서 모듈 가장자리까지 최소 거리 (팔각형 이송 챔버 + 여유)
+            int chamberW = EquipmentCanvasStyler.ChamberWidth;
+            int chamberH = EquipmentCanvasStyler.ChamberHeight;
+            int foupW = EquipmentCanvasStyler.FoupWidth;
+            int foupH = EquipmentCanvasStyler.FoupHeight;
+
+            float cx = canvasSize.Width / 2f;
+            int topY = margin;
+            int foupY = Math.Max(topY + chamberH + 2 * tmClearance, canvasSize.Height - margin - foupH);
+            float cy = (topY + chamberH + foupY) / 2f;
+
+            // 좌우 챔버: 화면 폭이 허락하는 만큼 벌리되, 아래 FOUP과 겹치지 않게 한다.
+            float sideDistance = Math.Max(tmClearance + chamberW / 2f, (cy - topY) * 1.25f);
+            float maxSideDistance = cx - margin - chamberW / 2f;
+            float foupOffset = Math.Max(foupW / 2f + 14f, Math.Min(sideDistance * 0.62f, foupW / 2f + 60f));
+            bool sideOverlapsFoupRows = cy + chamberH / 2f + 10f > foupY;
+            if (sideOverlapsFoupRows)
+            {
+                sideDistance = Math.Max(sideDistance, foupOffset + foupW / 2f + 16f + chamberW / 2f);
+            }
+            sideDistance = Math.Min(sideDistance, Math.Max(tmClearance + chamberW / 2f, maxSideDistance));
+
+            PlaceCentered(form.panelChamberB, new PointF(cx, topY + chamberH / 2f));
+            PlaceCentered(form.panelChamberA, new PointF(cx - sideDistance, cy));
+            PlaceCentered(form.panelChamberC, new PointF(cx + sideDistance, cy));
+            PlaceCentered(form.panelFoupA, new PointF(cx - foupOffset, foupY + foupH / 2f));
+            PlaceCentered(form.panelFoupB, new PointF(cx + foupOffset, foupY + foupH / 2f));
+
+            if (form.panelMainLamp != null)
+            {
+                form.panelMainLamp.Location = new Point(margin, margin);
+                form.panelMainLamp.BringToFront();
+            }
+
             if (form.tmVisualizationControl != null)
             {
-                // 블레이드가 잘리지 않도록 캔버스보다 크게 설정
-                tmControlSize = Math.Max(canvasSize.Width, canvasSize.Height) + 300; // 캔버스보다 300px 더 크게
-                form.tmVisualizationControl.Size = new Size(tmControlSize, tmControlSize);
-                
-                // TM 컨트롤을 중앙에 배치 (컨트롤 크기가 캔버스보다 크므로 음수 위치 가능)
-                var tmPosition = new Point(
-                    (canvasSize.Width - tmControlSize) / 2,
-                    (canvasSize.Height - tmControlSize) / 2);
-                form.tmVisualizationControl.Location = tmPosition;
-                
-                // Z-order: TM을 뒤로 보내서 FOUP/Chamber가 위에 표시되도록
+                form.tmVisualizationControl.Location = Point.Empty;
+                form.tmVisualizationControl.Size = canvasSize;
                 form.tmVisualizationControl.SendToBack();
+
+                var anchors = new System.Collections.Generic.Dictionary<EquipmentRegion, PointF>();
+                AddWellAnchor(anchors, EquipmentRegion.ChamberA, form.panelChamberA);
+                AddWellAnchor(anchors, EquipmentRegion.ChamberB, form.panelChamberB);
+                AddWellAnchor(anchors, EquipmentRegion.ChamberC, form.panelChamberC);
+                AddCenterAnchor(anchors, EquipmentRegion.FoupA, form.panelFoupA);
+                AddCenterAnchor(anchors, EquipmentRegion.FoupB, form.panelFoupB);
+                form.tmVisualizationControl.SetLayout(new PointF(cx, cy), anchors);
             }
 
-            // TM 중심 위치
-            var tmCenter = new PointF(
-                canvasSize.Width / 2f,
-                canvasSize.Height / 2f);
-
-            // Chamber 간격 조정 (TM 본체 크기 기준으로 적절한 간격)
-            int chamberGap = 120; // 챔버와 TM 본체 사이 간격 (충분한 간격)
-
-            if (form.panelChamberB != null)
-            {
-                var topPos = new Point(
-                    (int)(tmCenter.X - form.panelChamberB.Width / 2f),
-                    (int)(tmCenter.Y - tmBodySize / 2f - form.panelChamberB.Height - chamberGap));
-                form.panelChamberB.Location = ClampToCanvas(topPos, form.panelChamberB);
-            }
-
-            if (form.panelChamberA != null)
-            {
-                var leftPos = new Point(
-                    (int)(tmCenter.X - tmBodySize / 2f - form.panelChamberA.Width - chamberGap),
-                    (int)(tmCenter.Y - form.panelChamberA.Height / 2f));
-                form.panelChamberA.Location = ClampToCanvas(leftPos, form.panelChamberA);
-            }
-
-            if (form.panelChamberC != null)
-            {
-                var rightPos = new Point(
-                    (int)(tmCenter.X + tmBodySize / 2f + chamberGap),
-                    (int)(tmCenter.Y - form.panelChamberC.Height / 2f));
-                form.panelChamberC.Location = ClampToCanvas(rightPos, form.panelChamberC);
-            }
-
-            // FOUP 반경 조정 (TM 본체 크기 기준)
-            var radiusBase = tmBodySize * 3.5f; // TM 본체 크기의 3.5배 (더 멀리 배치)
-            var radiusLimit = Math.Min(canvasSize.Width, canvasSize.Height) / 2.0f;
-            var foupRadius = Math.Min(radiusBase, radiusLimit);
-
-            PositionFoupAtAngle(form.panelFoupA, tmCenter, foupRadius, 225f);
-            PositionFoupAtAngle(form.panelFoupB, tmCenter, foupRadius, 315f);
-            
-            // 캔버스 업데이트 (TM 그리기)
             form.panelEquipmentCanvas.Invalidate();
+        }
+
+        private void PlaceCentered(Control control, PointF center)
+        {
+            if (control == null)
+            {
+                return;
+            }
+
+            var desired = new Point(
+                (int)Math.Round(center.X - control.Width / 2f),
+                (int)Math.Round(center.Y - control.Height / 2f));
+            control.Location = ClampToCanvas(desired, control);
+        }
+
+        private static void AddWellAnchor(System.Collections.Generic.IDictionary<EquipmentRegion, PointF> anchors, EquipmentRegion region, Control chamber)
+        {
+            if (chamber != null)
+            {
+                anchors[region] = EquipmentCanvasStyler.GetWellCenter(chamber);
+            }
+        }
+
+        private static void AddCenterAnchor(System.Collections.Generic.IDictionary<EquipmentRegion, PointF> anchors, EquipmentRegion region, Control control)
+        {
+            if (control != null)
+            {
+                anchors[region] = new PointF(control.Left + control.Width / 2f, control.Top + control.Height / 2f);
+            }
         }
 
         private Point ClampToCanvas(Point desired, Control control)
@@ -118,26 +136,6 @@ namespace SemiconductorUi.Helpers
             return new Point(
                 Math.Max(0, Math.Min(desired.X, maxX)),
                 Math.Max(0, Math.Min(desired.Y, maxY)));
-        }
-
-        private void PositionFoupAtAngle(Control foupPanel, PointF center, float radius, float angleDegrees)
-        {
-            if (foupPanel == null || form.panelEquipmentCanvas == null)
-            {
-                return;
-            }
-
-            double radians = angleDegrees * Math.PI / 180.0;
-            var offset = new PointF(
-                (float)(Math.Cos(radians) * radius),
-                (float)(-Math.Sin(radians) * radius));
-
-            var desiredCenter = new PointF(center.X + offset.X, center.Y + offset.Y);
-            var desiredLocation = new Point(
-                (int)Math.Round(desiredCenter.X - foupPanel.Width / 2f),
-                (int)Math.Round(desiredCenter.Y - foupPanel.Height / 2f));
-
-            foupPanel.Location = ClampToCanvas(desiredLocation, foupPanel);
         }
 
         /// <summary>

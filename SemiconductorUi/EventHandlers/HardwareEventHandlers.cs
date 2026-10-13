@@ -40,8 +40,8 @@ namespace SemiconductorUi.EventHandlers
                     if (form.labelEthercatStatus != null)
                     {
                         form.labelEthercatStatus.Text = "EtherCAT: Connected";
-                        form.labelEthercatStatus.ForeColor = System.Drawing.Color.FromArgb(76, 175, 80);
-                        form.labelEthercatStatus.BackColor = System.Drawing.Color.FromArgb(170, 170, 180);
+                        form.labelEthercatStatus.ForeColor = Helpers.UiTheme.Success;
+                        form.labelEthercatStatus.BackColor = Helpers.UiTheme.SurfaceAlt;
                     }
                     
                     // EtherCAT 연결 시 서보 상태를 명시적으로 OFF로 초기화
@@ -94,8 +94,8 @@ namespace SemiconductorUi.EventHandlers
                     if (form.labelEthercatStatus != null)
                     {
                         form.labelEthercatStatus.Text = "EtherCAT: Connection Failed";
-                        form.labelEthercatStatus.ForeColor = System.Drawing.Color.FromArgb(244, 67, 54);
-                        form.labelEthercatStatus.BackColor = System.Drawing.Color.FromArgb(170, 170, 180);
+                        form.labelEthercatStatus.ForeColor = Helpers.UiTheme.Danger;
+                        form.labelEthercatStatus.BackColor = Helpers.UiTheme.SurfaceAlt;
                     }
                     MessageBox.Show("EtherCAT 연결에 실패했습니다.\n시뮬레이션 모드로 동작합니다.", "연결 오류", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 }
@@ -105,8 +105,8 @@ namespace SemiconductorUi.EventHandlers
                 if (form.labelEthercatStatus != null)
                 {
                     form.labelEthercatStatus.Text = "EtherCAT: Error";
-                    form.labelEthercatStatus.ForeColor = System.Drawing.Color.FromArgb(244, 67, 54);
-                    form.labelEthercatStatus.BackColor = System.Drawing.Color.FromArgb(170, 170, 180);
+                    form.labelEthercatStatus.ForeColor = Helpers.UiTheme.Danger;
+                    form.labelEthercatStatus.BackColor = Helpers.UiTheme.SurfaceAlt;
                 }
                 form.AddLogMessage($"EtherCAT 연결 오류: {ex.Message}", "ERROR");
                 MessageBox.Show($"EtherCAT 연결 중 오류가 발생했습니다: {ex.Message}\n시뮬레이션 모드로 동작합니다.", "연결 오류", MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -131,8 +131,8 @@ namespace SemiconductorUi.EventHandlers
                 if (form.labelEthercatStatus != null)
                 {
                     form.labelEthercatStatus.Text = "EtherCAT: Disconnected";
-                    form.labelEthercatStatus.ForeColor = System.Drawing.Color.FromArgb(40, 40, 40);
-                    form.labelEthercatStatus.BackColor = System.Drawing.Color.FromArgb(170, 170, 180);
+                    form.labelEthercatStatus.ForeColor = Helpers.UiTheme.TextPrimary;
+                    form.labelEthercatStatus.BackColor = Helpers.UiTheme.SurfaceAlt;
                 }
                 
                 // 서보 상태 라벨 업데이트
