@@ -21,6 +21,7 @@ namespace SemiconductorUi.Forms
         public Action OnTeachingRequested; // 티칭 위치 편집
         public Action<bool> OnCylinderStateChanged; // isExtended
         public Action<bool> OnVacuumStateChanged; // isOn
+        public Action OnEmergencyStopRequested; // 긴급 정지 (메인 화면 상태 갱신)
 
         /// <summary>
         /// 자동 공정(Running/Paused) 중이면 true. 챔버 램프·도어·진공 수동 제어를 막을 때 사용.
@@ -70,6 +71,7 @@ namespace SemiconductorUi.Forms
 
         private Label labelStatus;
         private Button buttonClose;
+        private Button buttonEmergencyStop;
         
         // 상태 업데이트 타이머
         private System.Windows.Forms.Timer statusUpdateTimer;
@@ -216,7 +218,21 @@ namespace SemiconductorUi.Forms
             buttonClose.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
             buttonClose.Click += (s, e) => this.Close();
 
+            // 긴급 정지: 하단 바의 닫기 버튼 왼쪽에 둡니다.
+            buttonEmergencyStop = new Button();
+            buttonEmergencyStop.Text = "긴급 정지 (서보 OFF)";
+            buttonEmergencyStop.Width = 180;
+            buttonEmergencyStop.Height = 32;
+            buttonEmergencyStop.Margin = new Padding(8, 8, 32, 8);
+            buttonEmergencyStop.BackColor = Color.FromArgb(206, 56, 66);
+            buttonEmergencyStop.FlatStyle = FlatStyle.Flat;
+            buttonEmergencyStop.FlatAppearance.BorderSize = 0;
+            buttonEmergencyStop.ForeColor = Color.White;
+            buttonEmergencyStop.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            buttonEmergencyStop.Click += (s, e) => ControlEmergencyStop();
+
             bottomPanel.Controls.Add(buttonClose);
+            bottomPanel.Controls.Add(buttonEmergencyStop);
             this.Controls.Add(bottomPanel);
             this.Controls.Add(labelStatus);
 
@@ -1145,6 +1161,16 @@ namespace SemiconductorUi.Forms
                 return;
             }
 
+            if (ethercatDevice.IsEmergencyStopped)
+            {
+                if (labelServoStatus != null)
+                {
+                    labelServoStatus.Text = "서보 상태: 비상정지";
+                    labelServoStatus.ForeColor = Color.Red;
+                }
+                return;
+            }
+
             try
             {
                 // 원점복귀 상태 확인
@@ -1194,6 +1220,12 @@ namespace SemiconductorUi.Forms
                 return;
             }
 
+            if (ethercatDevice.IsEmergencyStopped)
+            {
+                ShowEmergencyStopActive();
+                return;
+            }
+
             labelStatus.Text = "서보 ON 중...";
             labelStatus.ForeColor = Color.Yellow;
             var device = ethercatDevice;
@@ -1202,7 +1234,7 @@ namespace SemiconductorUi.Forms
             long deceleration = 100000000;
             long acceleration = 1000000;
 
-            System.Threading.Tasks.Task.Run(() =>
+            HardwareOperation.Run(device, () =>
             {
                 try
                 {
@@ -1216,6 +1248,7 @@ namespace SemiconductorUi.Forms
                     var servoCheckTimeout = DateTime.Now.AddSeconds(2);
                     while (DateTime.Now < servoCheckTimeout)
                     {
+                        device.ThrowIfEmergencyStopped();
                         try
                         {
                             string axis1Pos = device.Axis1_is_PosData();
@@ -1321,6 +1354,12 @@ namespace SemiconductorUi.Forms
                 return;
             }
 
+            if (ethercatDevice.IsEmergencyStopped)
+            {
+                ShowEmergencyStopActive();
+                return;
+            }
+
             try
             {
                 bool cylinderRetracted = ethercatDevice.Digital_Input(12);
@@ -1344,7 +1383,7 @@ namespace SemiconductorUi.Forms
             }
 
             var device = ethercatDevice;
-            System.Threading.Tasks.Task.Run(() =>
+            HardwareOperation.Run(device, () =>
             {
                 try
                 {
@@ -1353,6 +1392,7 @@ namespace SemiconductorUi.Forms
                     bool axis1Homed = false;
                     while (DateTime.Now < timeout)
                     {
+                        device.ThrowIfEmergencyStopped();
                         try
                         {
                             if (device.Axis1_Status("HOME_D")) { axis1Homed = true; break; }
@@ -1393,6 +1433,7 @@ namespace SemiconductorUi.Forms
                     bool axis2Homed = false;
                     while (DateTime.Now < timeout)
                     {
+                        device.ThrowIfEmergencyStopped();
                         try
                         {
                             if (device.Axis2_Status("HOME_D")) { axis2Homed = true; break; }
@@ -1447,6 +1488,49 @@ namespace SemiconductorUi.Forms
                     });
                 }
             });
+        }
+
+        /// <summary>
+        /// 긴급 정지. 진행 중인 타이머 동작을 취소하고 두 축 서보를 끈 뒤 메인 화면에 알립니다.
+        /// 출력(진공, 실린더, 도어)은 지금 상태 그대로 둡니다.
+        /// </summary>
+        private void ControlEmergencyStop()
+        {
+            DisposeAllTimedActions();
+
+            // 메인 화면 연결과 관계없이 장비부터 멈춥니다.
+            Exception stopError = null;
+            if (ethercatDevice != null)
+            {
+                try
+                {
+                    ethercatDevice.EmergencyStop();
+                }
+                catch (Exception ex)
+                {
+                    stopError = ex;
+                }
+            }
+
+            OnEmergencyStopRequested?.Invoke();
+
+            if (stopError != null)
+            {
+                labelStatus.Text = $"비상정지 서보 OFF 전송 오류: {stopError.Message} - 비상 차단 스위치로 전원을 끊으세요";
+            }
+            else
+            {
+                labelStatus.Text = "비상정지 - 서보 OFF. 메인 화면의 알람 리셋으로 해제하세요.";
+            }
+            labelStatus.ForeColor = Color.Red;
+            UpdateServoStatusFromDevice();
+        }
+
+        private void ShowEmergencyStopActive()
+        {
+            MessageBox.Show(
+                "비상정지 중입니다.\n메인 화면의 알람 리셋으로 비상정지를 해제한 뒤 다시 시도하세요.",
+                "비상정지 중", MessageBoxButtons.OK, MessageBoxIcon.Warning);
         }
 
         private void SafeUi(Action action)

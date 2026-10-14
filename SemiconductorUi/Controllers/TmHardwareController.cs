@@ -464,6 +464,7 @@ namespace SemiconductorUi.Controllers
                 var timeout = DateTime.Now.AddMilliseconds(SERVO_MOVE_TIMEOUT_MS);
                 while (DateTime.Now < timeout)
                 {
+                    _ethercat.ThrowIfEmergencyStopped();
                     if (_ethercat.Axis1_Status("HOME_D"))
                     {
                         break;
@@ -485,6 +486,7 @@ namespace SemiconductorUi.Controllers
                 timeout = DateTime.Now.AddMilliseconds(SERVO_MOVE_TIMEOUT_MS);
                 while (DateTime.Now < timeout)
                 {
+                    _ethercat.ThrowIfEmergencyStopped();
                     if (_ethercat.Axis2_Status("HOME_D"))
                     {
                         _isHomed = true;
@@ -734,6 +736,7 @@ namespace SemiconductorUi.Controllers
 
             while (DateTime.Now < timeout)
             {
+                _ethercat.ThrowIfEmergencyStopped();
                 UpdateCurrentPositions();
 
                 // PP_D (Position Profile Done) 상태 확인
@@ -766,6 +769,7 @@ namespace SemiconductorUi.Controllers
 
             while (DateTime.Now < timeout)
             {
+                _ethercat.ThrowIfEmergencyStopped();
                 UpdateCurrentPositions();
 
                 bool axis1Done = _ethercat.Axis1_Status("PP_D");
@@ -943,6 +947,7 @@ namespace SemiconductorUi.Controllers
                 var timeout = DateTime.Now.AddMilliseconds(CYLINDER_ACTION_TIMEOUT_MS);
                 while (DateTime.Now < timeout)
                 {
+                    _ethercat.ThrowIfEmergencyStopped();
                     if (CheckCylinderExtended())
                     {
                         _cylinderForward = true;
@@ -978,6 +983,7 @@ namespace SemiconductorUi.Controllers
                 var timeout = DateTime.Now.AddMilliseconds(CYLINDER_ACTION_TIMEOUT_MS);
                 while (DateTime.Now < timeout)
                 {
+                    _ethercat.ThrowIfEmergencyStopped();
                     if (CheckCylinderRetracted())
                     {
                         _cylinderForward = false;

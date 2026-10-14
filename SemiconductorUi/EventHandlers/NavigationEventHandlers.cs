@@ -294,6 +294,8 @@ namespace SemiconductorUi.EventHandlers
                         form.AddLogMessage($"진공 상태 변경: {(isOn ? "ON" : "OFF")}", "INFO");
                     };
 
+                    ecf.OnEmergencyStopRequested = () => form.ExecuteEmergencyStop("장비 제어 창 긴급 정지 버튼");
+
                     ecf.ShowDialog(form);
                 }
             }

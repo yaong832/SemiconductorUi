@@ -90,6 +90,45 @@ namespace SemiconductorUi.Hardware
         /// </summary>
         EthercatCommunicationStatus CheckCommunication();
 
+        /// <summary>
+        /// 서보가 실제로 운전 가능 상태(Operation enabled)인지. 상태워드 2번 비트를 읽습니다.
+        /// </summary>
+        /// <param name="axis">1 = 상하, 2 = 좌우</param>
+        bool IsAxisOperationEnabled(int axis);
+
+        #endregion
+
+        #region 비상정지
+
+        /// <summary>
+        /// 비상정지가 걸려 있는지. ClearEmergencyStop()을 부르기 전까지 유지됩니다.
+        /// </summary>
+        bool IsEmergencyStopped { get; }
+
+        /// <summary>
+        /// 비상정지. 두 축 서보를 끄고(제어워드 0, AxisN_OFF와 같은 값) 해제 전까지 명령을 막습니다.
+        /// 막는 것: 서보 ON, 이동, 원점복귀, 위치/속도 설정, 알람 리셋, 허용 목록 밖의 디지털 출력.
+        /// 허용하는 것: 서보 OFF, 감속 정지, 모든 읽기, EmergencyStopPolicy의 출력.
+        /// </summary>
+        void EmergencyStop();
+
+        /// <summary>
+        /// 비상정지 해제. 서보는 꺼진 채로 남으므로 서보 ON과 원점복귀를 다시 해야 합니다.
+        /// </summary>
+        void ClearEmergencyStop();
+
+        /// <summary>
+        /// 비상정지 중이거나, 현재 동작(BeginOperation)이 비상정지 이전에 시작됐으면
+        /// EmergencyStopActiveException을 던집니다. 완료 대기 루프에서 부릅니다.
+        /// </summary>
+        void ThrowIfEmergencyStopped();
+
+        /// <summary>
+        /// 백그라운드 장비 동작의 시작을 표시합니다. 이 범위 안에서는 시작 이후 비상정지가
+        /// 한 번이라도 눌렸으면 해제된 뒤에도 명령이 거부됩니다. 비상정지 중에는 시작할 수 없습니다.
+        /// </summary>
+        System.IDisposable BeginOperation();
+
         #endregion
     }
 }

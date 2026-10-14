@@ -2621,7 +2621,7 @@ namespace SemiconductorUi
             _hardwareInitInProgress = true;
             UpdateProcessControlButtons();
 
-            System.Threading.Tasks.Task.Run(() =>
+            HardwareOperation.Run(EtherCAT_M, () =>
             {
                 bool ok = false;
                 string failReason = null;
@@ -2792,6 +2792,109 @@ namespace SemiconductorUi
             }
             UpdateSimulationUi();
             UpdateTmAnimationIdleTarget();
+        }
+
+        // 드라이브 상태는 DLL 수신 타이머(300ms)로 갱신되므로 그보다 충분히 뒤에 확인합니다.
+        private const int EmergencyStopVerifyDelayMs = 1000;
+
+        /// <summary>
+        /// 비상정지. 메인 화면과 장비 제어 창의 긴급 정지 버튼이 부릅니다 (UI 스레드).
+        /// 두 축 서보를 끄고, 알람 리셋으로 해제하기 전까지 장비 명령을 막습니다.
+        /// 진공은 끄지 않습니다. 웨이퍼를 들고 있을 때 떨어뜨리지 않기 위해서입니다.
+        /// </summary>
+        /// <param name="source">어디서 눌렀는지 (로그용)</param>
+        internal void ExecuteEmergencyStop(string source)
+        {
+            bool servoOffSent = false;
+            if (EtherCAT_M != null)
+            {
+                try
+                {
+                    EtherCAT_M.EmergencyStop();
+                    servoOffSent = EthercatConnected;
+                }
+                catch (Exception ex)
+                {
+                    AddLogMessage($"비상정지 서보 OFF 전송 오류: {ex.Message} - 비상 차단 스위치로 전원을 끊으세요", "ALARM");
+                }
+            }
+
+            IsServoOn = false;
+            TmHardwareInitialized = false;
+            TmHardwareActionPending = false;
+            TmSettleWaiting = false;
+            HasAlarm = true;
+
+            AddLogMessage(servoOffSent
+                ? $"비상정지 ({source}): 서보 OFF 전송, 장비 명령 차단. 진공은 유지합니다."
+                : $"비상정지 ({source}): EtherCAT 미연결 상태, 장비 명령 차단", "ALARM");
+
+            string reason = "비상정지. 알람 리셋으로 해제한 뒤 서보 ON과 원점복귀를 다시 하세요.";
+            if (SimulationRunning)
+            {
+                AbortSimulation(reason, true);
+            }
+            else
+            {
+                SetProcessState(ProcessState.Error, reason);
+            }
+
+            UpdateServoStatusLabel();
+            UpdateProcessControlButtons();
+
+            if (servoOffSent)
+            {
+                ScheduleEmergencyStopVerification();
+            }
+        }
+
+        private void ScheduleEmergencyStopVerification()
+        {
+            var timer = new System.Windows.Forms.Timer { Interval = EmergencyStopVerifyDelayMs };
+            timer.Tick += (s, e) =>
+            {
+                timer.Stop();
+                timer.Dispose();
+                VerifyServoOffAfterEmergencyStop();
+            };
+            timer.Start();
+        }
+
+        /// <summary>
+        /// 비상정지 뒤 드라이브가 실제로 서보를 껐는지 상태워드로 확인합니다.
+        /// </summary>
+        private void VerifyServoOffAfterEmergencyStop()
+        {
+            if (EtherCAT_M == null || !EthercatConnected)
+            {
+                return;
+            }
+
+            bool axis1On;
+            bool axis2On;
+            try
+            {
+                axis1On = EtherCAT_M.IsAxisOperationEnabled(1);
+                axis2On = EtherCAT_M.IsAxisOperationEnabled(2);
+            }
+            catch (Exception ex)
+            {
+                AddLogMessage($"비상정지 확인 실패: {ex.Message} - 서보가 꺼졌는지 눈으로 확인하세요", "ALARM");
+                return;
+            }
+
+            if (!axis1On && !axis2On)
+            {
+                AddLogMessage("비상정지 확인: 두 축 모두 서보 OFF (드라이브 상태워드)", "INFO");
+                return;
+            }
+
+            string axes = axis1On && axis2On ? "Axis1(상하), Axis2(좌우)" : axis1On ? "Axis1(상하)" : "Axis2(좌우)";
+            AddLogMessage($"비상정지 확인 실패: {axes} 서보가 아직 켜져 있습니다 - 비상 차단 스위치로 전원을 끊으세요", "ALARM");
+            MessageBox.Show(
+                $"비상정지 후에도 {axes} 서보가 켜져 있는 것으로 읽힙니다.\n\n" +
+                "비상 차단 스위치로 장비 전원을 끊으세요.",
+                "비상정지 확인 실패", MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
 
 
@@ -4617,7 +4720,7 @@ namespace SemiconductorUi
             panel.BackColor = GetStatusColor(statusText);
         }
 
-        private void UpdateProcessControlButtons()
+        internal void UpdateProcessControlButtons()
         {
             uiUpdater?.UpdateProcessControlButtons();
         }
@@ -5033,6 +5136,7 @@ namespace SemiconductorUi
                     };
 
                     ecf.OnTeachingRequested = OpenTeachingPositionEditor;
+                    ecf.OnEmergencyStopRequested = () => ExecuteEmergencyStop("장비 제어 창 긴급 정지 버튼");
                     
                     ecf.ShowDialog(this);
                 }
@@ -6434,7 +6538,7 @@ namespace SemiconductorUi
                 }
 
                 // 비동기로 원점복귀 실행 (UI 블로킹 방지)
-                System.Threading.Tasks.Task.Run(() => PerformHomingSequence());
+                HardwareOperation.Run(EtherCAT_M, () => PerformHomingSequence());
             }
             catch (Exception ex)
             {
@@ -6509,6 +6613,7 @@ namespace SemiconductorUi
                     var timeout = DateTime.Now.AddSeconds(120);
                     while (DateTime.Now < timeout)
                     {
+                        EtherCAT_M.ThrowIfEmergencyStopped();
                         if (EtherCAT_M.Axis1_Status("HOME_D"))
                         {
                             break;
@@ -6555,6 +6660,7 @@ namespace SemiconductorUi
                     timeout = DateTime.Now.AddSeconds(120);
                     while (DateTime.Now < timeout)
                     {
+                        EtherCAT_M.ThrowIfEmergencyStopped();
                         if (EtherCAT_M.Axis2_Status("HOME_D"))
                         {
                             break;
@@ -6612,6 +6718,15 @@ namespace SemiconductorUi
                         UpdateServoStatusLabel();
                     }));
                     return; // 성공
+                }
+                catch (EmergencyStopActiveException ex)
+                {
+                    // 비상정지는 재시도하지 않고 바로 끝냅니다.
+                    this.Invoke((Action)(() => {
+                        AddLogMessage($"원점복귀 중단: {ex.Message}", "WARN");
+                        UpdateServoStatusLabel();
+                    }));
+                    return;
                 }
                 catch (Exception ex)
                 {
@@ -6755,6 +6870,7 @@ namespace SemiconductorUi
                     var servoCheckTimeout = DateTime.Now.AddSeconds(2);
                     while (DateTime.Now < servoCheckTimeout)
                     {
+                        EtherCAT_M.ThrowIfEmergencyStopped();
                         try
                         {
                             // 위치 데이터가 읽히면 서보가 ON 상태로 간주
@@ -6815,6 +6931,7 @@ namespace SemiconductorUi
                 var timeout = DateTime.Now.AddSeconds(120);
                 while (DateTime.Now < timeout)
                 {
+                    EtherCAT_M.ThrowIfEmergencyStopped();
                     if (EtherCAT_M.Axis1_Status("HOME_D"))
                     {
                         break;
@@ -6838,6 +6955,7 @@ namespace SemiconductorUi
                 timeout = DateTime.Now.AddSeconds(120);
                 while (DateTime.Now < timeout)
                 {
+                    EtherCAT_M.ThrowIfEmergencyStopped();
                     if (EtherCAT_M.Axis2_Status("HOME_D"))
                     {
                         break;
@@ -6904,6 +7022,7 @@ namespace SemiconductorUi
                 var timeout = DateTime.Now.AddSeconds(120);
                 while (DateTime.Now < timeout)
                 {
+                    EtherCAT_M.ThrowIfEmergencyStopped();
                     if (EtherCAT_M.Axis1_Status("HOME_D"))
                     {
                         break;
@@ -6926,6 +7045,7 @@ namespace SemiconductorUi
                 timeout = DateTime.Now.AddSeconds(120);
                 while (DateTime.Now < timeout)
                 {
+                    EtherCAT_M.ThrowIfEmergencyStopped();
                     if (EtherCAT_M.Axis2_Status("HOME_D"))
                     {
                         TmHardwareInitialized = true;
@@ -6950,7 +7070,7 @@ namespace SemiconductorUi
         /// </summary>
         internal void PerformShutdownHoming()
         {
-            System.Threading.Tasks.Task.Run(() =>
+            HardwareOperation.Run(EtherCAT_M, () =>
             {
                 try
                 {
@@ -6974,6 +7094,7 @@ namespace SemiconductorUi
                     var timeout = DateTime.Now.AddSeconds(120);
                     while (DateTime.Now < timeout)
                     {
+                        EtherCAT_M.ThrowIfEmergencyStopped();
                         if (EtherCAT_M.Axis1_Status("HOME_D"))
                         {
                             break;
@@ -6999,6 +7120,7 @@ namespace SemiconductorUi
                     timeout = DateTime.Now.AddSeconds(120);
                     while (DateTime.Now < timeout)
                     {
+                        EtherCAT_M.ThrowIfEmergencyStopped();
                         if (EtherCAT_M.Axis2_Status("HOME_D"))
                         {
                             this.Invoke((Action)(() => {

@@ -15,6 +15,10 @@ namespace SemiconductorUi.Hardware
     /// - 축1: 제어워드 WriteData[0], 상태워드 ReadData[0..1]
     /// - 축2: 제어워드 WriteData[23], 상태워드 ReadData[20..21]
     /// 제어워드/상태워드 비트는 CiA402 표준을 따릅니다.
+    ///
+    /// 비상정지 확인은 락 안에서 합니다. 락 밖에서 확인하면, 확인을 통과하고 락을 기다리던
+    /// 명령이 비상정지의 서보 OFF 다음에 보내져 서보가 다시 켜질 수 있기 때문입니다.
+    /// (DLL의 이동/원점복귀 명령은 제어워드 15를 써서 서보를 켭니다.)
     /// </summary>
     public sealed class Ieg3268Device : IEthercatDevice
     {
@@ -26,6 +30,7 @@ namespace SemiconductorUi.Hardware
         internal const byte ControlWordDisableVoltage = 0x00;
         internal const byte ControlWordQuickStop = 0x02;
         internal const byte ControlWordFaultReset = 0x80;
+        internal const byte StatusWordOperationEnabledBit = 0x04;
         internal const byte StatusWordFaultBit = 0x08;
 
         private const int FaultResetStepDelayMs = 100;
@@ -36,6 +41,13 @@ namespace SemiconductorUi.Hardware
         private bool _isConnected;
         private bool _readTimerRegistered;
 
+        // 비상정지 잠금. 읽기는 락 없이 하므로 volatile입니다.
+        private volatile bool _emergencyStopped;
+        // 비상정지가 눌린 횟수. 동작이 시작된 뒤 비상정지가 있었는지 판단하는 데 씁니다.
+        private long _emergencyStopCount;
+        // 현재 동작(BeginOperation)이 시작될 때의 비상정지 횟수. 동작 범위 밖이면 null.
+        private readonly AsyncLocal<long?> _operationStartStopCount = new AsyncLocal<long?>();
+
         public Ieg3268Device(IEG3268 dll)
             : this(dll, new CifxNativeChannel())
         {
@@ -45,6 +57,15 @@ namespace SemiconductorUi.Hardware
         {
             _dll = dll ?? throw new ArgumentNullException(nameof(dll));
             _channel = channel ?? throw new ArgumentNullException(nameof(channel));
+        }
+
+        /// <summary>
+        /// 테스트용. 실제 드라이버 연결 없이 연결된 상태로 시작합니다.
+        /// </summary>
+        internal Ieg3268Device(IEG3268 dll, ICifxChannel channel, bool isConnected)
+            : this(dll, channel)
+        {
+            _isConnected = isConnected;
         }
 
         #region 연결 / 데이터 수신
@@ -106,6 +127,11 @@ namespace SemiconductorUi.Hardware
         {
             lock (_sync)
             {
+                if (!EmergencyStopPolicy.IsOutputAllowedWhileStopped(numbering, value))
+                {
+                    ThrowIfEmergencyStopped();
+                }
+
                 _dll.Digital_Output(numbering, value);
             }
         }
@@ -132,6 +158,7 @@ namespace SemiconductorUi.Hardware
         {
             lock (_sync)
             {
+                ThrowIfEmergencyStopped();
                 _dll.Axis1_ON();
             }
         }
@@ -164,6 +191,7 @@ namespace SemiconductorUi.Hardware
         {
             lock (_sync)
             {
+                ThrowIfEmergencyStopped();
                 _dll.Axis1_UD_Config_Update(acceleration, deceleration, maxVelocity, velocity);
             }
         }
@@ -172,6 +200,7 @@ namespace SemiconductorUi.Hardware
         {
             lock (_sync)
             {
+                ThrowIfEmergencyStopped();
                 _dll.Axis1_UD_POS_Update(position);
             }
         }
@@ -180,6 +209,7 @@ namespace SemiconductorUi.Hardware
         {
             lock (_sync)
             {
+                ThrowIfEmergencyStopped();
                 _dll.Axis1_UD_Move_Send();
             }
         }
@@ -188,6 +218,7 @@ namespace SemiconductorUi.Hardware
         {
             lock (_sync)
             {
+                ThrowIfEmergencyStopped();
                 _dll.Axis1_UD_Homming();
             }
         }
@@ -200,6 +231,7 @@ namespace SemiconductorUi.Hardware
         {
             lock (_sync)
             {
+                ThrowIfEmergencyStopped();
                 _dll.Axis2_ON();
             }
         }
@@ -232,6 +264,7 @@ namespace SemiconductorUi.Hardware
         {
             lock (_sync)
             {
+                ThrowIfEmergencyStopped();
                 _dll.Axis2_LR_Config_Update(acceleration, deceleration, maxVelocity, velocity);
             }
         }
@@ -240,6 +273,7 @@ namespace SemiconductorUi.Hardware
         {
             lock (_sync)
             {
+                ThrowIfEmergencyStopped();
                 _dll.Axis2_LR_POS_Update(position);
             }
         }
@@ -248,6 +282,7 @@ namespace SemiconductorUi.Hardware
         {
             lock (_sync)
             {
+                ThrowIfEmergencyStopped();
                 _dll.Axis2_LR_Move_Send();
             }
         }
@@ -256,6 +291,7 @@ namespace SemiconductorUi.Hardware
         {
             lock (_sync)
             {
+                ThrowIfEmergencyStopped();
                 _dll.Axis2_LR_Homming();
             }
         }
@@ -295,6 +331,8 @@ namespace SemiconductorUi.Hardware
 
             lock (_sync)
             {
+                ThrowIfEmergencyStopped();
+
                 // 알람 리셋은 제어워드 7번 비트의 상승 에지로 동작합니다.
                 byte[] writeData = _dll.WriteData;
                 writeData[index] = ControlWordDisableVoltage;
@@ -308,6 +346,19 @@ namespace SemiconductorUi.Hardware
                 writeData[index] = ControlWordDisableVoltage;
                 _channel.Write(writeData);
             }
+        }
+
+        public bool IsAxisOperationEnabled(int axis)
+        {
+            byte[] readData = _dll.ReadData;
+            int index = GetStatusWordIndex(axis);
+
+            if (readData == null || readData.Length <= index)
+            {
+                return false;
+            }
+
+            return (readData[index] & StatusWordOperationEnabledBit) != 0;
         }
 
         public EthercatCommunicationStatus CheckCommunication()
@@ -324,6 +375,91 @@ namespace SemiconductorUi.Hardware
                 uint ioReadError = _channel.ReadIo(new byte[CifxConstants.IoReadLength]);
 
                 return new EthercatCommunicationStatus(true, busStateError, busState, ioReadError);
+            }
+        }
+
+        #endregion
+
+        #region 비상정지
+
+        public bool IsEmergencyStopped => _emergencyStopped;
+
+        public void EmergencyStop()
+        {
+            // 잠금을 먼저 걸어서, 지금 다른 스레드가 보내는 중인 명령이 끝나면 그다음 명령부터 막힙니다.
+            _emergencyStopped = true;
+            Interlocked.Increment(ref _emergencyStopCount);
+
+            lock (_sync)
+            {
+                // 다른 스레드의 DLL 명령이 진행 중이면(내부 대기 최대 약 0.3초) 그 명령이 끝난 뒤 여기로 들어옵니다.
+                // 그 명령이 서보를 켰더라도 아래 쓰기로 다시 끕니다.
+                // Axis1_OFF / Axis2_OFF와 같은 값(제어워드 0)을 두 축에 한 번에 씁니다.
+                byte[] writeData = _dll.WriteData;
+                writeData[Axis1ControlWordIndex] = ControlWordDisableVoltage;
+                writeData[Axis2ControlWordIndex] = ControlWordDisableVoltage;
+
+                // 연결이 없으면 버퍼만 0으로 두고 보내지 않습니다. 다시 연결해도 서보 ON 값이 남아 있지 않게 합니다.
+                if (_isConnected)
+                {
+                    _channel.Write(writeData);
+                }
+            }
+        }
+
+        public void ClearEmergencyStop()
+        {
+            _emergencyStopped = false;
+        }
+
+        public void ThrowIfEmergencyStopped()
+        {
+            if (_emergencyStopped)
+            {
+                throw new EmergencyStopActiveException("비상정지 중입니다. 알람 리셋으로 비상정지를 해제한 뒤 서보 ON과 원점복귀를 다시 하세요.");
+            }
+
+            long? startStopCount = _operationStartStopCount.Value;
+            if (startStopCount.HasValue && startStopCount.Value != Interlocked.Read(ref _emergencyStopCount))
+            {
+                throw new EmergencyStopActiveException("비상정지로 중단된 동작입니다. 처음부터 다시 실행하세요.");
+            }
+        }
+
+        public IDisposable BeginOperation()
+        {
+            ThrowIfEmergencyStopped();
+
+            long? previous = _operationStartStopCount.Value;
+            if (!previous.HasValue)
+            {
+                _operationStartStopCount.Value = Interlocked.Read(ref _emergencyStopCount);
+            }
+
+            return new OperationScope(this, previous);
+        }
+
+        private sealed class OperationScope : IDisposable
+        {
+            private readonly Ieg3268Device _owner;
+            private readonly long? _previous;
+            private bool _disposed;
+
+            public OperationScope(Ieg3268Device owner, long? previous)
+            {
+                _owner = owner;
+                _previous = previous;
+            }
+
+            public void Dispose()
+            {
+                if (_disposed)
+                {
+                    return;
+                }
+
+                _owner._operationStartStopCount.Value = _previous;
+                _disposed = true;
             }
         }
 
