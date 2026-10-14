@@ -58,6 +58,7 @@
     <Compile Include="Ieg3268DeviceTests.cs" />
     <Compile Include="EmergencyStopTests.cs" />
     <Compile Include="ServoFaultMonitorTests.cs" />
+    <Compile Include="TmHeightEstimatorTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\SemiconductorUi\SemiconductorUi.csproj">

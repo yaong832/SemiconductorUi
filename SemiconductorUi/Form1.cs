@@ -504,6 +504,11 @@ namespace SemiconductorUi
             }
         }
         
+        /// <summary>
+        /// 시뮬레이터 오른쪽의 TM 기준 화면(정면/옆면). Form1Initializer가 만든다.
+        /// </summary>
+        internal Controls.TmSideViewControl tmSideViewControl;
+
         // Transfer Module 상태 속성
         internal EquipmentRegion TmVisualTarget
         {
@@ -5409,6 +5414,7 @@ namespace SemiconductorUi
             {
                 TmHardwareController.Positions.ApplyFrom(positions.ToData());
             }
+            uiUpdater?.SetSimulatedTeachingPositions(positions);
 
             AddLogMessage(
                 $"TM 티칭 위치 적용: Home=({positions.Home_X},{positions.Home_Y}), " +

@@ -133,6 +133,7 @@
     <Compile Include="Helpers\ChamberHardwareHelper.cs" />
     <Compile Include="Helpers\ChamberStatusTexts.cs" />
     <Compile Include="Helpers\EquipmentCanvasStyler.cs" />
+    <Compile Include="Helpers\TmHeightEstimator.cs" />
     <Compile Include="Helpers\UiTheme.cs" />
     <Compile Include="Helpers\Form1UiUpdater.cs" />
     <Compile Include="Helpers\Form1Initializer.cs" />
@@ -180,6 +181,9 @@
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="Controls\TmVisualizationControl.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Controls\TmSideViewControl.cs">
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="Controls\PmStatusPanel.cs">
