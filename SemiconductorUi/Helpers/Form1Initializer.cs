@@ -55,6 +55,18 @@ namespace SemiconductorUi.Helpers
                 form.panelEquipmentCanvas.Controls.Add(form.tmVisualizationControl);
                 form.tmVisualizationControl.SendToBack(); // FOUP/Chamber 뒤로 보내기 (가리지 않도록)
             }
+
+            // TM 기준 화면(정면/옆면): 위치와 크기는 LayoutCentralEquipment에서 정한다.
+            if (form.tmSideViewControl == null)
+            {
+                form.tmSideViewControl = new TmSideViewControl
+                {
+                    Name = "tmSideViewControl",
+                    Size = new Size(262, 300),
+                    TabStop = false
+                };
+                form.panelEquipmentCanvas.Controls.Add(form.tmSideViewControl);
+            }
             
             // 초기 레이아웃 설정
             form.LayoutCentralEquipment();
