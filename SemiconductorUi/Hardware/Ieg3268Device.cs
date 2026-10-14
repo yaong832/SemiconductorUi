@@ -314,6 +314,20 @@ namespace SemiconductorUi.Hardware
             return (readData[index] & StatusWordFaultBit) != 0;
         }
 
+        public ushort GetStatusWord(int axis)
+        {
+            byte[] readData = _dll.ReadData;
+            int index = GetStatusWordIndex(axis);
+
+            if (readData == null || readData.Length <= index + 1)
+            {
+                return 0;
+            }
+
+            // 상태워드는 하위 바이트가 앞에 옵니다 (DLL의 Axis1_Status도 같은 순서로 읽습니다).
+            return (ushort)(readData[index] | (readData[index + 1] << 8));
+        }
+
         public void QuickStopAll()
         {
             lock (_sync)

@@ -74,6 +74,12 @@ namespace SemiconductorUi.Hardware
         bool IsAxisFault(int axis);
 
         /// <summary>
+        /// 드라이브 상태워드 원값(16비트). 로그와 진단용입니다. 읽을 수 없으면 0.
+        /// </summary>
+        /// <param name="axis">1 = 상하, 2 = 좌우</param>
+        ushort GetStatusWord(int axis);
+
+        /// <summary>
         /// 두 축 모두 감속 정지(Quick Stop)합니다. 서보 OFF와 달리 드라이브가 감속하며 멈춥니다.
         /// 다시 움직이려면 AxisN_ON()으로 서보를 다시 켜야 합니다.
         /// </summary>

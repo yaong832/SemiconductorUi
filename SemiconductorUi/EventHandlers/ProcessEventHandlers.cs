@@ -155,8 +155,14 @@ namespace SemiconductorUi.EventHandlers
             bool emergencyStopCleared = false;
             if (IsEmergencyStopped())
             {
+                var faultedAxes = form.GetFaultedServoAxes();
+                string faultNotice = faultedAxes.Count > 0
+                    ? $"드라이브 알람이 남아 있어 알람 리셋 신호도 함께 보냅니다:\n{form.DescribeServoAxes(faultedAxes)}\n\n"
+                    : "";
+
                 var confirm = MessageBox.Show(
                     "비상정지를 해제하시겠습니까?\n\n" +
+                    faultNotice +
                     "해제하기 전에 확인하세요:\n" +
                     "• 장비 근처에 사람이 없는지\n" +
                     "• 웨이퍼, 블레이드, 실린더 위치\n\n" +
@@ -175,6 +181,7 @@ namespace SemiconductorUi.EventHandlers
                 form.EtherCAT_M.ClearEmergencyStop();
                 emergencyStopCleared = true;
                 form.AddLogMessage("비상정지 해제 (서보 OFF 유지, 서보 ON과 원점복귀 필요)", "WARN");
+                form.ResetServoFaultsAfterEmergencyStopCleared();
             }
 
             // 헤더에 알람이 표시되어 있는지 확인
