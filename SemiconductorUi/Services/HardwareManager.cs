@@ -1,5 +1,5 @@
 using System;
-using IEG3268_Dll;
+using SemiconductorUi.Hardware;
 using SemiconductorUi.Controllers;
 
 namespace SemiconductorUi.Services
@@ -12,7 +12,7 @@ namespace SemiconductorUi.Services
     {
         #region Fields
 
-        private IEG3268 _ethercat;
+        private IEthercatDevice _ethercat;
         private TmHardwareController _tmHardwareController;
         private bool _isEthercatConnected;
         private bool _isTmHardwareInitialized;
@@ -31,7 +31,7 @@ namespace SemiconductorUi.Services
         /// <summary>
         /// EtherCAT 인스턴스 (읽기 전용)
         /// </summary>
-        public IEG3268 EtherCAT => _ethercat;
+        public IEthercatDevice EtherCAT => _ethercat;
 
         /// <summary>
         /// TM 하드웨어 컨트롤러 (읽기 전용)
@@ -52,7 +52,7 @@ namespace SemiconductorUi.Services
         /// </summary>
         /// <param name="ethercat">EtherCAT 인스턴스</param>
         /// <param name="logCallback">로깅 콜백 함수</param>
-        public HardwareManager(IEG3268 ethercat, Action<string, string> logCallback)
+        public HardwareManager(IEthercatDevice ethercat, Action<string, string> logCallback)
         {
             _ethercat = ethercat ?? throw new ArgumentNullException(nameof(ethercat));
             _logCallback = logCallback ?? throw new ArgumentNullException(nameof(logCallback));
@@ -89,6 +89,7 @@ namespace SemiconductorUi.Services
                     _ethercat.ReadData_Timer_Start();
 
                     Log("EtherCAT 연결 성공 - 실제 장비 제어 모드 활성화", "INFO");
+                    LogCommunicationStatus();
                     return true;
                 }
                 else
@@ -119,10 +120,8 @@ namespace SemiconductorUi.Services
                 // TM 하드웨어 컨트롤러 종료
                 ShutdownTmHardwareController();
 
-                // ReadData Timer 중지 시도
-                // ReadData_Timer_Stop() 메서드가 존재하지 않을 수 있으므로,
-                // 리플렉션을 사용하여 가능한 모든 Stop 메서드를 시도합니다.
-                TryStopReadDataTimer();
+                // ReadData Timer는 DLL에 중지 메서드가 없습니다.
+                // 연결을 해제하면 타이머는 돌지만 데이터를 읽지 않습니다.
 
                 // EtherCAT 연결 해제
                 if (_ethercat != null)
@@ -285,68 +284,36 @@ namespace SemiconductorUi.Services
         #region Helper Methods
 
         /// <summary>
+        /// 실제 통신 상태를 확인해 로그로 남깁니다.
+        /// DLL의 연결 성공은 드라이버가 열렸다는 뜻일 뿐이라, 버스와 입력 읽기를 따로 확인합니다.
+        /// 아직 실장비에서 검증 전이므로 연결을 막지 않고 경고만 남깁니다.
+        /// </summary>
+        private void LogCommunicationStatus()
+        {
+            try
+            {
+                var status = _ethercat.CheckCommunication();
+                if (status.IsHealthy)
+                {
+                    Log($"EtherCAT 통신 상태 정상 ({status})", "INFO");
+                }
+                else
+                {
+                    Log($"EtherCAT 통신 상태 이상 ({status}) - 장비 배선과 드라이버 설정을 확인하세요.", "WARN");
+                }
+            }
+            catch (Exception ex)
+            {
+                Log($"EtherCAT 통신 상태 확인 실패: {ex.Message}", "WARN");
+            }
+        }
+
+        /// <summary>
         /// 로그 기록
         /// </summary>
         private void Log(string message, string level)
         {
             _logCallback?.Invoke(message, level);
-        }
-
-        /// <summary>
-        /// ReadData Timer 중지 시도 (리플렉션 사용)
-        /// ReadData_Timer_Stop() 메서드가 존재하지 않을 수 있으므로,
-        /// 여러 가능한 메서드명을 시도합니다.
-        /// </summary>
-        private void TryStopReadDataTimer()
-        {
-            if (_ethercat == null)
-            {
-                return;
-            }
-
-            // 가능한 타이머 중지 메서드명 목록
-            string[] possibleMethodNames = new string[]
-            {
-                "ReadData_Timer_Stop",
-                "ReadData_Send_Stop",
-                "ReadData_Stop",
-                "Timer_Stop",
-                "StopReadData",
-                "StopReadDataTimer"
-            };
-
-            bool timerStopped = false;
-
-            foreach (var methodName in possibleMethodNames)
-            {
-                try
-                {
-                    var method = _ethercat.GetType().GetMethod(methodName, 
-                        System.Reflection.BindingFlags.Public | 
-                        System.Reflection.BindingFlags.Instance,
-                        null, 
-                        System.Type.EmptyTypes, 
-                        null);
-
-                    if (method != null && method.GetParameters().Length == 0)
-                    {
-                        method.Invoke(_ethercat, null);
-                        Log($"ReadData Timer 중지 성공: {methodName}()", "INFO");
-                        timerStopped = true;
-                        break;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    // 메서드가 없거나 호출 실패 시 무시하고 다음 시도
-                    System.Diagnostics.Debug.WriteLine($"Timer 중지 메서드 {methodName} 시도 실패: {ex.Message}");
-                }
-            }
-
-            if (!timerStopped)
-            {
-                Log("ReadData Timer 중지 메서드를 찾을 수 없습니다. CIFX_50RE_Disconnect()가 타이머를 자동으로 중지할 수 있습니다.", "WARN");
-            }
         }
 
         #endregion

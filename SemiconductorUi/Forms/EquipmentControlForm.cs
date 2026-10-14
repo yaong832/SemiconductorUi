@@ -2,14 +2,14 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Windows.Forms;
-using IEG3268_Dll;
+using SemiconductorUi.Hardware;
 using SemiconductorUi.Controls;
 
 namespace SemiconductorUi.Forms
 {
     public class EquipmentControlForm : Form
     {
-        private IEG3268 ethercatDevice;
+        private IEthercatDevice ethercatDevice;
         private bool isConnected = false;
         
         // UI 업데이트를 위한 콜백
@@ -73,7 +73,7 @@ namespace SemiconductorUi.Forms
         private readonly Dictionary<string, System.Windows.Forms.Timer> timedActionTimers =
             new Dictionary<string, System.Windows.Forms.Timer>();
 
-        public EquipmentControlForm(IEG3268 device, bool connected)
+        public EquipmentControlForm(IEthercatDevice device, bool connected)
         {
             ethercatDevice = device;
             isConnected = connected;

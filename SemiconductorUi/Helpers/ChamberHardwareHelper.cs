@@ -1,5 +1,5 @@
 using System;
-using IEG3268_Dll;
+using SemiconductorUi.Hardware;
 using SemiconductorUi.Controls;
 
 namespace SemiconductorUi.Helpers
@@ -57,7 +57,7 @@ namespace SemiconductorUi.Helpers
         /// <param name="region">EquipmentRegion</param>
         /// <param name="open">열림 여부</param>
         /// <returns>성공 여부</returns>
-        public static bool ControlChamberDoor(IEG3268 ethercatDevice, EquipmentRegion region, bool open)
+        public static bool ControlChamberDoor(IEthercatDevice ethercatDevice, EquipmentRegion region, bool open)
         {
             if (ethercatDevice == null)
             {
@@ -122,7 +122,7 @@ namespace SemiconductorUi.Helpers
         /// <param name="region">EquipmentRegion</param>
         /// <param name="on">켜기 여부</param>
         /// <returns>성공 여부</returns>
-        public static bool ControlChamberLamp(IEG3268 ethercatDevice, EquipmentRegion region, bool on)
+        public static bool ControlChamberLamp(IEthercatDevice ethercatDevice, EquipmentRegion region, bool on)
         {
             if (ethercatDevice == null)
             {
@@ -177,7 +177,7 @@ namespace SemiconductorUi.Helpers
         /// 도어 열림 센서 확인.
         /// 센서 없음/오류/미연결 시 false (fail-closed: "열림 완료"로 오인하지 않음).
         /// </summary>
-        public static bool CheckDoorSensorOpen(IEG3268 ethercatDevice, EquipmentRegion region)
+        public static bool CheckDoorSensorOpen(IEthercatDevice ethercatDevice, EquipmentRegion region)
         {
             if (!HasDoorPositionSensors || ethercatDevice == null)
             {
@@ -204,7 +204,7 @@ namespace SemiconductorUi.Helpers
         /// 도어 닫힘 센서 확인.
         /// 센서 없음/오류/미연결 시 false (fail-closed: "닫힘 완료"로 오인하지 않음).
         /// </summary>
-        public static bool CheckDoorSensorClosed(IEG3268 ethercatDevice, EquipmentRegion region)
+        public static bool CheckDoorSensorClosed(IEthercatDevice ethercatDevice, EquipmentRegion region)
         {
             if (!HasDoorPositionSensors || ethercatDevice == null)
             {

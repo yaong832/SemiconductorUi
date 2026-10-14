@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Drawing.Drawing2D;
 using IEG3268_Dll;
+using SemiconductorUi.Hardware;
 using SemiconductorUi.Helpers;
 using SemiconductorUi.Controllers;
 using SemiconductorUi.Repositories;
@@ -646,7 +647,7 @@ namespace SemiconductorUi
         }
         
         // EtherCAT 인스턴스는 필드로 유지 (초기화 필요)
-        internal IEG3268 EtherCAT_M;
+        internal IEthercatDevice EtherCAT_M;
         
         // 장비 상태 동기화 플래그
         internal bool isSyncingEquipmentState = false;
@@ -828,7 +829,7 @@ namespace SemiconductorUi
             ViewModel = new MainFormViewModel();
             
             // EtherCAT 인스턴스 생성 (HardwareManager 초기화 전에 필요)
-            EtherCAT_M = new IEG3268();
+            EtherCAT_M = new Ieg3268Device(new IEG3268());
             
             // HardwareManager 초기화
             HardwareManager = new HardwareManager(EtherCAT_M, AddLogMessage);

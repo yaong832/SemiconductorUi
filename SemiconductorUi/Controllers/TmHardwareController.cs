@@ -1,5 +1,5 @@
 using System;
-using IEG3268_Dll;
+using SemiconductorUi.Hardware;
 using SemiconductorUi.Controls;
 using AppSettings = SemiconductorUi.AppSettings;
 
@@ -232,7 +232,7 @@ namespace SemiconductorUi.Controllers
 
         #region Fields
 
-        private readonly IEG3268 _ethercat;
+        private readonly IEthercatDevice _ethercat;
         private readonly Action<string, string> _logCallback;
         private TmPositionSet _positions;
         private bool _isInitialized;
@@ -314,7 +314,7 @@ namespace SemiconductorUi.Controllers
         /// </summary>
         /// <param name="ethercat">EtherCAT 통신 객체</param>
         /// <param name="logCallback">로그 콜백 (메시지, 레벨)</param>
-        public TmHardwareController(IEG3268 ethercat, Action<string, string> logCallback = null)
+        public TmHardwareController(IEthercatDevice ethercat, Action<string, string> logCallback = null)
         {
             _ethercat = ethercat ?? throw new ArgumentNullException(nameof(ethercat));
             _logCallback = logCallback ?? ((msg, level) => { });
