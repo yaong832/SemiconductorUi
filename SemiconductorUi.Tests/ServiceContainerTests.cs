@@ -1,5 +1,6 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using SemiconductorUi;
+using SemiconductorUi.Services;
 
 namespace SemiconductorUi.Tests
 {
