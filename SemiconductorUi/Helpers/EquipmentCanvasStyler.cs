@@ -12,10 +12,6 @@ namespace SemiconductorUi.Helpers
     public static class EquipmentCanvasStyler
     {
         public static readonly Color CanvasBack = Color.FromArgb(236, 239, 244);
-        public static readonly Color CorridorFill = Color.FromArgb(222, 227, 235);
-        public static readonly Color CorridorEdge = Color.FromArgb(200, 207, 218);
-        public static readonly Color TransferChamberFill = Color.FromArgb(210, 217, 228);
-        public static readonly Color TransferChamberEdge = Color.FromArgb(160, 170, 186);
         public static readonly Color CardFill = Color.White;
         public static readonly Color CardBorder = Color.FromArgb(184, 192, 205);
         public static readonly Color CardTitle = Color.FromArgb(38, 46, 60);
