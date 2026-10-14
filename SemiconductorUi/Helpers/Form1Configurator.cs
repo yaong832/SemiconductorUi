@@ -48,7 +48,14 @@ namespace SemiconductorUi.Helpers
             int foupW = EquipmentCanvasStyler.FoupWidth;
             int foupH = EquipmentCanvasStyler.FoupHeight;
 
-            float cx = canvasSize.Width / 2f;
+            // 오른쪽에는 TM 기준 화면(정면/옆면) 칸을 둔다. 캔버스가 좁으면 숨기고 전체 폭을 시뮬레이터에 쓴다.
+            const int sideViewWidth = 262;
+            const int sideViewGap = 12;
+            const int minSideViewCanvasWidth = 880;
+            bool showSideView = form.tmSideViewControl != null && canvasSize.Width >= minSideViewCanvasWidth;
+            int clusterWidth = showSideView ? canvasSize.Width - sideViewWidth - sideViewGap - margin : canvasSize.Width;
+
+            float cx = clusterWidth / 2f;
             int topY = margin;
             int foupY = Math.Max(topY + chamberH + 2 * tmClearance, canvasSize.Height - margin - foupH);
             float cy = (topY + chamberH + foupY) / 2f;
@@ -70,10 +77,23 @@ namespace SemiconductorUi.Helpers
             PlaceCentered(form.panelFoupA, new PointF(cx - foupOffset, foupY + foupH / 2f));
             PlaceCentered(form.panelFoupB, new PointF(cx + foupOffset, foupY + foupH / 2f));
 
+            int sideViewLeft = canvasSize.Width - margin - sideViewWidth;
             if (form.panelMainLamp != null)
             {
-                form.panelMainLamp.Location = new Point(margin, margin);
+                // TM 기준 화면이 있으면 상태 램프 범례는 그 칸 위로 옮긴다 (왼쪽 위는 Chamber B와 가까워짐).
+                form.panelMainLamp.Location = showSideView ? new Point(sideViewLeft, margin) : new Point(margin, margin);
                 form.panelMainLamp.BringToFront();
+            }
+
+            if (form.tmSideViewControl != null)
+            {
+                form.tmSideViewControl.Visible = showSideView;
+                if (showSideView)
+                {
+                    int sideTop = margin + (form.panelMainLamp?.Height ?? 0) + 8;
+                    form.tmSideViewControl.Bounds = new Rectangle(sideViewLeft, sideTop, sideViewWidth, Math.Max(120, canvasSize.Height - margin - sideTop));
+                    form.tmSideViewControl.BringToFront();
+                }
             }
 
             if (form.tmVisualizationControl != null)

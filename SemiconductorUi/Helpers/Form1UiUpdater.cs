@@ -17,6 +17,9 @@ namespace SemiconductorUi.Helpers
     {
         private readonly Form1 form;
 
+        // 시뮬레이션 모드의 TM 정면/옆면 보기에 쓰는 티칭 값 (하드웨어 모드는 TmHardwareController.Positions를 쓴다)
+        private TmHardwareController.TmPositionSet simulatedTeachingPositions;
+
         /// <summary>
         /// Form1UiUpdater 생성자
         /// </summary>
@@ -742,6 +745,7 @@ namespace SemiconductorUi.Helpers
                 ? form.GetWaferColorForRegion(form.TmVisualTarget)
                 : (Color?)null;
             form.tmVisualizationControl?.UpdateTmState(form.TmVisualTarget, waferOnBlade, form.TmBladeExtensionFactor, waferColor);
+            UpdateTmSideViewForSimulation(waferOnBlade, waferColor);
         }
 
         /// <summary>
@@ -803,12 +807,172 @@ namespace SemiconductorUi.Helpers
                 
                 // 4. UI 업데이트 (실제 하드웨어 상태만 반영)
                 form.tmVisualizationControl?.UpdateTmState(targetRegion, waferOnBlade, form.TmBladeExtensionFactor, waferColor, false);
+                UpdateTmSideViewFromHardware(targetRegion, currentY, carrying, waferOnBlade, waferColor);
             }
             catch (Exception ex)
             {
                 // 오류 시 무시 (로그 스팸 방지)
                 System.Diagnostics.Debug.WriteLine($"TM 시각화 업데이트 오류: {ex.Message}");
             }
+        }
+
+        /// <summary>
+        /// 시뮬레이션 모드가 쓸 티칭 값을 바꾼다 (티칭 화면에서 저장했을 때).
+        /// </summary>
+        internal void SetSimulatedTeachingPositions(TmHardwareController.TmPositionSet positions)
+        {
+            if (positions == null)
+            {
+                return;
+            }
+
+            var copy = new TmHardwareController.TmPositionSet();
+            copy.ApplyFrom(positions.ToData());
+            simulatedTeachingPositions = copy;
+        }
+
+        private TmHardwareController.TmPositionSet GetSimulatedTeachingPositions()
+        {
+            if (simulatedTeachingPositions == null)
+            {
+                var loaded = new TmHardwareController.TmPositionSet();
+                try
+                {
+                    loaded.ApplyFrom(Repositories.TeachingPositionsRepository.Load());
+                }
+                catch (Exception ex)
+                {
+                    // 티칭 파일을 못 읽으면 기본 티칭 값으로 그린다 (표시 전용)
+                    System.Diagnostics.Debug.WriteLine($"TM 정면 보기 티칭 값 로드 오류: {ex.Message}");
+                }
+                simulatedTeachingPositions = loaded;
+            }
+
+            return simulatedTeachingPositions;
+        }
+
+        /// <summary>
+        /// 시뮬레이션 모드: 실제 Axis1 값이 없으므로 이송 단계와 티칭 값으로 높이를 정해 정면 보기를 그린다.
+        /// 표시 전용이며 장비 동작에는 영향이 없다.
+        /// </summary>
+        private void UpdateTmSideViewForSimulation(bool waferOnBlade, Color? waferColor)
+        {
+            var view = form.tmSideViewControl;
+            if (view == null || !view.Visible)
+            {
+                return;
+            }
+
+            var phase = form.TmPhase;
+            var transfer = form.CurrentTransfer;
+            EquipmentRegion target;
+            if (transfer == null || phase == TransferController.TmPhase.Idle)
+            {
+                target = form.TmVisualTarget;
+            }
+            else
+            {
+                target = TmHeightEstimator.IsDropoffPhase(phase) ? transfer.Dropoff : transfer.Pickup;
+            }
+
+            int level = GetFoupLevelForTransfer(target, transfer);
+            var positions = GetSimulatedTeachingPositions();
+            long height = transfer == null
+                ? positions.Home_Y
+                : TmHeightEstimator.EstimateForPhase(phase, target, positions, level);
+
+            view.SetPositions(positions);
+            view.UpdateState(BuildSideViewState(target, height, waferOnBlade, waferOnBlade, waferColor, false));
+        }
+
+        /// <summary>
+        /// 하드웨어 모드: 실제 Axis1 위치와 진공 상태를 그대로 그린다.
+        /// </summary>
+        private void UpdateTmSideViewFromHardware(EquipmentRegion target, long currentY, bool vacuumOn, bool waferOnBlade, Color? waferColor)
+        {
+            var view = form.tmSideViewControl;
+            if (view == null || !view.Visible)
+            {
+                return;
+            }
+
+            view.SetPositions(form.TmHardwareController.Positions);
+            view.UpdateState(BuildSideViewState(target, currentY, vacuumOn, waferOnBlade, waferColor, true));
+        }
+
+        private TmSideViewState BuildSideViewState(EquipmentRegion target, long height, bool vacuumOn, bool waferOnBlade, Color? waferColor, bool isHardware)
+        {
+            var state = new TmSideViewState
+            {
+                Target = target,
+                Height = height,
+                Extension = Math.Max(0f, Math.Min(1f, (form.TmBladeExtensionFactor - 0.7f) / 0.6f)),
+                VacuumOn = vacuumOn,
+                WaferOnBlade = waferOnBlade,
+                IsHardware = isHardware
+            };
+
+            if (waferColor.HasValue)
+            {
+                state.WaferColor = waferColor.Value;
+            }
+
+            var foupB = form.FoupBCompleted;
+            int foupBCount = foupB?.Count ?? 0;
+            for (int level = 1; level <= TmHeightEstimator.FoupLevels; level++)
+            {
+                if (target == EquipmentRegion.FoupA)
+                {
+                    state.FoupLevels[level - 1] = form.foupManager?.HasWaferAtLayerFoupA(level) == true;
+                }
+                else if (target == EquipmentRegion.FoupB)
+                {
+                    // FOUP B는 1층부터 차례로 쌓인다
+                    state.FoupLevels[level - 1] = level <= foupBCount;
+                }
+            }
+
+            switch (target)
+            {
+                case EquipmentRegion.ChamberA: state.ChamberHasWafer = form.ChamberAState?.CurrentWafer != null; break;
+                case EquipmentRegion.ChamberB: state.ChamberHasWafer = form.ChamberBState?.CurrentWafer != null; break;
+                case EquipmentRegion.ChamberC: state.ChamberHasWafer = form.ChamberCState?.CurrentWafer != null; break;
+            }
+
+            return state;
+        }
+
+        /// <summary>
+        /// 이번 이송이 FOUP의 몇 층을 쓰는지 (1~5).
+        /// FOUP A는 웨이퍼 번호가 층 번호, FOUP B는 1층부터 쌓이므로 이미 놓였으면 그 자리, 아니면 다음 빈 층.
+        /// </summary>
+        private int GetFoupLevelForTransfer(EquipmentRegion target, TransferController.TransferTask transfer)
+        {
+            var wafer = transfer?.Wafer;
+            if (target == EquipmentRegion.FoupA)
+            {
+                if (wafer != null && transfer.Pickup == EquipmentRegion.FoupA)
+                {
+                    return wafer.Id;
+                }
+
+                return form.ConfiguredFoupALoadCount - form.FoupARemainingInventoryCount + 1;
+            }
+
+            if (target == EquipmentRegion.FoupB)
+            {
+                var foupB = form.FoupBCompleted;
+                int index = wafer != null && foupB != null ? foupB.IndexOf(wafer) : -1;
+                if (index >= 0)
+                {
+                    // 놓기 직후(뒤로 빼는 중)에는 이미 목록에 들어가 있다
+                    return index + 1;
+                }
+
+                return (foupB?.Count ?? 0) + 1;
+            }
+
+            return 1;
         }
 
         /// <summary>
