@@ -30,6 +30,13 @@ namespace SemiconductorUi.Hardware
         bool Digital_Input(int numbering);
         void Digital_Output(int numbering, bool value);
 
+        /// <summary>
+        /// 마지막으로 보낸 디지털 출력 값. DLL로는 실제 출력 단자를 다시 읽을 수 없어서
+        /// 램프·도어처럼 출력으로만 제어하는 장치의 상태 표시는 이 값을 씁니다.
+        /// Digital_Input과 번호 체계가 다르므로 섞어 쓰면 안 됩니다.
+        /// </summary>
+        bool GetDigitalOutput(int numbering);
+
         #endregion
 
         #region 축 1 (상하, UD)

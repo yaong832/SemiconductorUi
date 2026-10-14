@@ -111,6 +111,22 @@ namespace SemiconductorUi.Tests
         }
 
         [TestMethod]
+        public void GetDigitalOutput_ReturnsLastCommandedValue()
+        {
+            _dll.Digital_Out_Value[6] = true; // 챔버 B 램프 출력
+
+            Assert.IsTrue(_device.GetDigitalOutput(6));
+            Assert.IsFalse(_device.GetDigitalOutput(3));
+        }
+
+        [TestMethod]
+        public void GetDigitalOutput_OutOfRange_ReturnsFalse()
+        {
+            Assert.IsFalse(_device.GetDigitalOutput(-1));
+            Assert.IsFalse(_device.GetDigitalOutput(16));
+        }
+
+        [TestMethod]
         public void CheckCommunication_NotConnected_DoesNotTouchDriver()
         {
             var status = _device.CheckCommunication();

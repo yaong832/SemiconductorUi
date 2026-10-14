@@ -27,6 +27,11 @@ namespace SemiconductorUi.Forms
         /// </summary>
         public Func<bool> IsAutoProcessActive;
 
+        /// <summary>
+        /// 원점복귀 절차가 성공해 아직 원점에 있다고 기록된 상태인지 (메인 화면과 같은 기준)
+        /// </summary>
+        public Func<bool> IsHomedBySequence;
+
         // Chamber 램프 버튼
         private Button buttonChamberALampOn;
         private Button buttonChamberALampOff;
@@ -892,9 +897,9 @@ namespace SemiconductorUi.Forms
                 bool red = false, yellow = false, green = false;
                 try
                 {
-                    red = ethercatDevice.Digital_Input(0);
-                    yellow = ethercatDevice.Digital_Input(1);
-                    green = ethercatDevice.Digital_Input(2);
+                    red = ethercatDevice.GetDigitalOutput(0);
+                    yellow = ethercatDevice.GetDigitalOutput(1);
+                    green = ethercatDevice.GetDigitalOutput(2);
                 }
                 catch { }
                 
@@ -1039,9 +1044,9 @@ namespace SemiconductorUi.Forms
                 bool red = false, yellow = false, green = false;
                 try
                 {
-                    red = ethercatDevice.Digital_Input(0);
-                    yellow = ethercatDevice.Digital_Input(1);
-                    green = ethercatDevice.Digital_Input(2);
+                    red = ethercatDevice.GetDigitalOutput(0);
+                    yellow = ethercatDevice.GetDigitalOutput(1);
+                    green = ethercatDevice.GetDigitalOutput(2);
                 }
                 catch { }
                 
@@ -1093,9 +1098,9 @@ namespace SemiconductorUi.Forms
                 bool red = false, yellow = false, green = false;
                 try
                 {
-                    red = ethercatDevice.Digital_Input(0);
-                    yellow = ethercatDevice.Digital_Input(1);
-                    green = ethercatDevice.Digital_Input(2);
+                    red = ethercatDevice.GetDigitalOutput(0);
+                    yellow = ethercatDevice.GetDigitalOutput(1);
+                    green = ethercatDevice.GetDigitalOutput(2);
                 }
                 catch { }
                 
@@ -1143,8 +1148,9 @@ namespace SemiconductorUi.Forms
             try
             {
                 // 원점복귀 상태 확인
-                bool axis1Home = ethercatDevice.Axis1_Status("HOME_D");
-                bool axis2Home = ethercatDevice.Axis2_Status("HOME_D");
+                bool homedBySequence = IsHomedBySequence != null && IsHomedBySequence();
+                bool axis1Home = homedBySequence || ethercatDevice.Axis1_Status("HOME_D");
+                bool axis2Home = homedBySequence || ethercatDevice.Axis2_Status("HOME_D");
                 bool isHomed = axis1Home && axis2Home;
 
                 // 위치 데이터 확인 (서보 ON 여부 추정)

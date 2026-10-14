@@ -88,9 +88,13 @@ namespace SemiconductorUi.Helpers
                         }
                         else
                         {
-                            // 서보 ON 상태이면 HOME_D 센서 확인
-                            axis1Homed = form.EtherCAT_M.Axis1_Status("HOME_D");
-                            axis2Homed = form.EtherCAT_M.Axis2_Status("HOME_D");
+                            // HOME_D는 축이 원점복귀 모드에 있고 '목표 도달' 비트가 켜져 있을 때만 true라서,
+                            // 원점복귀가 끝난 뒤에도 축 상태에 따라 꺼질 수 있습니다.
+                            // 원점복귀 절차가 성공해 기록된 상태(TmHardwareInitialized)를 우선합니다.
+                            // 이 값은 이동, 서보 OFF, 연결 해제 시 초기화됩니다.
+                            bool homedBySequence = form.TmHardwareInitialized;
+                            axis1Homed = homedBySequence || form.EtherCAT_M.Axis1_Status("HOME_D");
+                            axis2Homed = homedBySequence || form.EtherCAT_M.Axis2_Status("HOME_D");
                             isHomed = axis1Homed && axis2Homed;
                         }
                     }

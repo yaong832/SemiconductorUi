@@ -173,6 +173,7 @@ namespace SemiconductorUi.EventHandlers
                     ecf.IsAutoProcessActive = () =>
                         form.CurrentProcessState == ViewModels.MainFormViewModel.ProcessState.Running ||
                         form.CurrentProcessState == ViewModels.MainFormViewModel.ProcessState.Paused;
+                    ecf.IsHomedBySequence = () => form.TmHardwareInitialized;
 
                     // 도어 상태 변경 시 UI 업데이트 콜백
                     ecf.OnDoorStateChanged = (region, isOpen) =>

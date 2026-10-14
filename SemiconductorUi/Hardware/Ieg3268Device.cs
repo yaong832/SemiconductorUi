@@ -110,6 +110,20 @@ namespace SemiconductorUi.Hardware
             }
         }
 
+        public bool GetDigitalOutput(int numbering)
+        {
+            lock (_sync)
+            {
+                bool[] outputs = _dll.Digital_Out_Value;
+                if (outputs == null || numbering < 0 || numbering >= outputs.Length)
+                {
+                    return false;
+                }
+
+                return outputs[numbering];
+            }
+        }
+
         #endregion
 
         #region 축 1
