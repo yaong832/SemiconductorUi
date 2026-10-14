@@ -51,6 +51,8 @@ namespace SemiconductorUi
         internal readonly Dictionary<Control, Color> originalPanelColors = new Dictionary<Control, Color>();
         internal readonly Timer HeaderClockTimer;
         internal readonly Timer HardwareUiUpdateTimer; // UI 전용 고속 타이머 (50ms 주기)
+        private readonly Timer ServoFaultTimer; // 서보 드라이브 알람 감시 (연결 중에만 확인)
+        private readonly ServoFaultMonitor _servoFaultMonitor;
         internal static readonly ChamberController.SimulationStepDefinition[] ChamberProcessFlow =
         {
             new ChamberController.SimulationStepDefinition("PR 도포", 30),
@@ -913,6 +915,17 @@ namespace SemiconductorUi
                 components.Add(HardwareUiUpdateTimer);
             }
             // 타이머는 EtherCAT 연결 시 시작됨
+
+            // 서보 알람 감시: 공정, 수동 조작, 장비 제어 창 여부와 관계없이 연결되어 있으면 확인합니다.
+            _servoFaultMonitor = new ServoFaultMonitor(EtherCAT_M);
+            ServoFaultTimer = new Timer();
+            ServoFaultTimer.Interval = ServoFaultPollIntervalMs;
+            ServoFaultTimer.Tick += ServoFaultTimer_Tick;
+            if (components != null)
+            {
+                components.Add(ServoFaultTimer);
+            }
+            ServoFaultTimer.Start();
             
             uiInitializer.InitializeSimulationState();
             // 초기화 시 모드에 따라 적절한 업데이트 메서드 호출
@@ -2850,14 +2863,163 @@ namespace SemiconductorUi
 
         private void ScheduleEmergencyStopVerification()
         {
-            var timer = new System.Windows.Forms.Timer { Interval = EmergencyStopVerifyDelayMs };
+            RunOnceAfter(EmergencyStopVerifyDelayMs, VerifyServoOffAfterEmergencyStop);
+        }
+
+        /// <summary>
+        /// UI 스레드에서 지정 시간 뒤 한 번 실행합니다.
+        /// </summary>
+        private void RunOnceAfter(int delayMs, Action action)
+        {
+            var timer = new System.Windows.Forms.Timer { Interval = delayMs };
             timer.Tick += (s, e) =>
             {
                 timer.Stop();
                 timer.Dispose();
-                VerifyServoOffAfterEmergencyStop();
+                action();
             };
             timer.Start();
+        }
+
+        // 서보 알람 감시 주기. 드라이브 상태는 DLL 수신 타이머(300ms)로 갱신되므로 그보다 짧게 둡니다.
+        private const int ServoFaultPollIntervalMs = 100;
+
+        // 드라이브 알람 리셋 뒤 상태가 다시 읽힐 때까지 기다리는 시간.
+        private const int ServoFaultResetVerifyDelayMs = 1000;
+
+        private static readonly int[] ServoAxes = { 1, 2 };
+
+        /// <summary>
+        /// 서보 드라이브 알람이 새로 생기면 비상정지와 같은 경로로 멈춥니다.
+        /// 드라이브는 알람이 나면 스스로 출력을 끊지만, 그대로 두면 공정이 다음 이송 명령을 계속 보냅니다.
+        /// </summary>
+        private void ServoFaultTimer_Tick(object sender, EventArgs e)
+        {
+            if (EtherCAT_M == null || !EthercatConnected)
+            {
+                _servoFaultMonitor.Reset();
+                return;
+            }
+
+            IList<int> newFaults;
+            try
+            {
+                newFaults = _servoFaultMonitor.PollNewFaults();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"서보 알람 확인 오류: {ex.Message}");
+                return;
+            }
+
+            if (newFaults.Count == 0)
+            {
+                return;
+            }
+
+            string detail = DescribeServoAxes(newFaults);
+            if (EtherCAT_M.IsEmergencyStopped)
+            {
+                AddLogMessage($"서보 알람 발생: {detail} (이미 비상정지 중)", "ALARM");
+                return;
+            }
+
+            // 감시 상태는 이미 갱신되었으므로, 아래 메시지 창이 떠 있는 동안 타이머가 다시 돌아도 중복으로 멈추지 않습니다.
+            ExecuteEmergencyStop($"서보 알람: {detail}");
+            MessageBox.Show(
+                $"서보 드라이브 알람이 발생해 비상정지했습니다.\n\n{detail}\n\n" +
+                "• 서보: OFF, 진행 중이던 공정과 이송은 중단됨\n" +
+                "• 진공: 유지\n\n" +
+                "드라이브 표시창의 알람 코드를 확인하고 원인을 없앤 뒤,\n" +
+                "알람 리셋 → 서보 ON → 원점복귀 순서로 다시 시작하세요.",
+                "서보 알람", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
+
+        /// <summary>
+        /// 지금 드라이브 알람이 켜져 있는 축. 연결되지 않았으면 빈 목록.
+        /// </summary>
+        internal IList<int> GetFaultedServoAxes()
+        {
+            var faulted = new List<int>();
+            if (EtherCAT_M == null || !EthercatConnected)
+            {
+                return faulted;
+            }
+
+            foreach (int axis in ServoAxes)
+            {
+                if (EtherCAT_M.IsAxisFault(axis))
+                {
+                    faulted.Add(axis);
+                }
+            }
+            return faulted;
+        }
+
+        /// <summary>
+        /// 축 이름과 상태워드 원값. 예: "Axis1(상하) 상태워드 0x0218"
+        /// </summary>
+        internal string DescribeServoAxes(IList<int> axes)
+        {
+            var parts = new List<string>();
+            foreach (int axis in axes)
+            {
+                string name = axis == 1 ? "Axis1(상하)" : "Axis2(좌우)";
+                ushort statusWord = EtherCAT_M != null ? EtherCAT_M.GetStatusWord(axis) : (ushort)0;
+                parts.Add($"{name} 상태워드 0x{statusWord:X4}");
+            }
+            return string.Join(", ", parts);
+        }
+
+        /// <summary>
+        /// 비상정지를 해제한 직후에 부릅니다. 드라이브 알람이 남아 있으면 알람 리셋 신호를 보내고,
+        /// 잠시 뒤에도 알람이 남아 있으면 다시 비상정지를 겁니다.
+        /// </summary>
+        internal void ResetServoFaultsAfterEmergencyStopCleared()
+        {
+            IList<int> faulted = GetFaultedServoAxes();
+            if (faulted.Count == 0)
+            {
+                return;
+            }
+
+            string detail = DescribeServoAxes(faulted);
+            foreach (int axis in faulted)
+            {
+                try
+                {
+                    EtherCAT_M.ResetAxisFault(axis);
+                }
+                catch (Exception ex)
+                {
+                    AddLogMessage($"드라이브 알람 리셋 전송 오류 (Axis{axis}): {ex.Message}", "ERROR");
+                }
+            }
+            AddLogMessage($"드라이브 알람 리셋 전송: {detail}", "WARN");
+
+            RunOnceAfter(ServoFaultResetVerifyDelayMs, () =>
+            {
+                IList<int> stillFaulted = GetFaultedServoAxes();
+                if (stillFaulted.Count == 0)
+                {
+                    AddLogMessage("드라이브 알람 해제 확인", "INFO");
+                    return;
+                }
+
+                string stillDetail = DescribeServoAxes(stillFaulted);
+                if (EtherCAT_M.IsEmergencyStopped)
+                {
+                    AddLogMessage($"드라이브 알람이 아직 남아 있습니다: {stillDetail}", "ALARM");
+                    return;
+                }
+
+                ExecuteEmergencyStop($"알람 리셋 후에도 서보 알람 유지: {stillDetail}");
+                MessageBox.Show(
+                    $"드라이브 알람 리셋 후에도 알람이 남아 있어 다시 비상정지했습니다.\n\n{stillDetail}\n\n" +
+                    "드라이브 표시창의 알람 코드를 확인하고 원인을 없앤 뒤 다시 알람 리셋을 하세요.\n" +
+                    "원인을 모르면 드라이브 전원을 껐다 켜야 할 수 있습니다.",
+                    "서보 알람 유지", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            });
         }
 
         /// <summary>
