@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Windows.Forms;
+using SemiconductorUi.Hardware;
 using SemiconductorUi.ViewModels;
 using SemiconductorUi.Repositories;
 using SemiconductorUi.Helpers;
@@ -28,6 +29,14 @@ namespace SemiconductorUi.EventHandlers
         {
             if (!form.EnsureLoggedIn())
             {
+                return;
+            }
+
+            if (IsEmergencyStopped())
+            {
+                MessageBox.Show(
+                    "비상정지 중입니다.\n\n알람 리셋으로 비상정지를 해제하고, 서보 ON과 원점복귀를 한 뒤 시작하세요.",
+                    "비상정지 중", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
@@ -107,67 +116,27 @@ namespace SemiconductorUi.EventHandlers
         }
 
         /// <summary>
-        /// 공정 정지 버튼 클릭 이벤트 핸들러
-        /// 진행 중인 공정을 긴급 정지합니다. 하드웨어 모드에서는 서보와 진공을 즉시 OFF합니다.
+        /// 긴급 정지 버튼 클릭 이벤트 핸들러
+        /// 공정 여부, 로그인 여부와 관계없이 두 축 서보를 끄고 장비 명령을 막습니다.
+        /// 진공은 유지합니다. 알람 리셋으로 해제합니다.
         /// </summary>
         /// <param name="sender">이벤트 발생 객체</param>
         /// <param name="e">이벤트 인자</param>
         public void ButtonStop_Click(object sender, EventArgs e)
         {
-            if (!form.EnsureLoggedIn())
-            {
-                return;
-            }
+            form.ExecuteEmergencyStop("메인 화면 긴급 정지 버튼");
 
-            if (!form.SimulationRunning)
-            {
-                MessageBox.Show("정지할 공정이 없습니다.", "안내", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                return;
-            }
-
-            // 하드웨어 모드: 긴급 정지
-            if (form.EthercatConnected && form.EtherCAT_M != null)
-            {
-                try
-                {
-                    // 1. 서보 즉시 OFF
-                    form.EtherCAT_M.Axis1_OFF();
-                    form.EtherCAT_M.Axis2_OFF();
-                    form.IsServoOn = false;
-                    
-                    // 2. 진공 OFF (웨이퍼가 떨어질 수 있으므로 주의 메시지)
-                    form.EtherCAT_M.Digital_Output(14, false); // 진공 OFF
-                    form.EtherCAT_M.Digital_Output(15, false); // 배기 OFF
-                    
-                    form.AddLogMessage("긴급정지: 서보 OFF, 진공 OFF - 장비 상태를 확인하세요!", "ALARM");
-                    
-                    // 상태 초기화
-                    form.TmHardwareInitialized = false;
-                    form.TmHardwareActionPending = false;
-                    form.TmSettleWaiting = false;
-                }
-                catch (Exception ex)
-                {
-                    form.AddLogMessage($"긴급정지 하드웨어 제어 오류: {ex.Message}", "ERROR");
-                }
-            }
-
-            form.HasAlarm = true;
-            form.AbortSimulation("긴급 정지를 실행했습니다. 장비 상태를 확인하세요.", true);
-            
-            // 긴급정지 후 안내 메시지
             MessageBox.Show(
-                "긴급 정지가 실행되었습니다.\n\n" +
-                "⚠️ 장비 상태를 확인하세요:\n" +
-                "• 서보: OFF 상태\n" +
-                "• 진공: OFF 상태\n" +
-                "• 실린더: 현재 상태 유지\n\n" +
-                "재시작하려면:\n" +
+                "비상정지가 실행되었습니다.\n\n" +
+                "• 서보: OFF (두 축)\n" +
+                "• 진공: 유지 (웨이퍼를 잡고 있으면 그대로)\n" +
+                "• 실린더, 도어: 현재 상태 유지\n" +
+                "• 장비 명령: 해제 전까지 차단\n\n" +
+                "다시 움직이려면:\n" +
                 "1. 장비 상태 확인\n" +
-                "2. 실린더 후진 확인\n" +
-                "3. 서보 ON → 원점복귀\n" +
-                "4. 공정 리셋 후 재시작",
-                "긴급 정지", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                "2. 알람 리셋으로 비상정지 해제\n" +
+                "3. 서보 ON → 원점복귀",
+                "비상정지", MessageBoxButtons.OK, MessageBoxIcon.Warning);
         }
 
         /// <summary>
@@ -183,10 +152,40 @@ namespace SemiconductorUi.EventHandlers
                 return;
             }
 
+            bool emergencyStopCleared = false;
+            if (IsEmergencyStopped())
+            {
+                var confirm = MessageBox.Show(
+                    "비상정지를 해제하시겠습니까?\n\n" +
+                    "해제하기 전에 확인하세요:\n" +
+                    "• 장비 근처에 사람이 없는지\n" +
+                    "• 웨이퍼, 블레이드, 실린더 위치\n\n" +
+                    "해제해도 서보는 꺼진 채로 남습니다.\n" +
+                    "해제한 뒤 서보 ON → 원점복귀를 다시 하세요.",
+                    "비상정지 해제",
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Warning,
+                    MessageBoxDefaultButton.Button2);
+
+                if (confirm != DialogResult.Yes)
+                {
+                    return;
+                }
+
+                form.EtherCAT_M.ClearEmergencyStop();
+                emergencyStopCleared = true;
+                form.AddLogMessage("비상정지 해제 (서보 OFF 유지, 서보 ON과 원점복귀 필요)", "WARN");
+            }
+
             // 헤더에 알람이 표시되어 있는지 확인
             if (!form.HasHeaderAlarm())
             {
-                MessageBox.Show("해제할 알람이 없습니다.", "안내", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                if (!emergencyStopCleared)
+                {
+                    MessageBox.Show("해제할 알람이 없습니다.", "안내", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                form.UpdateServoStatusLabel();
+                form.UpdateProcessControlButtons();
                 return;
             }
 
@@ -265,6 +264,8 @@ namespace SemiconductorUi.EventHandlers
             
             // UI 업데이트
             form.UpdateSimulationUi();
+            form.UpdateServoStatusLabel();
+            form.UpdateProcessControlButtons();
         }
 
         /// <summary>
@@ -277,6 +278,14 @@ namespace SemiconductorUi.EventHandlers
         {
             if (!form.EnsureLoggedIn())
             {
+                return;
+            }
+
+            if (IsEmergencyStopped())
+            {
+                MessageBox.Show(
+                    "비상정지 중에는 공정 리셋을 할 수 없습니다.\n공정 리셋은 진공 OFF, 실린더 후진, 원점복귀를 함께 수행합니다.\n\n먼저 알람 리셋으로 비상정지를 해제하세요.",
+                    "비상정지 중", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
@@ -329,7 +338,7 @@ namespace SemiconductorUi.EventHandlers
                 form.AddLogMessage("공정 리셋: 하드웨어 초기화 시작 (백그라운드)", "INFO");
                 var ethercat = form.EtherCAT_M;
                 var servoOn = form.IsServoOn;
-                System.Threading.Tasks.Task.Run(() =>
+                HardwareOperation.Run(ethercat, () =>
                 {
                     try
                     {
@@ -349,6 +358,7 @@ namespace SemiconductorUi.EventHandlers
                             var timeout = DateTime.Now.AddSeconds(5);
                             while (DateTime.Now < timeout)
                             {
+                                ethercat.ThrowIfEmergencyStopped();
                                 try
                                 {
                                     if (ethercat.Digital_Input(12)) { cylinderRetracted = true; break; }
@@ -470,6 +480,11 @@ namespace SemiconductorUi.EventHandlers
                     form.UpdatePmEnvironmentTable(kvp.Key);
                 }
             }
+        }
+
+        private bool IsEmergencyStopped()
+        {
+            return form.EtherCAT_M != null && form.EtherCAT_M.IsEmergencyStopped;
         }
     }
 }

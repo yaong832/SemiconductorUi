@@ -246,8 +246,8 @@ namespace SemiconductorUi.Services
                     _ethercat.Axis2_OFF();
                 }
 
-                // 진공 OFF
-                if (_isEthercatConnected && _ethercat != null)
+                // 진공 OFF (비상정지 중에는 웨이퍼를 놓치지 않도록 진공을 유지합니다)
+                if (_isEthercatConnected && _ethercat != null && !_ethercat.IsEmergencyStopped)
                 {
                     _ethercat.Digital_Output(14, false); // 진공 OFF
                     _ethercat.Digital_Output(15, false); // 배기 OFF

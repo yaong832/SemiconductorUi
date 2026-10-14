@@ -52,6 +52,13 @@ namespace SemiconductorUi.Helpers
 
             try
             {
+                if (form.EtherCAT_M != null && form.EtherCAT_M.IsEmergencyStopped)
+                {
+                    form.labelServoStatus.Text = "서보: 비상정지 | 알람 리셋 필요";
+                    form.labelServoStatus.ForeColor = UiTheme.Danger;
+                    return;
+                }
+
                 if (!form.EthercatConnected)
                 {
                     form.labelServoStatus.Text = "서보: - | Home: -";
@@ -942,11 +949,14 @@ namespace SemiconductorUi.Helpers
         /// </summary>
         public void UpdateProcessControlButtons()
         {
+            // 긴급 정지는 로그인, 공정 상태와 관계없이 항상 누를 수 있어야 합니다.
+            form.buttonStop.Enabled = true;
+            bool emergencyStopped = form.EtherCAT_M != null && form.EtherCAT_M.IsEmergencyStopped;
+
             if (!form.IsLoggedIn)
             {
                 form.buttonStart.Enabled = false;
                 form.buttonPause.Enabled = false;
-                form.buttonStop.Enabled = false;
                 form.buttonResetAlarm.Enabled = false;
                 form.buttonResetProcess.Enabled = false;
                 form.buttonApplyRecipe.Enabled = false;
@@ -957,14 +967,13 @@ namespace SemiconductorUi.Helpers
                 return;
             }
 
-            form.buttonStart.Enabled = !form.IsHardwareInitInProgress
+            form.buttonStart.Enabled = !emergencyStopped && !form.IsHardwareInitInProgress
                 && (!form.SimulationRunning || form.SimulationPaused || form.CurrentProcessState == MainFormViewModel.ProcessState.Error);
             form.buttonPause.Enabled = form.SimulationRunning && !form.SimulationPaused && !form.IsHardwareInitInProgress;
-            form.buttonStop.Enabled = form.SimulationRunning && !form.IsHardwareInitInProgress;
             
-            // 알람 리셋 버튼: 헤더에 알람이 표시되면 활성화
+            // 알람 리셋 버튼: 헤더에 알람이 표시되거나 비상정지 중이면 활성화 (비상정지 해제도 여기서 함)
             bool hasHeaderAlarm = form.HasHeaderAlarm();
-            form.buttonResetAlarm.Enabled = hasHeaderAlarm;
+            form.buttonResetAlarm.Enabled = hasHeaderAlarm || emergencyStopped;
             
             form.buttonResetProcess.Enabled = true;
             form.buttonApplyRecipe.Enabled = true;

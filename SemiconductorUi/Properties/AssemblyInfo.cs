@@ -19,6 +19,9 @@ using System.Runtime.InteropServices;
 // 해당 형식에 대해 ComVisible 특성을 true로 설정하세요.
 [assembly: ComVisible(false)]
 
+// 단위 테스트에서 하드웨어 없이 내부 생성자를 쓰기 위해 공개합니다.
+[assembly: InternalsVisibleTo("SemiconductorUi.Tests")]
+
 // 이 프로젝트가 COM에 노출되는 경우 다음 GUID는 typelib의 ID를 나타냅니다.
 [assembly: Guid("35ca8fe8-f73a-4f30-b7fa-553bacf407d3")]
 

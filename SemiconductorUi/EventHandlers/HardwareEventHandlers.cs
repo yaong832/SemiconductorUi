@@ -1,5 +1,6 @@
 using System;
 using System.Windows.Forms;
+using SemiconductorUi.Hardware;
 using AppSettings = SemiconductorUi.AppSettings;
 
 namespace SemiconductorUi.EventHandlers
@@ -177,6 +178,12 @@ namespace SemiconductorUi.EventHandlers
                 return;
             }
 
+            if (form.EtherCAT_M.IsEmergencyStopped)
+            {
+                MessageBox.Show("비상정지 중입니다.\n알람 리셋으로 비상정지를 해제한 뒤 서보 ON을 하세요.", "비상정지 중", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
             form.AddLogMessage("서보모터 ON 시작...", "INFO");
             var ethercat = form.EtherCAT_M;
             Int64 velocity = AppSettings.ServoDefaultVelocity;
@@ -184,7 +191,7 @@ namespace SemiconductorUi.EventHandlers
             Int64 deceleration = AppSettings.ServoDefaultDeceleration;
             Int64 acceleration = AppSettings.ServoDefaultAcceleration;
 
-            System.Threading.Tasks.Task.Run(() =>
+            HardwareOperation.Run(ethercat, () =>
             {
                 try
                 {
@@ -203,6 +210,7 @@ namespace SemiconductorUi.EventHandlers
                     var servoCheckTimeout = DateTime.Now.AddSeconds(2);
                     while (DateTime.Now < servoCheckTimeout)
                     {
+                        ethercat.ThrowIfEmergencyStopped();
                         try
                         {
                             string axis1Pos = ethercat.Axis1_is_PosData();
@@ -311,7 +319,7 @@ namespace SemiconductorUi.EventHandlers
                 }
 
                 // 비동기로 원점복귀 실행 (UI 블로킹 방지)
-                System.Threading.Tasks.Task.Run(() => form.PerformHomingSequence());
+                HardwareOperation.Run(form.EtherCAT_M, () => form.PerformHomingSequence());
             }
             catch (Exception ex)
             {
