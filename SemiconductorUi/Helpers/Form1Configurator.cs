@@ -42,7 +42,7 @@ namespace SemiconductorUi.Helpers
 
             // 배치: Chamber B는 위, A/C는 좌우, FOUP A/B는 아래 양쪽. TM은 그 사이 중앙.
             const int margin = 14;
-            const int tmClearance = 70; // TM 중심에서 모듈 가장자리까지 최소 거리 (팔각형 이송 챔버 + 여유)
+            const int tmClearance = 70; // TM 중심에서 모듈 가장자리까지 최소 거리 (로봇 몸체 + 회전 범위 고리 + 여유)
             int chamberW = EquipmentCanvasStyler.ChamberWidth;
             int chamberH = EquipmentCanvasStyler.ChamberHeight;
             int foupW = EquipmentCanvasStyler.FoupWidth;
@@ -88,7 +88,15 @@ namespace SemiconductorUi.Helpers
                 AddWellAnchor(anchors, EquipmentRegion.ChamberC, form.panelChamberC);
                 AddCenterAnchor(anchors, EquipmentRegion.FoupA, form.panelFoupA);
                 AddCenterAnchor(anchors, EquipmentRegion.FoupB, form.panelFoupB);
-                form.tmVisualizationControl.SetLayout(new PointF(cx, cy), anchors);
+                var modules = new System.Collections.Generic.List<RectangleF>();
+                foreach (var panel in new Control[] { form.panelChamberA, form.panelChamberB, form.panelChamberC, form.panelFoupA, form.panelFoupB })
+                {
+                    if (panel != null)
+                    {
+                        modules.Add(panel.Bounds);
+                    }
+                }
+                form.tmVisualizationControl.SetLayout(new PointF(cx, cy), anchors, modules);
             }
 
             form.panelEquipmentCanvas.Invalidate();
