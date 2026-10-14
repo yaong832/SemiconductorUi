@@ -2,7 +2,7 @@ using System;
 using System.Drawing;
 using System.Globalization;
 using System.Windows.Forms;
-using IEG3268_Dll;
+using SemiconductorUi.Hardware;
 using SemiconductorUi.Controllers;
 using SemiconductorUi.Models;
 using SemiconductorUi.Repositories;
@@ -14,7 +14,7 @@ namespace SemiconductorUi.Forms
     /// </summary>
     public class TeachingPositionForm : Form
     {
-        private readonly Func<IEG3268> _getEthercat;
+        private readonly Func<IEthercatDevice> _getEthercat;
         private readonly Func<bool> _isConnected;
         private readonly Action<TmHardwareController.TmPositionSet> _onApplied;
 
@@ -37,7 +37,7 @@ namespace SemiconductorUi.Forms
 
         public TeachingPositionForm(
             TeachingPositionsData initial,
-            Func<IEG3268> getEthercat = null,
+            Func<IEthercatDevice> getEthercat = null,
             Func<bool> isConnected = null,
             Action<TmHardwareController.TmPositionSet> onApplied = null)
         {

@@ -4,6 +4,8 @@ using System.IO;
 using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using SemiconductorUi;
+using SemiconductorUi.Models;
+using SemiconductorUi.Repositories;
 
 namespace SemiconductorUi.Tests
 {

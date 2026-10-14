@@ -35,7 +35,7 @@
   <ItemGroup>
     <Reference Include="IEG3268_Dll, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\새 폴더\IEG3268_Dll.dll</HintPath>
+      <HintPath>..\IEG3268_Dll.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -120,6 +120,10 @@
     <Compile Include="Controllers\TransferController.cs" />
     <Compile Include="Controllers\SimulationController.cs" />
     <Compile Include="Services\HardwareManager.cs" />
+    <Compile Include="Hardware\CifxChannel.cs" />
+    <Compile Include="Hardware\EthercatCommunicationStatus.cs" />
+    <Compile Include="Hardware\IEthercatDevice.cs" />
+    <Compile Include="Hardware\Ieg3268Device.cs" />
     <Compile Include="Helpers\EquipmentRegionHelper.cs" />
     <Compile Include="Helpers\RecipeValidator.cs" />
     <Compile Include="Helpers\ChamberHardwareHelper.cs" />

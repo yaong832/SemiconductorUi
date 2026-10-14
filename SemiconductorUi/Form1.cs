@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Drawing.Drawing2D;
 using IEG3268_Dll;
+using SemiconductorUi.Hardware;
 using SemiconductorUi.Helpers;
 using SemiconductorUi.Controllers;
 using SemiconductorUi.Repositories;
@@ -646,7 +647,7 @@ namespace SemiconductorUi
         }
         
         // EtherCAT 인스턴스는 필드로 유지 (초기화 필요)
-        internal IEG3268 EtherCAT_M;
+        internal IEthercatDevice EtherCAT_M;
         
         // 장비 상태 동기화 플래그
         internal bool isSyncingEquipmentState = false;
@@ -828,7 +829,7 @@ namespace SemiconductorUi
             ViewModel = new MainFormViewModel();
             
             // EtherCAT 인스턴스 생성 (HardwareManager 초기화 전에 필요)
-            EtherCAT_M = new IEG3268();
+            EtherCAT_M = new Ieg3268Device(new IEG3268());
             
             // HardwareManager 초기화
             HardwareManager = new HardwareManager(EtherCAT_M, AddLogMessage);
@@ -3878,26 +3879,26 @@ namespace SemiconductorUi
                 {
                     // ReadData 타이머가 이미 주기적으로 갱신 중이므로 UI 스레드 Sleep 없이 즉시 읽음
                     
-                // Chamber A, B, C에 대한 도어 및 램프 상태 매핑
-                // (Region, 도어 Digital_Input 인덱스, 램프 Digital_Input 인덱스)
-                var chamberMappings = new[]
+                // 도어와 램프는 출력으로만 제어하고 상태 센서가 없으므로
+                // 마지막으로 보낸 출력 값으로 표시합니다. (입력 번호와 출력 번호는 서로 다른 신호)
+                var chamberRegions = new[]
                 {
-                    (EquipmentRegion.ChamberA, 5, 3),
-                    (EquipmentRegion.ChamberB, 8, 6),
-                    (EquipmentRegion.ChamberC, 11, 9)
+                    EquipmentRegion.ChamberA,
+                    EquipmentRegion.ChamberB,
+                    EquipmentRegion.ChamberC
                 };
 
-                // 실제 장비의 도어 상태 읽기 및 UI 반영
-                foreach (var (region, doorInputIndex, lampInputIndex) in chamberMappings)
+                // 도어 및 램프 출력 상태 읽기 및 UI 반영
+                foreach (var region in chamberRegions)
                 {
                     bool doorOpen = false;
                     bool lampOn = false;
                     
                     try
                     {
-                    // IEG3268_Dll의 Digital_Input 메서드를 사용하여 실제 장비 상태 읽기
-                        doorOpen = EtherCAT_M.Digital_Input(doorInputIndex);
-                        lampOn = EtherCAT_M.Digital_Input(lampInputIndex);
+                        var doorIndices = ChamberHardwareHelper.GetChamberDoorIoIndices(region);
+                        doorOpen = doorIndices.HasValue && EtherCAT_M.GetDigitalOutput(doorIndices.Value.OpenOutputIndex);
+                        lampOn = EtherCAT_M.GetDigitalOutput(ChamberHardwareHelper.GetChamberLampIoIndex(region));
                 }
                 catch (Exception ex)
                 {
@@ -3922,11 +3923,10 @@ namespace SemiconductorUi
                 bool mainLampGreen = false;
                 try
                 {
-                    // IEG3268_Dll의 Digital_Input 메서드를 사용하여 실제 장비 상태 읽기
-                    // 3색 램프 상태: Digital Input 0(적색), 1(황색), 2(녹색)가 true면 켜짐
-                    mainLampRed = EtherCAT_M.Digital_Input(0);
-                    mainLampYellow = EtherCAT_M.Digital_Input(1);
-                    mainLampGreen = EtherCAT_M.Digital_Input(2);
+                    // 3색 램프 상태: 출력 0(적색), 1(황색), 2(녹색)의 마지막 출력 값
+                    mainLampRed = EtherCAT_M.GetDigitalOutput(0);
+                    mainLampYellow = EtherCAT_M.GetDigitalOutput(1);
+                    mainLampGreen = EtherCAT_M.GetDigitalOutput(2);
                 }
                 catch (Exception ex)
                 {

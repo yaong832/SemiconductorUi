@@ -1,6 +1,8 @@
 using System.ComponentModel;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using SemiconductorUi;
+using SemiconductorUi.Controls;
+using SemiconductorUi.ViewModels;
 
 namespace SemiconductorUi.Tests
 {
