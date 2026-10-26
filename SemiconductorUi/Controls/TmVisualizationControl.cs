@@ -25,29 +25,43 @@ namespace SemiconductorUi.Controls
         private readonly List<RectangleF> moduleBounds = new List<RectangleF>();
         private float rangeRadius = 60f;
 
-        // 로봇 몸체(원)와 팔, U자 포크 크기
-        private const float BodyRadius = 26f;
-        private const float BodyCoreRadius = 20f;
-        private const float ArmThickness = 10f;
+        // 로봇 크기: 고정 베이스(원), 회전 몸체, 실린더 빔, 진공 패드가 달린 U자 포크
+        private const float BodyRadius = 26f;          // 회전 몸체가 차지하는 반경(블레이드 시작 길이 계산용)
+        private const float BaseRadius = 24f;
+        private const float BeamThickness = 12f;
         private const float WaferRadius = 22f;
         private const float RetractedLength = BodyRadius + WaferRadius + 4f;
         private const float RetractedFactor = 0.7f;
         private const float ExtendedFactor = 1.3f;
 
-        // 회전 범위 고리
-        private const float RangeTrackWidth = 6f;
+        // 로봇 구역(원판)과 회전 범위 홈
+        private const float RangeTrackWidth = 4f;
         private const float MinRangeRadius = BodyRadius + 14f;
         private const float MaxRangeRadius = 96f;
         private const float RangeGapToModule = 10f;
+        private const float WellMargin = 7f;
 
-        private static readonly Color ArmColor = Color.FromArgb(91, 106, 128);
-        private static readonly Color ForkColor = Color.FromArgb(140, 153, 172);
-        private static readonly Color ForkExtendedColor = UiTheme.Primary;
-        private static readonly Color BodyRing = Color.White;
-        private static readonly Color BodyRingEdge = Color.FromArgb(184, 192, 205);
-        private static readonly Color BodyCore = Color.FromArgb(43, 53, 70);
-        private static readonly Color RangeTrack = Color.FromArgb(213, 220, 230);
-        private static readonly Color RangeTick = Color.FromArgb(154, 166, 184);
+        private static readonly Color WellLight = Color.FromArgb(190, 198, 209);
+        private static readonly Color WellDark = Color.FromArgb(166, 175, 188);
+        private static readonly Color WellEdge = Color.FromArgb(142, 152, 167);
+        private static readonly Color RangeGroove = Color.FromArgb(150, 118, 130, 148);
+        private static readonly Color RangeTick = Color.FromArgb(84, 96, 114);
+        private static readonly Color BaseLight = Color.FromArgb(234, 238, 243);
+        private static readonly Color BaseDark = Color.FromArgb(170, 179, 192);
+        private static readonly Color MetalEdge = Color.FromArgb(124, 135, 152);
+        private static readonly Color BoltFill = Color.FromArgb(232, 236, 241);
+        private static readonly Color BeamLight = Color.FromArgb(205, 212, 222);
+        private static readonly Color BeamDark = Color.FromArgb(142, 153, 169);
+        private static readonly Color TubeLight = Color.FromArgb(236, 239, 243);
+        private static readonly Color TubeDark = Color.FromArgb(137, 148, 164);
+        private static readonly Color RodFill = Color.FromArgb(221, 226, 232);
+        private static readonly Color TurretLight = Color.FromArgb(75, 84, 101);
+        private static readonly Color TurretDark = Color.FromArgb(38, 44, 55);
+        private static readonly Color ForkFill = Color.FromArgb(238, 241, 245);
+        private static readonly Color ForkEdge = Color.FromArgb(142, 152, 167);
+        private static readonly Color PadOff = Color.FromArgb(154, 164, 178);
+        private static readonly Color PadOn = Color.FromArgb(59, 209, 126);
+        private static readonly Color HoseColor = Color.FromArgb(58, 67, 82);
         private static readonly Color WaferEdge = Color.FromArgb(181, 154, 69);
 
         public TmVisualizationControl()
@@ -131,13 +145,11 @@ namespace SemiconductorUi.Controls
 
             var center = hasLayout ? hubCenter : new PointF(ClientSize.Width / 2f, ClientSize.Height / 2f);
 
+            DrawRobotWell(g, center);
             DrawRotationRange(g, center);
-            DrawArm(g, center);
-            if (carryingWafer)
-            {
-                DrawWaferOnBlade(g, center);
-            }
-            DrawBody(g, center);
+            DrawBase(g, center);
+            DrawRobot(g, center);
+            DrawCenterMarks(g, center);
             DrawCurrentAngleMarker(g, center);
         }
 
@@ -182,14 +194,14 @@ namespace SemiconductorUi.Controls
                 float sweep = end - start;
                 while (sweep <= 0f) sweep += 360f;
 
-                using (var track = new Pen(RangeTrack, RangeTrackWidth) { StartCap = LineCap.Round, EndCap = LineCap.Round })
+                using (var track = new Pen(RangeGroove, RangeTrackWidth) { StartCap = LineCap.Round, EndCap = LineCap.Round })
                 {
                     g.DrawArc(track, ring, start, sweep);
                 }
             }
             else
             {
-                using (var track = new Pen(RangeTrack, RangeTrackWidth))
+                using (var track = new Pen(RangeGroove, RangeTrackWidth))
                 {
                     g.DrawEllipse(track, ring);
                 }
@@ -230,33 +242,205 @@ namespace SemiconductorUi.Controls
             }
         }
 
-        private void DrawBody(Graphics g, PointF center)
+        /// <summary>
+        /// 로봇이 도는 움푹한 원판. 회전 범위 홈 바깥으로 조금 더 크게, 모듈 카드에는 닿지 않게 그린다.
+        /// </summary>
+        private void DrawRobotWell(Graphics g, PointF center)
         {
-            var ringRect = new RectangleF(center.X - BodyRadius, center.Y - BodyRadius, BodyRadius * 2f, BodyRadius * 2f);
-            var coreRect = new RectangleF(center.X - BodyCoreRadius, center.Y - BodyCoreRadius, BodyCoreRadius * 2f, BodyCoreRadius * 2f);
-            using (var ringFill = new SolidBrush(BodyRing))
-            using (var ringEdge = new Pen(BodyRingEdge, 1.5f))
-            using (var core = new SolidBrush(BodyCore))
+            float radius = rangeRadius + WellMargin;
+            var rect = new RectangleF(center.X - radius, center.Y - radius, radius * 2f, radius * 2f);
+            using (var path = new GraphicsPath())
             {
-                g.FillEllipse(ringFill, ringRect);
-                g.DrawEllipse(ringEdge, ringRect);
-                g.FillEllipse(core, coreRect);
+                path.AddEllipse(rect);
+                using (var brush = new PathGradientBrush(path)
+                {
+                    CenterColor = WellLight,
+                    SurroundColors = new[] { WellDark },
+                    CenterPoint = new PointF(center.X, center.Y - radius * 0.1f)
+                })
+                {
+                    g.FillPath(brush, path);
+                }
+            }
+            using (var edge = new Pen(WellEdge, 1.4f))
+            using (var inner = new Pen(Color.FromArgb(120, 255, 255, 255), 1f))
+            {
+                g.DrawEllipse(edge, rect);
+                g.DrawEllipse(inner, RectangleF.Inflate(rect, -3f, -3f));
+            }
+        }
+
+        /// <summary>
+        /// 바닥에 고정된 둥근 베이스와 볼트 링.
+        /// </summary>
+        private static void DrawBase(Graphics g, PointF center)
+        {
+            var rect = new RectangleF(center.X - BaseRadius, center.Y - BaseRadius, BaseRadius * 2f, BaseRadius * 2f);
+            using (var shadow = new SolidBrush(Color.FromArgb(45, 28, 36, 51)))
+            {
+                g.FillEllipse(shadow, rect.X + 1.5f, rect.Y + 2.5f, rect.Width, rect.Height);
+            }
+            using (var path = new GraphicsPath())
+            {
+                path.AddEllipse(rect);
+                using (var brush = new PathGradientBrush(path)
+                {
+                    CenterColor = BaseLight,
+                    SurroundColors = new[] { BaseDark },
+                    CenterPoint = new PointF(center.X - BaseRadius * 0.3f, center.Y - BaseRadius * 0.35f)
+                })
+                {
+                    g.FillPath(brush, path);
+                }
+            }
+            using (var edge = new Pen(MetalEdge, 1.2f))
+            {
+                g.DrawEllipse(edge, rect);
             }
 
-            using (var font = new Font("Segoe UI", 8.5F, FontStyle.Bold))
+            const int bolts = 10;
+            float boltRadius = BaseRadius - 4f;
+            using (var fill = new SolidBrush(BoltFill))
+            using (var pen = new Pen(MetalEdge, 0.7f))
             {
-                TextRenderer.DrawText(g, "TM", font, Rectangle.Round(coreRect), Color.White,
+                for (int i = 0; i < bolts; i++)
+                {
+                    double angle = (i + 0.5) * 2 * Math.PI / bolts;
+                    var bolt = new RectangleF(center.X + boltRadius * (float)Math.Cos(angle) - 1.6f, center.Y + boltRadius * (float)Math.Sin(angle) - 1.6f, 3.2f, 3.2f);
+                    g.FillEllipse(fill, bolt);
+                    g.DrawEllipse(pen, bolt);
+                }
+            }
+        }
+
+        /// <summary>
+        /// 회전하는 로봇: 몸체, 공압 실린더(배럴 + 로드), 빔, 진공 패드가 달린 U자 포크, 진공 호스.
+        /// 실린더가 전진 쪽이면 포크 테두리를 파랗게, 웨이퍼를 들고 있으면(진공 ON) 패드를 초록으로 칠한다.
+        /// </summary>
+        private void DrawRobot(Graphics g, PointF center)
+        {
+            var bladeLength = GetBladeLength();
+            float forkRoot = bladeLength - WaferRadius - 8f;
+            float forkTip = bladeLength + WaferRadius - 2f;
+            bool extended = currentExtensionFactor >= (RetractedFactor + ExtendedFactor) / 2f;
+
+            var state = g.Save();
+            g.TranslateTransform(center.X, center.Y);
+            g.RotateTransform(ToDegrees(currentAngleRad));
+
+            // 빔 (몸체에서 포크 뿌리까지)
+            var beam = new RectangleF(12f, -BeamThickness / 2f, Math.Max(10f, forkRoot + 6f - 12f), BeamThickness);
+            using (var path = EquipmentCanvasStyler.CreateRoundedRectangle(beam, 3f))
+            using (var fill = new LinearGradientBrush(new RectangleF(beam.X, beam.Y - 0.5f, beam.Width, beam.Height + 1f), BeamLight, BeamDark, LinearGradientMode.Vertical))
+            using (var pen = new Pen(MetalEdge, 0.8f))
+            {
+                g.FillPath(fill, path);
+                g.DrawPath(pen, path);
+            }
+            using (var groove = new Pen(MetalEdge, 1f))
+            {
+                g.DrawLine(groove, beam.Left + 4f, 0f, beam.Right - 4f, 0f);
+            }
+
+            // 포크 (전진이면 파란 테두리와 은은한 빛)
+            using (var forkPath = CreateForkPath(forkRoot, forkTip))
+            {
+                if (extended)
+                {
+                    using (var glow = new Pen(Color.FromArgb(70, UiTheme.Primary), 5f) { LineJoin = LineJoin.Round })
+                    {
+                        g.DrawPath(glow, forkPath);
+                    }
+                }
+                using (var fill = new SolidBrush(ForkFill))
+                using (var pen = new Pen(extended ? UiTheme.Primary : ForkEdge, extended ? 1.6f : 1f))
+                {
+                    g.FillPath(fill, forkPath);
+                    g.DrawPath(pen, forkPath);
+                }
+            }
+
+            // 진공 패드 3개 (두 갈래 끝 + 뿌리)
+            using (var pad = new SolidBrush(carryingWafer ? PadOn : PadOff))
+            using (var padEdge = new Pen(Color.FromArgb(94, 106, 122), 0.6f))
+            {
+                foreach (var p in new[] { new PointF(forkTip - 7f, -10f), new PointF(forkTip - 7f, 10f), new PointF(forkRoot + 7f, 0f) })
+                {
+                    var r = new RectangleF(p.X - 2.6f, p.Y - 2.6f, 5.2f, 5.2f);
+                    g.FillEllipse(pad, r);
+                    g.DrawEllipse(padEdge, r);
+                }
+            }
+
+            if (carryingWafer)
+            {
+                var wafer = new RectangleF(bladeLength - WaferRadius, -WaferRadius, WaferRadius * 2f, WaferRadius * 2f);
+                using (var brush = new SolidBrush(waferColor))
+                using (var pen = new Pen(WaferEdge, 1.2f))
+                {
+                    g.FillEllipse(brush, wafer);
+                    g.DrawEllipse(pen, wafer);
+                }
+            }
+
+            // 공압 실린더: 배럴은 몸체 옆에 고정, 로드는 포크 뿌리까지 나간다
+            const float barrelTop = -20f, barrelHeight = 10f, barrelStart = 4f, barrelEnd = 40f;
+            float rodEnd = Math.Max(barrelEnd + 3f, forkRoot - 2f);
+            using (var rod = new SolidBrush(RodFill))
+            using (var rodPen = new Pen(ForkEdge, 0.6f))
+            {
+                g.FillRectangle(rod, barrelEnd - 2f, barrelTop + 3f, rodEnd - barrelEnd + 2f, 4f);
+                g.DrawRectangle(rodPen, barrelEnd - 2f, barrelTop + 3f, rodEnd - barrelEnd + 2f, 4f);
+            }
+            var barrel = new RectangleF(barrelStart, barrelTop, barrelEnd - barrelStart, barrelHeight);
+            using (var path = EquipmentCanvasStyler.CreateRoundedRectangle(barrel, 3f))
+            using (var fill = new LinearGradientBrush(new RectangleF(barrel.X, barrel.Y - 0.5f, barrel.Width, barrel.Height + 1f), TubeLight, TubeDark, LinearGradientMode.Vertical))
+            using (var pen = new Pen(MetalEdge, 0.8f))
+            using (var cap = new SolidBrush(BaseDark))
+            {
+                g.FillPath(fill, path);
+                g.DrawPath(pen, path);
+                g.FillRectangle(cap, barrel.Left, barrel.Top + 0.5f, 4f, barrel.Height - 1f);
+                g.FillRectangle(cap, barrel.Right - 4f, barrel.Top + 0.5f, 4f, barrel.Height - 1f);
+            }
+
+            // 회전 몸체
+            var turret = new RectangleF(-20f, -18f, 40f, 36f);
+            using (var path = EquipmentCanvasStyler.CreateRoundedRectangle(turret, 8f))
+            using (var fill = new LinearGradientBrush(new RectangleF(turret.X, turret.Y - 0.5f, turret.Width, turret.Height + 1f), TurretLight, TurretDark, LinearGradientMode.Vertical))
+            using (var pen = new Pen(Color.FromArgb(31, 37, 48), 1f))
+            {
+                g.FillPath(fill, path);
+                g.DrawPath(pen, path);
+            }
+
+            // 진공 호스 (몸체 → 포크 뿌리)
+            using (var hose = new Pen(HoseColor, 2.2f) { StartCap = LineCap.Round, EndCap = LineCap.Round })
+            {
+                g.DrawBezier(hose, new PointF(10f, 14f), new PointF(26f, 20f), new PointF(forkRoot - 18f, 18f), new PointF(forkRoot + 2f, 9f));
+            }
+
+            g.Restore(state);
+        }
+
+        /// <summary>
+        /// 몸체 위 "TM" 글자와 진공 표시(웨이퍼를 들고 있으면 초록 점). 글자는 회전하지 않는다.
+        /// </summary>
+        private void DrawCenterMarks(Graphics g, PointF center)
+        {
+            using (var font = new Font("Segoe UI", 8F, FontStyle.Bold))
+            {
+                var rect = new Rectangle((int)(center.X - 16), (int)(center.Y - 8), 32, 16);
+                TextRenderer.DrawText(g, "TM", font, rect, Color.FromArgb(233, 237, 243),
                     TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding);
             }
 
-            // 웨이퍼를 들고 있으면(하드웨어 모드에서는 진공 ON) 몸체 오른쪽 위에 초록 점
             if (carryingWafer)
             {
-                const float dot = 5f;
-                float offset = BodyRadius * 0.72f;
-                var dotRect = new RectangleF(center.X + offset - dot, center.Y - offset - dot, dot * 2f, dot * 2f);
-                using (var fill = new SolidBrush(UiTheme.Success))
-                using (var edge = new Pen(Color.White, 1.5f))
+                const float dot = 4f;
+                var dotRect = new RectangleF(center.X + 13f - dot, center.Y - 13f - dot, dot * 2f, dot * 2f);
+                using (var fill = new SolidBrush(PadOn))
+                using (var edge = new Pen(Color.White, 1.2f))
                 {
                     g.FillEllipse(fill, dotRect);
                     g.DrawEllipse(edge, dotRect);
@@ -283,43 +467,14 @@ namespace SemiconductorUi.Controls
         }
 
         /// <summary>
-        /// 실린더 팔과 U자 포크. 팔은 몸체 중심에서 포크 뿌리까지, 포크 두 갈래는 웨이퍼 아래로 들어간다.
-        /// 실린더가 전진 쪽에 있으면 포크를 파란색으로 칠한다.
-        /// </summary>
-        private void DrawArm(Graphics g, PointF center)
-        {
-            var bladeLength = GetBladeLength();
-            var state = g.Save();
-            g.TranslateTransform(center.X, center.Y);
-            g.RotateTransform(ToDegrees(currentAngleRad));
-
-            float forkRoot = bladeLength - WaferRadius - 8f;
-            using (var armBrush = new SolidBrush(ArmColor))
-            using (var armPath = EquipmentCanvasStyler.CreateRoundedRectangle(
-                new RectangleF(0f, -ArmThickness / 2f, Math.Max(ArmThickness, forkRoot + 4f), ArmThickness), ArmThickness / 2f))
-            {
-                g.FillPath(armBrush, armPath);
-            }
-
-            bool extended = currentExtensionFactor >= (RetractedFactor + ExtendedFactor) / 2f;
-            using (var forkBrush = new SolidBrush(extended ? ForkExtendedColor : ForkColor))
-            using (var forkPath = CreateForkPath(forkRoot, bladeLength + WaferRadius - 2f))
-            {
-                g.FillPath(forkBrush, forkPath);
-            }
-
-            g.Restore(state);
-        }
-
-        /// <summary>
         /// x축 방향으로 놓인 U자 포크. root에서 시작해 tip에서 끝나며, 가운데가 비어 있다.
         /// </summary>
         private static GraphicsPath CreateForkPath(float root, float tip)
         {
-            const float halfWidth = 14f;
-            const float prong = 8f;
+            const float halfWidth = 15f;
+            const float prong = 9f;
             const float corner = 6f;
-            float slotStart = root + 14f;
+            float slotStart = root + 16f;
 
             var path = new GraphicsPath();
             path.AddLine(root, -halfWidth, tip - corner, -halfWidth);
@@ -332,22 +487,6 @@ namespace SemiconductorUi.Controls
             path.AddLine(tip - corner, halfWidth, root, halfWidth);
             path.CloseFigure();
             return path;
-        }
-
-        private void DrawWaferOnBlade(Graphics g, PointF center)
-        {
-            var bladeLength = GetBladeLength();
-            var waferCenter = new PointF(
-                center.X + bladeLength * (float)Math.Cos(currentAngleRad),
-                center.Y + bladeLength * (float)Math.Sin(currentAngleRad));
-
-            var waferRect = new RectangleF(waferCenter.X - WaferRadius, waferCenter.Y - WaferRadius, WaferRadius * 2f, WaferRadius * 2f);
-            using (var waferBrush = new SolidBrush(waferColor))
-            using (var waferPen = new Pen(WaferEdge, 1.2f))
-            {
-                g.FillEllipse(waferBrush, waferRect);
-                g.DrawEllipse(waferPen, waferRect);
-            }
         }
 
         private static float AngleTo(PointF from, PointF to)

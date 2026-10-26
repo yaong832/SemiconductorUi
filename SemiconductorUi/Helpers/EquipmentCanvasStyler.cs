@@ -176,20 +176,57 @@ namespace SemiconductorUi.Helpers
                     g.DrawPath(pen, path);
                 }
 
+                var redColor = red?.BackColor ?? LampOff;
+                var yellowColor = yellow?.BackColor ?? LampOff;
+                var greenColor = green?.BackColor ?? LampOff;
+                DrawSignalTower(g, new Rectangle(16, 3, 12, host.Height - 6), redColor, yellowColor, greenColor);
+
                 using (var titleFont = new Font("Segoe UI", 8.5F, FontStyle.Bold))
                 using (var itemFont = new Font("Segoe UI", 8.5F))
                 {
-                    TextRenderer.DrawText(g, "상태 램프", titleFont, new Rectangle(12, 0, 64, host.Height), CardSubText,
+                    TextRenderer.DrawText(g, "상태 램프", titleFont, new Rectangle(36, 0, 60, host.Height), CardSubText,
                         TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding);
 
-                    int x = 78;
-                    x = DrawLampItem(g, itemFont, x, host.Height, red?.BackColor ?? LampOff, "오류");
-                    x = DrawLampItem(g, itemFont, x, host.Height, yellow?.BackColor ?? LampOff, "대기");
-                    DrawLampItem(g, itemFont, x, host.Height, green?.BackColor ?? LampOff, "진행");
+                    int x = 96;
+                    x = DrawLampItem(g, itemFont, x, host.Height, redColor, "오류");
+                    x = DrawLampItem(g, itemFont, x, host.Height, yellowColor, "대기");
+                    DrawLampItem(g, itemFont, x, host.Height, greenColor, "진행");
                 }
             };
             host.ResumeLayout(false);
             host.Invalidate();
+        }
+
+        /// <summary>
+        /// 장비 위 시그널 타워(빨강·노랑·초록 3단)를 작게 그린다. 켜진 단만 밝다.
+        /// </summary>
+        private static void DrawSignalTower(Graphics g, Rectangle area, Color red, Color yellow, Color green)
+        {
+            const int poleHeight = 4;
+            float segment = (area.Height - poleHeight - 2) / 3f;
+            var colors = new[]
+            {
+                new { Lit = red, Off = Color.FromArgb(232, 196, 196) },
+                new { Lit = yellow, Off = Color.FromArgb(236, 222, 190) },
+                new { Lit = green, Off = Color.FromArgb(196, 226, 206) }
+            };
+            for (int i = 0; i < colors.Length; i++)
+            {
+                bool on = !IsLampOff(colors[i].Lit);
+                var rect = new RectangleF(area.X, area.Y + i * segment, area.Width, segment - 1f);
+                using (var path = CreateRoundedRectangle(rect, 2f))
+                using (var fill = new SolidBrush(on ? colors[i].Lit : colors[i].Off))
+                using (var pen = new Pen(Color.FromArgb(140, 151, 166), 0.8f))
+                {
+                    g.FillPath(fill, path);
+                    g.DrawPath(pen, path);
+                }
+            }
+            using (var pole = new SolidBrush(Color.FromArgb(94, 106, 122)))
+            {
+                g.FillRectangle(pole, area.X + area.Width / 2f - 1.5f, area.Bottom - poleHeight - 2, 3f, poleHeight);
+                g.FillRectangle(pole, area.X - 1, area.Bottom - 2, area.Width + 2, 2);
+            }
         }
 
         private static int DrawLampItem(Graphics g, Font font, int x, int height, Color color, string text)

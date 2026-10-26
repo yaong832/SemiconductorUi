@@ -59,7 +59,17 @@ namespace SemiconductorUi.Controls
         private static readonly Color Grid = Color.FromArgb(222, 227, 235);
         private static readonly Color AxisText = Color.FromArgb(140, 150, 164);
         private static readonly Color ShelfColor = Color.FromArgb(170, 179, 193);
-        private static readonly Color BladeColor = Color.FromArgb(140, 153, 172);
+        private static readonly Color BladeFill = Color.FromArgb(238, 241, 245);
+        private static readonly Color BladeEdge = Color.FromArgb(142, 152, 167);
+        private static readonly Color PadOff = Color.FromArgb(154, 164, 178);
+        private static readonly Color PadOn = Color.FromArgb(59, 209, 126);
+        private static readonly Color CombColor = Color.FromArgb(90, 100, 116);
+        private static readonly Color ChamberInside = Color.FromArgb(29, 37, 50);
+        private static readonly Color SteelLight = Color.FromArgb(238, 241, 245);
+        private static readonly Color SteelDark = Color.FromArgb(190, 198, 209);
+        private static readonly Color SteelEdge = Color.FromArgb(142, 152, 167);
+        private static readonly Color SmokeFill = Color.FromArgb(70, 95, 106, 122);
+        private static readonly Color SmokeEdge = Color.FromArgb(60, 69, 84);
         private static readonly Color CarriageColor = Color.FromArgb(91, 106, 128);
         private static readonly Color MastFill = Color.FromArgb(214, 220, 229);
         private static readonly Color MastEdge = Color.FromArgb(174, 184, 198);
@@ -258,8 +268,8 @@ namespace SemiconductorUi.Controls
             {
                 float top = MapY(body, maxHeight, GetFoupTopHeight()) - 10;
                 var box = RectangleF.FromLTRB(frame.Left, top, frame.Right, body.Bottom + 2);
-                FillCard(g, box);
-                using (var shelf = new SolidBrush(ShelfColor))
+                FillFoupShell(g, box);
+                using (var shelf = new SolidBrush(CombColor))
                 using (var font = new Font("Segoe UI", 7F))
                 {
                     for (int level = 1; level <= TmHeightEstimator.FoupLevels; level++)
@@ -284,15 +294,16 @@ namespace SemiconductorUi.Controls
                 float bodyTop = MapY(body, maxHeight, raise + margin * 2);
                 float bodyBottom = MapY(body, maxHeight, Math.Max(0, land - margin * 2));
                 var box = RectangleF.FromLTRB(frame.Left, bodyTop, frame.Right, bodyBottom);
-                FillCard(g, box);
+                FillSteelBody(g, box);
 
                 // 슬릿 입구
                 var slit = RectangleF.FromLTRB(box.Left + 14, MapY(body, maxHeight, raise + margin), box.Right - 14, MapY(body, maxHeight, Math.Max(0, land - margin)));
-                using (var slitFill = new SolidBrush(EquipmentCanvasStyler.WellFill))
-                using (var slitPen = new Pen(EquipmentCanvasStyler.WellEdge))
+                using (var slitPath = EquipmentCanvasStyler.CreateRoundedRectangle(slit, 5))
+                using (var slitFill = new LinearGradientBrush(RectangleF.Inflate(slit, 0, 1), ChamberInside, Color.FromArgb(58, 70, 92), LinearGradientMode.Vertical))
+                using (var slitPen = new Pen(Color.FromArgb(110, 121, 135)))
                 {
-                    g.FillRectangle(slitFill, slit);
-                    g.DrawRectangle(slitPen, slit.X, slit.Y, slit.Width, slit.Height);
+                    g.FillPath(slitFill, slitPath);
+                    g.DrawPath(slitPen, slitPath);
                 }
 
                 // 스테이지와 받침대
@@ -327,12 +338,12 @@ namespace SemiconductorUi.Controls
             {
                 DrawFlatWafer(g, bladeMid - bladeHalf - 6, bladeMid + bladeHalf + 6, bladeY, state.WaferColor);
             }
-            using (var blade = new SolidBrush(extended ? UiTheme.Primary : BladeColor))
             using (var carriage = new SolidBrush(Color.FromArgb(extended ? 90 : 255, CarriageColor)))
             {
-                g.FillRectangle(blade, bladeMid - bladeHalf, bladeY, bladeHalf * 2f, BladeThickness);
                 g.FillRectangle(carriage, bladeMid - 12, bladeY + BladeThickness, 24, 12);
             }
+            DrawBlade(g, new RectangleF(bladeMid - bladeHalf, bladeY, bladeHalf * 2f, BladeThickness), extended,
+                new[] { bladeMid - bladeHalf * 0.7f, bladeMid + bladeHalf * 0.7f });
             if (state.VacuumOn)
             {
                 DrawVacuumDot(g, new PointF(bladeMid + 22, bladeY + BladeThickness + 6));
@@ -365,8 +376,8 @@ namespace SemiconductorUi.Controls
             {
                 float top = MapY(body, maxHeight, GetFoupTopHeight()) - 10;
                 var box = RectangleF.FromLTRB(moduleLeft, top, moduleRight, body.Bottom + 2);
-                FillCard(g, box);
-                using (var shelf = new SolidBrush(ShelfColor))
+                FillFoupShell(g, box);
+                using (var shelf = new SolidBrush(CombColor))
                 {
                     for (int level = 1; level <= TmHeightEstimator.FoupLevels; level++)
                     {
@@ -390,7 +401,7 @@ namespace SemiconductorUi.Controls
                 float slitBottom = MapY(body, maxHeight, Math.Max(0, land - margin));
 
                 // TM 쪽 벽만 슬릿 높이에서 뚫린 단면
-                using (var fill = new SolidBrush(EquipmentCanvasStyler.CardFill))
+                using (var fill = new SolidBrush(ChamberInside))
                 using (var pen = new Pen(EquipmentCanvasStyler.CardBorder, 1.5f))
                 {
                     g.FillRectangle(fill, moduleLeft, bodyTop, moduleRight - moduleLeft, bodyBottom - bodyTop);
@@ -431,12 +442,12 @@ namespace SemiconductorUi.Controls
             float tip = tipRetracted + (tipExtended - tipRetracted) * Math.Max(0f, Math.Min(1f, state.Extension));
 
             using (var carriage = new SolidBrush(CarriageColor))
-            using (var blade = new SolidBrush(extended ? UiTheme.Primary : BladeColor))
             {
                 g.FillRectangle(carriage, mastX - 11, bladeY - 2, 22, 16);
                 g.FillRectangle(carriage, mastX + 11, bladeY + BladeThickness, Math.Max(2f, tip - bladeLength - mastX - 11), 5);
-                g.FillRectangle(blade, tip - bladeLength, bladeY, bladeLength, BladeThickness);
             }
+            DrawBlade(g, new RectangleF(tip - bladeLength, bladeY, bladeLength, BladeThickness), extended,
+                new[] { tip - bladeLength + 8f, tip - 8f });
             if (state.WaferOnBlade)
             {
                 DrawFlatWafer(g, tip - bladeLength, tip, bladeY, state.WaferColor);
@@ -470,14 +481,67 @@ namespace SemiconductorUi.Controls
             }
         }
 
-        private static void FillCard(Graphics g, RectangleF rect)
+        /// <summary>
+        /// 챔버 몸체: 스테인리스 느낌의 가로 그라데이션과 모서리 볼트.
+        /// </summary>
+        private static void FillSteelBody(Graphics g, RectangleF rect)
         {
             using (var path = EquipmentCanvasStyler.CreateRoundedRectangle(rect, 6))
-            using (var fill = new SolidBrush(EquipmentCanvasStyler.CardFill))
-            using (var pen = new Pen(EquipmentCanvasStyler.CardBorder))
+            using (var fill = new LinearGradientBrush(RectangleF.Inflate(rect, 1, 0), SteelDark, SteelLight, LinearGradientMode.Horizontal))
+            using (var pen = new Pen(SteelEdge))
+            {
+                fill.SetBlendTriangularShape(0.35f);
+                g.FillPath(fill, path);
+                g.DrawPath(pen, path);
+            }
+            using (var bolt = new SolidBrush(Color.FromArgb(232, 236, 241)))
+            using (var boltPen = new Pen(SteelEdge, 0.7f))
+            {
+                foreach (var p in new[] { new PointF(rect.Left + 7, rect.Top + 7), new PointF(rect.Right - 7, rect.Top + 7), new PointF(rect.Left + 7, rect.Bottom - 7), new PointF(rect.Right - 7, rect.Bottom - 7) })
+                {
+                    g.FillEllipse(bolt, p.X - 2.2f, p.Y - 2.2f, 4.4f, 4.4f);
+                    g.DrawEllipse(boltPen, p.X - 2.2f, p.Y - 2.2f, 4.4f, 4.4f);
+                }
+            }
+        }
+
+        /// <summary>
+        /// FOUP 통: 반투명 회색 몸통과 위쪽 플랜지.
+        /// </summary>
+        private static void FillFoupShell(Graphics g, RectangleF rect)
+        {
+            using (var path = EquipmentCanvasStyler.CreateRoundedRectangle(rect, 8))
+            using (var fill = new SolidBrush(SmokeFill))
+            using (var pen = new Pen(SmokeEdge, 1.4f))
             {
                 g.FillPath(fill, path);
                 g.DrawPath(pen, path);
+            }
+            using (var flange = new SolidBrush(SmokeEdge))
+            {
+                float w = Math.Min(48f, rect.Width * 0.3f);
+                g.FillRectangle(flange, rect.Left + (rect.Width - w) / 2f, rect.Top - 6f, w, 6f);
+            }
+        }
+
+        /// <summary>
+        /// 블레이드(포크) 단면: 밝은 판, 전진이면 파란 테두리, 진공 ON이면 패드가 초록.
+        /// </summary>
+        private void DrawBlade(Graphics g, RectangleF rect, bool extended, float[] padCenters)
+        {
+            using (var path = EquipmentCanvasStyler.CreateRoundedRectangle(rect, 2))
+            using (var fill = new SolidBrush(BladeFill))
+            using (var pen = new Pen(extended ? UiTheme.Primary : BladeEdge, extended ? 1.6f : 1f))
+            {
+                g.FillPath(fill, path);
+                g.DrawPath(pen, path);
+            }
+            using (var pad = new SolidBrush(state.VacuumOn ? PadOn : PadOff))
+            {
+                foreach (var x in padCenters)
+                {
+                    g.FillRectangle(pad, x - 4f, rect.Top - 2f, 8f, 2.5f);
+                }
             }
         }
 
