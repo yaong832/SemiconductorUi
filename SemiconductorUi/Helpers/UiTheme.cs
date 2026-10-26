@@ -113,6 +113,13 @@ namespace SemiconductorUi.Helpers
         /// </summary>
         public static void ApplyToggleButton(Button button, bool selected)
         {
+            // 왼쪽 메뉴/작은 탭으로 다시 그리는 버튼은 선택 표시만 바꿉니다.
+            if (ShellNavPainter.IsShellStyled(button))
+            {
+                ShellNavPainter.SetSelected(button, selected);
+                return;
+            }
+
             if (selected)
             {
                 StylePrimaryButton(button);
