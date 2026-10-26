@@ -376,7 +376,7 @@ namespace SemiconductorUi.Controls
             {
                 float top = MapY(body, maxHeight, GetFoupTopHeight()) - 10;
                 var box = RectangleF.FromLTRB(moduleLeft, top, moduleRight, body.Bottom + 2);
-                FillFoupShell(g, box);
+                FillFoupShell(g, box, true);
                 using (var shelf = new SolidBrush(CombColor))
                 {
                     for (int level = 1; level <= TmHeightEstimator.FoupLevels; level++)
@@ -506,16 +506,38 @@ namespace SemiconductorUi.Controls
         }
 
         /// <summary>
-        /// FOUP 통: 반투명 회색 몸통과 위쪽 플랜지.
+        /// FOUP 통: 반투명 회색 몸통과 위쪽 플랜지. FOUP에는 문이 없어서,
+        /// 옆에서 자른 그림(openLeft)은 TM 쪽(왼쪽) 벽을 그리지 않고 열어 둔다.
         /// </summary>
-        private static void FillFoupShell(Graphics g, RectangleF rect)
+        private static void FillFoupShell(Graphics g, RectangleF rect, bool openLeft = false)
         {
             using (var path = EquipmentCanvasStyler.CreateRoundedRectangle(rect, 8))
             using (var fill = new SolidBrush(SmokeFill))
-            using (var pen = new Pen(SmokeEdge, 1.4f))
             {
                 g.FillPath(fill, path);
-                g.DrawPath(pen, path);
+            }
+            using (var pen = new Pen(SmokeEdge, 1.4f))
+            {
+                if (openLeft)
+                {
+                    const float r = 8f;
+                    using (var outline = new GraphicsPath())
+                    {
+                        outline.AddLine(rect.Left, rect.Top, rect.Right - r, rect.Top);
+                        outline.AddArc(rect.Right - r * 2f, rect.Top, r * 2f, r * 2f, 270f, 90f);
+                        outline.AddLine(rect.Right, rect.Top + r, rect.Right, rect.Bottom - r);
+                        outline.AddArc(rect.Right - r * 2f, rect.Bottom - r * 2f, r * 2f, r * 2f, 0f, 90f);
+                        outline.AddLine(rect.Right - r, rect.Bottom, rect.Left, rect.Bottom);
+                        g.DrawPath(pen, outline);
+                    }
+                }
+                else
+                {
+                    using (var path = EquipmentCanvasStyler.CreateRoundedRectangle(rect, 8))
+                    {
+                        g.DrawPath(pen, path);
+                    }
+                }
             }
             using (var flange = new SolidBrush(SmokeEdge))
             {

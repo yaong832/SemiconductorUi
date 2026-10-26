@@ -20,7 +20,7 @@ namespace SemiconductorUi.Controls
         private float facingDegrees = -45f;
         private bool mounted = true;
 
-        // 위에서 본 FOUP: 로드포트 판 위의 반투명 통. 문(앞판)은 TM을 향한다.
+        // 위에서 본 FOUP: 로드포트 판 위의 반투명 통. 문이 없는 앞쪽이 TM을 향한다.
         private const float PortHalf = 32f;
         private static readonly Color PortLight = Color.FromArgb(160, 170, 184);
         private static readonly Color PortDark = Color.FromArgb(124, 136, 152);
@@ -31,8 +31,6 @@ namespace SemiconductorUi.Controls
         private static readonly Color ShellDark = Color.FromArgb(60, 69, 84);
         private static readonly Color FlangeFill = Color.FromArgb(90, 100, 116);
         private static readonly Color FlangeTop = Color.FromArgb(124, 135, 152);
-        private static readonly Color DoorClosedFill = Color.FromArgb(89, 99, 111);
-        private static readonly Color DoorOpenFill = Color.FromArgb(59, 209, 126);
         private static readonly Color SiliconFill = Color.FromArgb(206, 213, 225);
         private static readonly Color SiliconRim = Color.FromArgb(226, 181, 60);
         private static readonly Color PlateFill = Color.FromArgb(42, 50, 64);
@@ -114,6 +112,9 @@ namespace SemiconductorUi.Controls
             }
         }
 
+        /// <summary>
+        /// 이전 상태 값을 그대로 받기 위해 남겨 둔 값. 실제 FOUP에는 문이 없어서 그림에는 쓰지 않는다.
+        /// </summary>
         [Category("FOUP"), DefaultValue(true)]
         public bool DoorClosed
         {
@@ -175,7 +176,7 @@ namespace SemiconductorUi.Controls
         }
 
         /// <summary>
-        /// FOUP 문이 향하는 방향(화면 좌표, 도). 배치할 때 TM 중심 방향으로 정한다.
+        /// FOUP의 열린 앞쪽이 향하는 방향(화면 좌표, 도). 배치할 때 TM 중심 방향으로 정한다.
         /// </summary>
         [Category("FOUP"), DefaultValue(-45f)]
         public float FacingDegrees
@@ -249,7 +250,7 @@ namespace SemiconductorUi.Controls
         }
 
         /// <summary>
-        /// 로드포트 판과 키네마틱 핀 3개. 이 아래의 좌표는 FOUP 중심 기준이고 +x가 TM 쪽(문)이다.
+        /// 로드포트 판과 키네마틱 핀 3개. 이 아래의 좌표는 FOUP 중심 기준이고 +x가 TM 쪽(열린 앞쪽)이다.
         /// </summary>
         private static void DrawLoadPort(Graphics g)
         {
@@ -280,7 +281,7 @@ namespace SemiconductorUi.Controls
         }
 
         /// <summary>
-        /// FOUP 통: 문 쪽은 평평하고 뒤쪽은 둥글다. 반투명이라 맨 위 웨이퍼가 비친다.
+        /// FOUP 통: TM 쪽(앞)은 문 없이 열려 있고 뒤쪽은 둥글다. 반투명이라 맨 위 웨이퍼가 비친다.
         /// </summary>
         private void DrawPod(Graphics g)
         {
@@ -297,6 +298,7 @@ namespace SemiconductorUi.Controls
                 }
             }
 
+            // 통 몸체는 반투명으로 채우고, 테두리는 뒤쪽과 양옆만 그린다. TM 쪽(앞)은 문 없이 열려 있다.
             using (var shell = new GraphicsPath())
             {
                 shell.AddLine(front, -half, back + round, -half);
@@ -304,7 +306,6 @@ namespace SemiconductorUi.Controls
                 shell.AddLine(back, -half + round, back, half - round);
                 shell.AddArc(back, half - round * 2f, round * 2f, round * 2f, 180f, -90f);
                 shell.AddLine(back + round, half, front, half);
-                shell.CloseFigure();
                 using (var fill = new SolidBrush(ShellFill))
                 using (var pen = new Pen(ShellEdge, 1.2f))
                 {
@@ -313,14 +314,11 @@ namespace SemiconductorUi.Controls
                 }
             }
 
-            // 문(앞판): 닫힘이면 어둡고, 열리면 초록
-            var door = new RectangleF(front, -half, 5f, half * 2f);
-            using (var path = EquipmentCanvasStyler.CreateRoundedRectangle(door, 1.5f))
-            using (var fill = new SolidBrush(doorClosed ? DoorClosedFill : DoorOpenFill))
-            using (var pen = new Pen(ShellEdge, 0.8f))
+            // 열린 앞쪽 가장자리 (양옆 벽 끝)
+            using (var lip = new SolidBrush(ShellDark))
             {
-                g.FillPath(fill, path);
-                g.DrawPath(pen, path);
+                g.FillRectangle(lip, front - 3f, -half - 1f, 4f, 4f);
+                g.FillRectangle(lip, front - 3f, half - 3f, 4f, 4f);
             }
 
             // 옆 손잡이와 위쪽 로봇 플랜지
