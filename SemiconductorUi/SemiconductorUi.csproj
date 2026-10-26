@@ -58,6 +58,10 @@
     <Compile Include="Form1.Designer.cs">
       <DependentUpon>Form1.cs</DependentUpon>
     </Compile>
+    <Compile Include="Form1.Shell.cs">
+      <DependentUpon>Form1.cs</DependentUpon>
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="Forms\EquipmentDetailForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -135,6 +139,7 @@
     <Compile Include="Helpers\EquipmentCanvasStyler.cs" />
     <Compile Include="Helpers\TmHeightEstimator.cs" />
     <Compile Include="Helpers\UiTheme.cs" />
+    <Compile Include="Helpers\ShellNavPainter.cs" />
     <Compile Include="Helpers\Form1UiUpdater.cs" />
     <Compile Include="Helpers\Form1Initializer.cs" />
     <Compile Include="Helpers\Form1Configurator.cs" />
@@ -190,6 +195,9 @@
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="Controls\FoupVisualizationControl.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Controls\ShellTopBar.cs">
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="Program.cs" />

@@ -961,6 +961,9 @@ namespace SemiconductorUi
             UpdateSimulationUi();
             SetHeaderAlarmIdle();
             uiConfigurator.LayoutCentralEquipment();
+
+            // 상단 바 + 왼쪽 메뉴 틀 (기존 버튼을 자리만 옮김)
+            BuildMainShell();
             
             // GroupBox 테두리를 검은색으로 그리기 위한 Paint 이벤트 연결
             if (groupBoxControlButtons != null)
@@ -2494,6 +2497,7 @@ namespace SemiconductorUi
             StatusProcessDetail = StatusProcessText;
             ApplyStatusTextsToLabels();
             UpdateProcessControlButtons();
+            RefreshShellState();
 
             if (!string.IsNullOrWhiteSpace(logMessage))
             {
@@ -6039,6 +6043,9 @@ namespace SemiconductorUi
             HookButton("buttonNavTrend", navigationEventHandlers.ButtonNavTrend_Click);
             HookButton("buttonNavReport", navigationEventHandlers.ButtonNavReport_Click);
             HookButton("buttonNavSysInfo", navigationEventHandlers.ButtonNavSysInfo_Click);
+            // 실제 컨트롤 이름(메뉴 글자가 한글로 바뀌어도 연결되도록)
+            HookButton("buttonNavMaintenance", navigationEventHandlers.ButtonNavMaint_Click);
+            HookButton("buttonNavSystem", navigationEventHandlers.ButtonNavSysInfo_Click);
 
             // 이름이 다를 경우 텍스트 기반 훅(영문/대소문자 무시)
             HookButtonByText(new[] { "verification", "검증", "인터락" }, navigationEventHandlers.ButtonNavVerification_Click);
