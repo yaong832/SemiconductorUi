@@ -17,6 +17,25 @@ namespace SemiconductorUi.Controls
         private Color bodyStart = Color.FromArgb(92, 104, 148);
         private Color bodyEnd = Color.FromArgb(54, 61, 96);
         private Color waferColor = Color.FromArgb(120, 170, 235);
+        private float facingDegrees = -45f;
+        private bool mounted = true;
+
+        // 위에서 본 FOUP: 로드포트 판 위의 반투명 통. 문이 없는 앞쪽이 TM을 향한다.
+        private const float PortHalf = 32f;
+        private static readonly Color PortLight = Color.FromArgb(160, 170, 184);
+        private static readonly Color PortDark = Color.FromArgb(124, 136, 152);
+        private static readonly Color PortEdge = Color.FromArgb(104, 115, 130);
+        private static readonly Color PinFill = Color.FromArgb(211, 217, 225);
+        private static readonly Color ShellFill = Color.FromArgb(108, 78, 88, 104);
+        private static readonly Color ShellEdge = Color.FromArgb(60, 69, 84);
+        private static readonly Color ShellDark = Color.FromArgb(60, 69, 84);
+        private static readonly Color FlangeFill = Color.FromArgb(90, 100, 116);
+        private static readonly Color FlangeTop = Color.FromArgb(124, 135, 152);
+        private static readonly Color SiliconFill = Color.FromArgb(206, 213, 225);
+        private static readonly Color SiliconRim = Color.FromArgb(226, 181, 60);
+        private static readonly Color PlateFill = Color.FromArgb(42, 50, 64);
+        private static readonly Color PlateText = Color.FromArgb(233, 237, 243);
+        private static readonly Color AlertText = Color.FromArgb(196, 72, 60);
 
         public FoupVisualizationControl()
         {
@@ -93,6 +112,9 @@ namespace SemiconductorUi.Controls
             }
         }
 
+        /// <summary>
+        /// 이전 상태 값을 그대로 받기 위해 남겨 둔 값. 실제 FOUP에는 문이 없어서 그림에는 쓰지 않는다.
+        /// </summary>
         [Category("FOUP"), DefaultValue(true)]
         public bool DoorClosed
         {
@@ -153,6 +175,42 @@ namespace SemiconductorUi.Controls
             }
         }
 
+        /// <summary>
+        /// FOUP의 열린 앞쪽이 향하는 방향(화면 좌표, 도). 배치할 때 TM 중심 방향으로 정한다.
+        /// </summary>
+        [Category("FOUP"), DefaultValue(-45f)]
+        public float FacingDegrees
+        {
+            get => facingDegrees;
+            set
+            {
+                if (Math.Abs(facingDegrees - value) < 0.01f)
+                {
+                    return;
+                }
+                facingDegrees = value;
+                Invalidate();
+            }
+        }
+
+        /// <summary>
+        /// 로드포트에 FOUP이 올라가 있는지. false면 빈 로드포트만 그린다.
+        /// </summary>
+        [Category("FOUP"), DefaultValue(true)]
+        public bool Mounted
+        {
+            get => mounted;
+            set
+            {
+                if (mounted == value)
+                {
+                    return;
+                }
+                mounted = value;
+                Invalidate();
+            }
+        }
+
         public void UpdateState(string status, int wafers, bool doorClosed)
         {
             StatusText = status ?? statusText;
@@ -168,101 +226,162 @@ namespace SemiconductorUi.Controls
             g.SmoothingMode = SmoothingMode.AntiAlias;
             g.Clear(Parent?.BackColor ?? BackColor);
 
-            var bounds = new Rectangle(1, 1, ClientSize.Width - 3, ClientSize.Height - 3);
-            if (bounds.Width <= 20 || bounds.Height <= 20)
+            if (ClientSize.Width <= 40 || ClientSize.Height <= 40)
             {
                 return;
             }
 
-            using (var bodyPath = CreateRoundedRectangle(bounds, EquipmentCanvasStyler.CardRadius))
-            using (var bodyBrush = new SolidBrush(EquipmentCanvasStyler.CardFill))
-            using (var borderPen = new Pen(EquipmentCanvasStyler.CardBorder, 1f))
+            var center = new PointF(ClientSize.Width / 2f, ClientSize.Height / 2f);
+            var state = g.Save();
+            g.TranslateTransform(center.X, center.Y);
+            g.RotateTransform(facingDegrees);
+            DrawLoadPort(g);
+            if (mounted)
             {
-                g.FillPath(bodyBrush, bodyPath);
-                g.DrawPath(borderPen, bodyPath);
+                DrawPod(g);
             }
-
-            DrawTitle(g, bounds);
-            DrawLamp(g, bounds);
-            DrawSlots(g, bounds);
-            DrawStatus(g, bounds);
-        }
-
-        private void DrawTitle(Graphics g, Rectangle bounds)
-        {
-            var titleRect = new Rectangle(bounds.X + 12, bounds.Y, bounds.Width - 44, EquipmentCanvasStyler.HeaderHeight);
-            using (var titleFont = new Font(Font.FontFamily, 10F, FontStyle.Bold))
+            else
             {
-                TextRenderer.DrawText(g, title, titleFont, titleRect, EquipmentCanvasStyler.CardTitle,
-                    TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPadding);
+                DrawEmptyOutline(g);
             }
+            g.Restore(state);
 
-            using (var divider = new Pen(Color.FromArgb(232, 236, 242)))
-            {
-                int y = bounds.Y + EquipmentCanvasStyler.HeaderHeight;
-                g.DrawLine(divider, bounds.Left + 10, y, bounds.Right - 10, y);
-            }
-        }
-
-        private void DrawLamp(Graphics g, Rectangle bounds)
-        {
-            // 도어 닫힘(장착/잠금) = 녹색, 열림 = 꺼짐
-            var lampRect = new Rectangle(bounds.Right - 24, bounds.Y + (EquipmentCanvasStyler.HeaderHeight - 12) / 2, 12, 12);
-            EquipmentCanvasStyler.DrawLampDot(g, lampRect, doorClosed ? Color.FromArgb(64, 170, 100) : EquipmentCanvasStyler.LampOff);
+            DrawLabels(g);
         }
 
         /// <summary>
-        /// 카세트 슬롯. 아래가 1번 슬롯이며, 웨이퍼는 1번부터 채워진다.
+        /// 로드포트 판과 키네마틱 핀 3개. 이 아래의 좌표는 FOUP 중심 기준이고 +x가 TM 쪽(열린 앞쪽)이다.
         /// </summary>
-        private void DrawSlots(Graphics g, Rectangle bounds)
+        private static void DrawLoadPort(Graphics g)
         {
-            int slotCount = Math.Max(1, capacity);
-            var rack = new RectangleF(bounds.X + 18, bounds.Y + EquipmentCanvasStyler.HeaderHeight + 7, bounds.Width - 36, bounds.Height - EquipmentCanvasStyler.HeaderHeight - 32);
-            if (rack.Height < 10)
+            var plate = new RectangleF(-PortHalf, -PortHalf, PortHalf * 2f, PortHalf * 2f);
+            using (var shadowPath = EquipmentCanvasStyler.CreateRoundedRectangle(new RectangleF(plate.X + 1.5f, plate.Y + 2.5f, plate.Width, plate.Height), 7f))
+            using (var shadow = new SolidBrush(Color.FromArgb(40, 28, 36, 51)))
             {
-                return;
+                g.FillPath(shadow, shadowPath);
+            }
+            using (var path = EquipmentCanvasStyler.CreateRoundedRectangle(plate, 7f))
+            using (var fill = new LinearGradientBrush(plate, PortLight, PortDark, LinearGradientMode.ForwardDiagonal))
+            using (var pen = new Pen(PortEdge, 1f))
+            {
+                g.FillPath(fill, path);
+                g.DrawPath(pen, path);
             }
 
-            float pitch = rack.Height / slotCount;
-            float barHeight = Math.Max(2f, Math.Min(6f, pitch * 0.55f));
-            int filled = Math.Max(0, Math.Min(waferCount, slotCount));
-
-            using (var emptyBrush = new SolidBrush(Color.FromArgb(233, 237, 243)))
-            using (var waferBrush = new SolidBrush(waferColor))
-            using (var waferPen = new Pen(ControlPaint.Dark(waferColor, 0.15f), 1f))
+            using (var pin = new SolidBrush(PinFill))
+            using (var pinEdge = new Pen(Color.FromArgb(94, 106, 122), 0.8f))
             {
-                for (int slot = 1; slot <= slotCount; slot++)
+                foreach (var p in new[] { new PointF(18f, -19f), new PointF(18f, 19f), new PointF(-21f, 0f) })
                 {
-                    float y = rack.Bottom - slot * pitch + (pitch - barHeight) / 2f;
-                    var bar = new RectangleF(rack.X, y, rack.Width, barHeight);
-                    if (slot <= filled)
-                    {
-                        g.FillRectangle(waferBrush, bar);
-                        g.DrawRectangle(waferPen, bar.X, bar.Y, bar.Width, bar.Height);
-                    }
-                    else
-                    {
-                        g.FillRectangle(emptyBrush, bar);
-                    }
+                    var r = new RectangleF(p.X - 2.4f, p.Y - 2.4f, 4.8f, 4.8f);
+                    g.FillEllipse(pin, r);
+                    g.DrawEllipse(pinEdge, r);
                 }
-            }
-
-            using (var railPen = new Pen(Color.FromArgb(196, 204, 216), 2f))
-            {
-                g.DrawLine(railPen, rack.X - 5, rack.Y, rack.X - 5, rack.Bottom);
-                g.DrawLine(railPen, rack.Right + 5, rack.Y, rack.Right + 5, rack.Bottom);
             }
         }
 
-        private void DrawStatus(Graphics g, Rectangle bounds)
+        /// <summary>
+        /// FOUP 통: TM 쪽(앞)은 문 없이 열려 있고 뒤쪽은 둥글다. 반투명이라 맨 위 웨이퍼가 비친다.
+        /// </summary>
+        private void DrawPod(Graphics g)
         {
-            var statusRect = new Rectangle(bounds.X + 10, bounds.Bottom - 24, bounds.Width - 20, 20);
-            var display = string.IsNullOrWhiteSpace(statusText) ? "-" : statusText;
-            // 상태 문구에 이미 매수가 들어 있으면 중복해서 붙이지 않는다.
-            var combined = display.Contains("장") ? display : $"{display} · {Math.Max(0, waferCount)}장";
+            const float back = -26f, front = 23f, half = 26f, round = 14f;
 
-            TextRenderer.DrawText(g, combined, Font, statusRect, EquipmentCanvasStyler.CardSubText,
-                TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPadding);
+            if (waferCount > 0)
+            {
+                var wafer = new RectangleF(-22f, -21f, 42f, 42f);
+                using (var fill = new SolidBrush(SiliconFill))
+                using (var rim = new Pen(SiliconRim, 1.6f))
+                {
+                    g.FillEllipse(fill, wafer);
+                    g.DrawEllipse(rim, wafer);
+                }
+            }
+
+            // 통 몸체는 반투명으로 채우고, 테두리는 뒤쪽과 양옆만 그린다. TM 쪽(앞)은 문 없이 열려 있다.
+            using (var shell = new GraphicsPath())
+            {
+                shell.AddLine(front, -half, back + round, -half);
+                shell.AddArc(back, -half, round * 2f, round * 2f, 270f, -90f);
+                shell.AddLine(back, -half + round, back, half - round);
+                shell.AddArc(back, half - round * 2f, round * 2f, round * 2f, 180f, -90f);
+                shell.AddLine(back + round, half, front, half);
+                using (var fill = new SolidBrush(ShellFill))
+                using (var pen = new Pen(ShellEdge, 1.2f))
+                {
+                    g.FillPath(fill, shell);
+                    g.DrawPath(pen, shell);
+                }
+            }
+
+            // 열린 앞쪽 가장자리 (양옆 벽 끝)
+            using (var lip = new SolidBrush(ShellDark))
+            {
+                g.FillRectangle(lip, front - 3f, -half - 1f, 4f, 4f);
+                g.FillRectangle(lip, front - 3f, half - 3f, 4f, 4f);
+            }
+
+            // 옆 손잡이와 위쪽 로봇 플랜지
+            using (var dark = new SolidBrush(ShellDark))
+            {
+                g.FillRectangle(dark, -9f, -half - 4f, 20f, 4f);
+                g.FillRectangle(dark, -9f, half, 20f, 4f);
+            }
+            var flange = new RectangleF(-9f, -9f, 18f, 18f);
+            using (var path = EquipmentCanvasStyler.CreateRoundedRectangle(flange, 4f))
+            using (var fill = new SolidBrush(FlangeFill))
+            using (var pen = new Pen(Color.FromArgb(46, 54, 68), 0.8f))
+            {
+                g.FillPath(fill, path);
+                g.DrawPath(pen, path);
+            }
+            using (var path = EquipmentCanvasStyler.CreateRoundedRectangle(RectangleF.Inflate(flange, -4f, -4f), 2f))
+            using (var fill = new SolidBrush(FlangeTop))
+            {
+                g.FillPath(fill, path);
+            }
+        }
+
+        private static void DrawEmptyOutline(Graphics g)
+        {
+            using (var pen = new Pen(Color.FromArgb(225, 230, 237), 1.2f) { DashStyle = DashStyle.Dash })
+            {
+                g.DrawRectangle(pen, -26f, -26f, 49f, 52f);
+            }
+        }
+
+        /// <summary>
+        /// 이름판과 매수. 통이 TM 쪽을 향하므로, 글자는 그 반대쪽(바깥쪽) 위 모서리에 모아 둔다.
+        /// </summary>
+        private void DrawLabels(Graphics g)
+        {
+            bool tmOnRight = Math.Cos(facingDegrees * Math.PI / 180.0) >= 0;
+            const int margin = 3;
+
+            using (var plateFont = new Font("Segoe UI", 8.5F, FontStyle.Bold))
+            using (var countFont = new Font("Segoe UI", 9F, FontStyle.Bold))
+            {
+                var flags = TextFormatFlags.NoPadding | TextFormatFlags.VerticalCenter | TextFormatFlags.HorizontalCenter;
+                var textSize = TextRenderer.MeasureText(g, title ?? string.Empty, plateFont, Size.Empty, TextFormatFlags.NoPadding);
+                int plateWidth = textSize.Width + 14;
+                const int plateHeight = 19;
+                int x = tmOnRight ? margin : ClientSize.Width - margin - plateWidth;
+                var plate = new Rectangle(x, margin, plateWidth, plateHeight);
+                using (var path = EquipmentCanvasStyler.CreateRoundedRectangle(plate, 4))
+                using (var fill = new SolidBrush(PlateFill))
+                {
+                    g.FillPath(fill, path);
+                }
+                TextRenderer.DrawText(g, title ?? string.Empty, plateFont, plate, PlateText, flags);
+
+                string count = mounted ? $"{Math.Max(0, waferCount)}/{capacity}" : "미장착";
+                var countSize = TextRenderer.MeasureText(g, count, countFont, Size.Empty, TextFormatFlags.NoPadding);
+                // 매수는 이름판 바로 아래에 둔다
+                int countX = tmOnRight ? plate.Left + 2 : plate.Right - 2 - countSize.Width;
+                var countRect = new Rectangle(countX, plate.Bottom + 4, countSize.Width + 2, countSize.Height + 2);
+                TextRenderer.DrawText(g, count, countFont, countRect, mounted ? EquipmentCanvasStyler.CardTitle : AlertText,
+                    TextFormatFlags.NoPadding | TextFormatFlags.Left | TextFormatFlags.VerticalCenter);
+            }
         }
 
         private static GraphicsPath CreateRoundedRectangle(Rectangle rect, float radius)

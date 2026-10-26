@@ -7,7 +7,7 @@ namespace SemiconductorUi.Helpers
 {
     /// <summary>
     /// 메인 화면 장비 시뮬레이터(캔버스)의 공통 색상과 카드 스타일.
-    /// 기존 패널(도어/램프/웨이퍼)은 상태 보관용으로 그대로 두고, 카드 모양은 Paint에서 직접 그린다.
+    /// 기존 패널(도어/램프/웨이퍼)은 상태 보관용으로 그대로 두고, 챔버 모양은 Paint에서 직접 그린다.
     /// </summary>
     public static class EquipmentCanvasStyler
     {
@@ -176,20 +176,57 @@ namespace SemiconductorUi.Helpers
                     g.DrawPath(pen, path);
                 }
 
+                var redColor = red?.BackColor ?? LampOff;
+                var yellowColor = yellow?.BackColor ?? LampOff;
+                var greenColor = green?.BackColor ?? LampOff;
+                DrawSignalTower(g, new Rectangle(16, 3, 12, host.Height - 6), redColor, yellowColor, greenColor);
+
                 using (var titleFont = new Font("Segoe UI", 8.5F, FontStyle.Bold))
                 using (var itemFont = new Font("Segoe UI", 8.5F))
                 {
-                    TextRenderer.DrawText(g, "상태 램프", titleFont, new Rectangle(12, 0, 64, host.Height), CardSubText,
+                    TextRenderer.DrawText(g, "상태 램프", titleFont, new Rectangle(36, 0, 60, host.Height), CardSubText,
                         TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding);
 
-                    int x = 78;
-                    x = DrawLampItem(g, itemFont, x, host.Height, red?.BackColor ?? LampOff, "오류");
-                    x = DrawLampItem(g, itemFont, x, host.Height, yellow?.BackColor ?? LampOff, "대기");
-                    DrawLampItem(g, itemFont, x, host.Height, green?.BackColor ?? LampOff, "진행");
+                    int x = 96;
+                    x = DrawLampItem(g, itemFont, x, host.Height, redColor, "오류");
+                    x = DrawLampItem(g, itemFont, x, host.Height, yellowColor, "대기");
+                    DrawLampItem(g, itemFont, x, host.Height, greenColor, "진행");
                 }
             };
             host.ResumeLayout(false);
             host.Invalidate();
+        }
+
+        /// <summary>
+        /// 장비 위 시그널 타워(빨강·노랑·초록 3단)를 작게 그린다. 켜진 단만 밝다.
+        /// </summary>
+        private static void DrawSignalTower(Graphics g, Rectangle area, Color red, Color yellow, Color green)
+        {
+            const int poleHeight = 4;
+            float segment = (area.Height - poleHeight - 2) / 3f;
+            var colors = new[]
+            {
+                new { Lit = red, Off = Color.FromArgb(232, 196, 196) },
+                new { Lit = yellow, Off = Color.FromArgb(236, 222, 190) },
+                new { Lit = green, Off = Color.FromArgb(196, 226, 206) }
+            };
+            for (int i = 0; i < colors.Length; i++)
+            {
+                bool on = !IsLampOff(colors[i].Lit);
+                var rect = new RectangleF(area.X, area.Y + i * segment, area.Width, segment - 1f);
+                using (var path = CreateRoundedRectangle(rect, 2f))
+                using (var fill = new SolidBrush(on ? colors[i].Lit : colors[i].Off))
+                using (var pen = new Pen(Color.FromArgb(140, 151, 166), 0.8f))
+                {
+                    g.FillPath(fill, path);
+                    g.DrawPath(pen, path);
+                }
+            }
+            using (var pole = new SolidBrush(Color.FromArgb(94, 106, 122)))
+            {
+                g.FillRectangle(pole, area.X + area.Width / 2f - 1.5f, area.Bottom - poleHeight - 2, 3f, poleHeight);
+                g.FillRectangle(pole, area.X - 1, area.Bottom - 2, area.Width + 2, 2);
+            }
         }
 
         private static int DrawLampItem(Graphics g, Font font, int x, int height, Color color, string text)
@@ -250,95 +287,220 @@ namespace SemiconductorUi.Helpers
             return Math.Max(0f, Math.Min(1f, ratio));
         }
 
+        // 챔버를 실제 장비처럼: 금속 몸체, 볼트로 고정한 둥근 뚜껑, 가운데 뷰포트, TM 쪽 슬릿 밸브.
+        private static readonly Color BodyLight = Color.FromArgb(246, 248, 250);
+        private static readonly Color BodyDark = Color.FromArgb(205, 212, 221);
+        private static readonly Color BodyEdge = Color.FromArgb(150, 160, 174);
+        private static readonly Color LidCenter = Color.FromArgb(252, 253, 254);
+        private static readonly Color LidEdge = Color.FromArgb(178, 187, 199);
+        private static readonly Color LidRim = Color.FromArgb(142, 152, 167);
+        private static readonly Color BoltFill = Color.FromArgb(232, 236, 241);
+        private static readonly Color BoltEdge = Color.FromArgb(140, 151, 166);
+        private static readonly Color GlassLight = Color.FromArgb(78, 94, 120);
+        private static readonly Color GlassDark = Color.FromArgb(26, 35, 50);
+        private static readonly Color PlateFill = Color.FromArgb(42, 50, 64);
+        private static readonly Color PlateText = Color.FromArgb(233, 237, 243);
+        private static readonly Color ValveBody = Color.FromArgb(140, 151, 166);
+        private static readonly Color ValveOpenGlow = Color.FromArgb(59, 209, 126);
+
+        private const int ChamberLidBolts = 12;
+
         private static void PaintChamberCard(Graphics g, Rectangle client, string title, Color lampColor, float valveOpen, AnchorStyles valveSide)
         {
             g.SmoothingMode = SmoothingMode.AntiAlias;
-            var card = new Rectangle(client.X + 1, client.Y + 1, client.Width - 3, client.Height - 3);
+            var card = new Rectangle(client.X + 1, client.Y + 1, client.Width - 4, client.Height - 4);
 
+            // 바닥 그림자
+            using (var shadowPath = CreateRoundedRectangle(new RectangleF(card.X + 1.5f, card.Y + 2.5f, card.Width, card.Height), CardRadius))
+            using (var shadow = new SolidBrush(Color.FromArgb(38, 28, 36, 51)))
+            {
+                g.FillPath(shadow, shadowPath);
+            }
+
+            // 금속 몸체
             using (var path = CreateRoundedRectangle(card, CardRadius))
-            using (var fill = new SolidBrush(CardFill))
-            using (var pen = new Pen(CardBorder, 1f))
+            using (var fill = new LinearGradientBrush(card, BodyLight, BodyDark, LinearGradientMode.ForwardDiagonal))
+            using (var pen = new Pen(BodyEdge, 1f))
             {
                 g.FillPath(fill, path);
                 g.DrawPath(pen, path);
             }
 
-            using (var divider = new Pen(Color.FromArgb(232, 236, 242)))
+            // 모서리 고정 볼트
+            const int boltInset = 8;
+            foreach (var corner in new[]
             {
-                g.DrawLine(divider, card.Left + 10, card.Top + HeaderHeight, card.Right - 10, card.Top + HeaderHeight);
+                new PointF(card.Right - boltInset, card.Top + HeaderHeight + 4),
+                new PointF(card.Left + boltInset, card.Bottom - boltInset),
+                new PointF(card.Right - boltInset, card.Bottom - boltInset),
+                new PointF(card.Left + boltInset, card.Top + HeaderHeight + 4)
+            })
+            {
+                DrawBolt(g, corner, 2.6f);
             }
 
-            using (var titleFont = new Font("Segoe UI", 10F, FontStyle.Bold))
-            {
-                TextRenderer.DrawText(g, title, titleFont, new Rectangle(card.Left + 12, card.Top, card.Width - 44, HeaderHeight),
-                    CardTitle, TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPadding);
-            }
-
+            DrawNameplate(g, card, title);
             DrawLampDot(g, new Rectangle(card.Right - 24, card.Top + (HeaderHeight - 12) / 2, 12, 12), lampColor);
 
-            var well = GetWellBounds(client);
-            using (var wellFill = new SolidBrush(WellFill))
-            using (var wellPen = new Pen(WellEdge, 1.2f))
-            using (var ringPen = new Pen(Color.FromArgb(205, 212, 223), 1f) { DashStyle = DashStyle.Dot })
-            {
-                g.FillEllipse(wellFill, well);
-                g.DrawEllipse(wellPen, well);
-                var inner = Rectangle.Inflate(well, -6, -6);
-                g.DrawEllipse(ringPen, inner);
-            }
-
+            DrawChamberLid(g, GetWellBounds(client));
             DrawSlitValve(g, card, valveOpen, valveSide);
         }
 
+        /// <summary>
+        /// 장비 이름판: 어두운 판에 흰 글자.
+        /// </summary>
+        private static void DrawNameplate(Graphics g, Rectangle card, string title)
+        {
+            using (var font = new Font("Segoe UI", 9F, FontStyle.Bold))
+            {
+                var flags = TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPadding;
+                int maxWidth = card.Width - 52;
+                var textSize = TextRenderer.MeasureText(g, title ?? string.Empty, font, new Size(maxWidth, HeaderHeight), flags);
+                var plate = new Rectangle(card.Left + 8, card.Top + 5, Math.Min(maxWidth, textSize.Width) + 16, HeaderHeight - 9);
+                using (var path = CreateRoundedRectangle(plate, 4))
+                using (var fill = new SolidBrush(PlateFill))
+                {
+                    g.FillPath(fill, path);
+                }
+                TextRenderer.DrawText(g, title ?? string.Empty, font, Rectangle.Inflate(plate, -8, 0), PlateText, flags);
+            }
+        }
+
+        /// <summary>
+        /// 둥근 뚜껑(볼트 링)과 가운데 뷰포트. 웨이퍼 패널은 뷰포트 위에 놓여 안의 웨이퍼처럼 보인다.
+        /// </summary>
+        private static void DrawChamberLid(Graphics g, Rectangle well)
+        {
+            var lid = Rectangle.Inflate(well, 4, 4);
+            using (var lidPath = new GraphicsPath())
+            {
+                lidPath.AddEllipse(lid);
+                using (var brush = new PathGradientBrush(lidPath)
+                {
+                    CenterColor = LidCenter,
+                    SurroundColors = new[] { LidEdge },
+                    CenterPoint = new PointF(lid.Left + lid.Width * 0.36f, lid.Top + lid.Height * 0.32f)
+                })
+                {
+                    g.FillPath(brush, lidPath);
+                }
+            }
+            using (var rim = new Pen(LidRim, 1.2f))
+            {
+                g.DrawEllipse(rim, lid);
+            }
+
+            // 볼트 링
+            float cx = lid.Left + lid.Width / 2f, cy = lid.Top + lid.Height / 2f;
+            float boltRadius = lid.Width / 2f - 4f;
+            for (int i = 0; i < ChamberLidBolts; i++)
+            {
+                double angle = (i + 0.5) * 2 * Math.PI / ChamberLidBolts;
+                DrawBolt(g, new PointF(cx + boltRadius * (float)Math.Cos(angle), cy + boltRadius * (float)Math.Sin(angle)), 1.7f);
+            }
+
+            // 뷰포트: 밝은 테두리 + 어두운 유리 + 반사광
+            var frame = Rectangle.Inflate(well, -3, -3);
+            using (var frameFill = new SolidBrush(Color.FromArgb(211, 217, 225)))
+            using (var framePen = new Pen(LidRim, 1f))
+            {
+                g.FillEllipse(frameFill, frame);
+                g.DrawEllipse(framePen, frame);
+            }
+
+            var glass = Rectangle.Inflate(frame, -3, -3);
+            using (var glassPath = new GraphicsPath())
+            {
+                glassPath.AddEllipse(glass);
+                using (var brush = new PathGradientBrush(glassPath)
+                {
+                    CenterColor = GlassLight,
+                    SurroundColors = new[] { GlassDark },
+                    CenterPoint = new PointF(glass.Left + glass.Width * 0.35f, glass.Top + glass.Height * 0.3f)
+                })
+                {
+                    g.FillPath(brush, glassPath);
+                }
+            }
+            using (var shine = new Pen(Color.FromArgb(90, 255, 255, 255), 1.6f) { StartCap = LineCap.Round, EndCap = LineCap.Round })
+            {
+                var arc = Rectangle.Inflate(glass, -5, -5);
+                if (arc.Width > 4 && arc.Height > 4)
+                {
+                    g.DrawArc(shine, arc, 200, 60);
+                }
+            }
+        }
+
+        private static void DrawBolt(Graphics g, PointF center, float radius)
+        {
+            var rect = new RectangleF(center.X - radius, center.Y - radius, radius * 2, radius * 2);
+            using (var fill = new SolidBrush(BoltFill))
+            using (var pen = new Pen(BoltEdge, 0.8f))
+            {
+                g.FillEllipse(fill, rect);
+                g.DrawEllipse(pen, rect);
+            }
+        }
+
+        /// <summary>
+        /// TM 쪽 변의 슬릿 밸브: 밸브 몸체 안의 틈이 닫히면 어둡고, 열린 만큼 가운데부터 초록으로 벌어진다.
+        /// </summary>
         private static void DrawSlitValve(Graphics g, Rectangle card, float openRatio, AnchorStyles side)
         {
-            const int thickness = 6;
-            const int length = 50;
+            const int bodyThickness = 11;
+            const int bodyLength = 58;
+            const int slotThickness = 4;
+            const int slotLength = 46;
             bool horizontal = side == AnchorStyles.Top || side == AnchorStyles.Bottom;
+            float bodyTop = card.Top + HeaderHeight + (card.Height - HeaderHeight - bodyLength) / 2f;
 
-            RectangleF slot;
+            RectangleF body;
             switch (side)
             {
                 case AnchorStyles.Bottom:
-                    slot = new RectangleF(card.Left + (card.Width - length) / 2f, card.Bottom - thickness - 3, length, thickness);
+                    body = new RectangleF(card.Left + (card.Width - bodyLength) / 2f, card.Bottom - bodyThickness, bodyLength, bodyThickness);
                     break;
                 case AnchorStyles.Top:
-                    slot = new RectangleF(card.Left + (card.Width - length) / 2f, card.Top + 3, length, thickness);
+                    body = new RectangleF(card.Left + (card.Width - bodyLength) / 2f, card.Top, bodyLength, bodyThickness);
                     break;
                 case AnchorStyles.Left:
-                    slot = new RectangleF(card.Left + 3, card.Top + HeaderHeight + (card.Height - HeaderHeight - length) / 2f, thickness, length);
+                    body = new RectangleF(card.Left, bodyTop, bodyThickness, bodyLength);
                     break;
                 default:
-                    slot = new RectangleF(card.Right - thickness - 3, card.Top + HeaderHeight + (card.Height - HeaderHeight - length) / 2f, thickness, length);
+                    body = new RectangleF(card.Right - bodyThickness, bodyTop, bodyThickness, bodyLength);
                     break;
             }
 
-            using (var track = new SolidBrush(Color.FromArgb(226, 231, 238)))
+            using (var path = CreateRoundedRectangle(body, 3))
+            using (var fill = new SolidBrush(ValveBody))
+            using (var pen = new Pen(Color.FromArgb(110, 121, 135), 0.8f))
             {
-                g.FillRectangle(track, slot);
+                g.FillPath(fill, path);
+                g.DrawPath(pen, path);
             }
 
-            // 열림 비율만큼 두 짝이 양쪽으로 벌어진다.
-            float gap = (horizontal ? slot.Width : slot.Height) * openRatio;
-            using (var brush = new SolidBrush(ValveClosed))
+            var slot = horizontal
+                ? new RectangleF(body.Left + (bodyLength - slotLength) / 2f, body.Top + (bodyThickness - slotThickness) / 2f, slotLength, slotThickness)
+                : new RectangleF(body.Left + (bodyThickness - slotThickness) / 2f, body.Top + (bodyLength - slotLength) / 2f, slotThickness, slotLength);
+
+            // 열린 만큼 초록 틈, 나머지는 닫힌 게이트
+            using (var gate = new SolidBrush(ValveClosed))
             {
-                if (horizontal)
+                g.FillRectangle(gate, slot);
+            }
+
+            float gap = (horizontal ? slot.Width : slot.Height) * Math.Max(0f, Math.Min(1f, openRatio));
+            if (gap > 0.5f)
+            {
+                var open = horizontal
+                    ? new RectangleF(slot.X + (slot.Width - gap) / 2f, slot.Y, gap, slot.Height)
+                    : new RectangleF(slot.X, slot.Y + (slot.Height - gap) / 2f, slot.Width, gap);
+                using (var glow = new SolidBrush(Color.FromArgb(80, ValveOpenGlow)))
+                using (var lit = new SolidBrush(ValveOpenGlow))
                 {
-                    float half = (slot.Width - gap) / 2f;
-                    if (half > 0.5f)
-                    {
-                        g.FillRectangle(brush, slot.X, slot.Y, half, slot.Height);
-                        g.FillRectangle(brush, slot.Right - half, slot.Y, half, slot.Height);
-                    }
-                }
-                else
-                {
-                    float half = (slot.Height - gap) / 2f;
-                    if (half > 0.5f)
-                    {
-                        g.FillRectangle(brush, slot.X, slot.Y, slot.Width, half);
-                        g.FillRectangle(brush, slot.X, slot.Bottom - half, slot.Width, half);
-                    }
+                    g.FillRectangle(glow, RectangleF.Inflate(open, 2f, 2f));
+                    g.FillRectangle(lit, open);
                 }
             }
         }

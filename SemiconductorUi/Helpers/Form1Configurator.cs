@@ -76,6 +76,8 @@ namespace SemiconductorUi.Helpers
             PlaceCentered(form.panelChamberC, new PointF(cx + sideDistance, cy));
             PlaceCentered(form.panelFoupA, new PointF(cx - foupOffset, foupY + foupH / 2f));
             PlaceCentered(form.panelFoupB, new PointF(cx + foupOffset, foupY + foupH / 2f));
+            FaceFoupToward(form.foupVisualizationControlA, form.panelFoupA, new PointF(cx, cy));
+            FaceFoupToward(form.foupVisualizationControlB, form.panelFoupB, new PointF(cx, cy));
 
             int sideViewLeft = canvasSize.Width - margin - sideViewWidth;
             if (form.panelMainLamp != null)
@@ -120,6 +122,21 @@ namespace SemiconductorUi.Helpers
             }
 
             form.panelEquipmentCanvas.Invalidate();
+        }
+
+        /// <summary>
+        /// 위에서 본 FOUP의 문이 TM 중심을 향하도록 돌린다.
+        /// </summary>
+        private static void FaceFoupToward(FoupVisualizationControl foup, Control host, PointF tmCenter)
+        {
+            if (foup == null || host == null)
+            {
+                return;
+            }
+
+            float hx = host.Left + host.Width / 2f;
+            float hy = host.Top + host.Height / 2f;
+            foup.FacingDegrees = (float)(Math.Atan2(tmCenter.Y - hy, tmCenter.X - hx) * 180.0 / Math.PI);
         }
 
         private void PlaceCentered(Control control, PointF center)

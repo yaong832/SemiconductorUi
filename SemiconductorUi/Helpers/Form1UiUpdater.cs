@@ -376,6 +376,10 @@ namespace SemiconductorUi.Helpers
             var foupADoorClosed = !form.IsRegionDoorOpen(EquipmentRegion.FoupA);
             var foupBDoorClosed = !form.IsRegionDoorOpen(EquipmentRegion.FoupB);
 
+            if (form.foupVisualizationControlA != null)
+            {
+                form.foupVisualizationControlA.Mounted = form.IsFoupAMounted;
+            }
             form.foupVisualizationControlA?.UpdateState(foupAStatus, form.currentFoupACount, foupADoorClosed);
             form.foupVisualizationControlB?.UpdateState(foupBStatus, form.currentFoupBCount, foupBDoorClosed);
         }
