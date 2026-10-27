@@ -38,7 +38,7 @@ namespace SemiconductorUi.Forms
 
 			comboUnit = new ComboBox();
 			comboUnit.DropDownStyle = ComboBoxStyle.DropDownList;
-			comboUnit.Items.AddRange(new object[] { "ALL", "PMA", "PMB", "PMC" });
+			comboUnit.Items.AddRange(new object[] { "ALL", "Chamber A", "Chamber B", "Chamber C" });
 			comboUnit.SelectedIndex = 0;
 			comboUnit.Location = new Point(16, 12);
 			comboUnit.Width = 120;
@@ -282,7 +282,7 @@ namespace SemiconductorUi.Forms
 				{
 					var s = samples[i];
 					var item = new ListViewItem(s.t.ToString("HH:mm:ss"));
-					item.SubItems.Add(s.unit);
+					item.SubItems.Add(SemiconductorUi.Helpers.EquipmentRegionHelper.FormatUnitLabel(s.unit));
 					item.SubItems.Add(s.pvTemp.ToString("0.0"));
 					item.SubItems.Add(s.svTemp.ToString("0.0"));
 					item.SubItems.Add(s.pvPress.ToString("0.###"));
@@ -327,7 +327,7 @@ namespace SemiconductorUi.Forms
 				for (int i = start; i < samples.Count; i++)
 				{
 					var s = samples[i];
-					if (unitFilter != "ALL" && !string.Equals(unitFilter, s.unit, StringComparison.OrdinalIgnoreCase))
+					if (unitFilter != "ALL" && !string.Equals(unitFilter, SemiconductorUi.Helpers.EquipmentRegionHelper.FormatUnitLabel(s.unit), StringComparison.OrdinalIgnoreCase))
 					{
 						continue;
 					}

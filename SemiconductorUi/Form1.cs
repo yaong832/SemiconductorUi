@@ -1654,7 +1654,7 @@ namespace SemiconductorUi
             ChamberEnvSpecs["PMC"] = new ChamberController.ChamberEnvironmentSpec(pmcTempStr, pmcPressStr, pmcRhStr, pmcNotes, pmcTemp, pmcPress, pmcRh);
 
             InitializeEnvironmentTelemetry();
-            AddLogMessage($"환경 설정 적용: {recipeKey} (PMA {pmaTempStr}, PMB {pmbPressStr}, PMC {pmcTempStr})", "INFO");
+            AddLogMessage($"환경 설정 적용: {recipeKey} (Chamber A {pmaTempStr}, Chamber B {pmbPressStr}, Chamber C {pmcTempStr})", "INFO");
         }
 
         internal void SetWaferLoadState(MainFormViewModel.WaferLoadStateType newState, bool logChange = true, bool refreshUi = true)
@@ -2295,7 +2295,7 @@ namespace SemiconductorUi
 
             using (var detailForm = new EquipmentDetailForm())
             {
-                detailForm.SetDetail(unitKey, status, description);
+                detailForm.SetDetail(EquipmentRegionHelper.FormatUnitLabel(unitKey), status, description);
                 detailForm.ShowDialog(this);
             }
         }
@@ -2310,7 +2310,7 @@ namespace SemiconductorUi
             using (var detailForm = new PmDetailForm())
             {
                 detailForm.SetDetail(
-                    unitKey,
+                    EquipmentRegionHelper.FormatUnitLabel(unitKey),
                     detail.StatusText,
                     detail.RecipeName,
                     detail.StepName,
@@ -2415,11 +2415,11 @@ namespace SemiconductorUi
                 case "TM":
                     return $"{processInfo}{Environment.NewLine}TM은 웨이퍼를 각 챔버로 이송하는 로봇입니다.";
                 case "PMA":
-                    return $"{processInfo}{Environment.NewLine}Chamber A(PMA)는 전처리 공정을 담당합니다.";
+                    return $"{processInfo}{Environment.NewLine}Chamber A는 전처리 공정을 담당합니다.";
                 case "PMB":
-                    return $"{processInfo}{Environment.NewLine}Chamber B(PMB)는 메인 공정을 수행합니다.";
+                    return $"{processInfo}{Environment.NewLine}Chamber B는 메인 공정을 수행합니다.";
                 case "PMC":
-                    return $"{processInfo}{Environment.NewLine}Chamber C(PMC)는 후처리 혹은 모니터링 용도로 사용됩니다.";
+                    return $"{processInfo}{Environment.NewLine}Chamber C는 후처리 혹은 모니터링 용도로 사용됩니다.";
                 case "FOUP A":
                     return $"{labelFoupAStatusHeadline.Text}{Environment.NewLine}"
                         + $"Path: {labelFoupAPathValue.Text}{Environment.NewLine}"
@@ -3206,7 +3206,7 @@ namespace SemiconductorUi
                         chamber.StatusText = "Transfer Ready";
                         chamber.ProcessingAccumulator = 0;
                         chamber.LastProcessedTime = DateTime.MinValue;
-                        AddLogMessage($"{chamber.UnitKey} 공정 완료 - TM 대기 중 (도어 닫힘 유지) (웨이퍼#{chamber.CurrentWafer?.Id})", "INFO");
+                        AddLogMessage($"{EquipmentRegionHelper.FormatUnitLabel(chamber.UnitKey)} 공정 완료 - TM 대기 중 (도어 닫힘 유지) (웨이퍼#{chamber.CurrentWafer?.Id})", "INFO");
                         break;
                     }
                 }
@@ -3224,7 +3224,7 @@ namespace SemiconductorUi
                     {
                         chamber.StatusText = "Transfer Ready";
                         chamber.ProcessingAccumulator = 0;
-                        AddLogMessage($"{chamber.UnitKey} 공정 완료 - TM 대기 중 (도어 닫힘 유지) (웨이퍼#{chamber.CurrentWafer?.Id})", "INFO");
+                        AddLogMessage($"{EquipmentRegionHelper.FormatUnitLabel(chamber.UnitKey)} 공정 완료 - TM 대기 중 (도어 닫힘 유지) (웨이퍼#{chamber.CurrentWafer?.Id})", "INFO");
                         break;
                     }
                 }
@@ -5502,12 +5502,12 @@ namespace SemiconductorUi
                         : (diffPress > 15.0);
                     if (failPress)
                     {
-                        failed.Add($"{unit} 압력 인터락 실패");
+                        failed.Add($"{EquipmentRegionHelper.FormatUnitLabel(unit)} 압력 인터락 실패");
                     }
                     var diffTemp = Math.Abs(live.TemperatureC - spec.TargetTemperatureC);
                     if (diffTemp > 10.0) // 온도 이탈 과대 시 실패
                     {
-                        failed.Add($"{unit} 온도 인터락 실패");
+                        failed.Add($"{EquipmentRegionHelper.FormatUnitLabel(unit)} 온도 인터락 실패");
                     }
                 }
             }
@@ -5529,12 +5529,12 @@ namespace SemiconductorUi
                         ? (live.PressureTorr <= spec.TargetPressureTorr * 5.0)
                         : (Math.Abs(live.PressureTorr - spec.TargetPressureTorr) <= 15.0);
                     bool tempOk = Math.Abs(live.TemperatureC - spec.TargetTemperatureC) <= 10.0;
-                    items.Add(($"{unit} 압력 범위", pressOk));
-                    items.Add(($"{unit} 온도 범위", tempOk));
+                    items.Add(($"{EquipmentRegionHelper.FormatUnitLabel(unit)} 압력 범위", pressOk));
+                    items.Add(($"{EquipmentRegionHelper.FormatUnitLabel(unit)} 온도 범위", tempOk));
                 }
                 else
                 {
-                    items.Add(($"{unit} 환경 데이터 준비", false));
+                    items.Add(($"{EquipmentRegionHelper.FormatUnitLabel(unit)} 환경 데이터 준비", false));
                 }
             }
             return items.ToArray();
@@ -5547,7 +5547,7 @@ namespace SemiconductorUi
             if (TmPhase == TransferController.TmPhase.Idle && (currentFoupACount > 0 || currentFoupBCount > 0))
             {
                 var source = currentFoupACount > 0 ? "FOUP A" : "FOUP B";
-                var target = "PMA";
+                var target = "Chamber A";
                 AddLogMessage($"이송 계획 생성: {source} → {target} (데모)", "INFO");
             }
         }
@@ -5643,9 +5643,9 @@ namespace SemiconductorUi
         {
             // 데모: 문 개폐 시퀀스 로그만 기록
             AddLogMessage("Door Cycle Test 시작: A,B,C 순차 개폐", "INFO");
-            AddLogMessage("PMA Door Open → Close", "INFO");
-            AddLogMessage("PMB Door Open → Close", "INFO");
-            AddLogMessage("PMC Door Open → Close", "INFO");
+            AddLogMessage("Chamber A Door Open → Close", "INFO");
+            AddLogMessage("Chamber B Door Open → Close", "INFO");
+            AddLogMessage("Chamber C Door Open → Close", "INFO");
             AddLogMessage("Door Cycle Test 완료", "INFO");
         }
 
@@ -6419,7 +6419,7 @@ namespace SemiconductorUi
                 HasAlarm = true;
                 if (CurrentProcessState != ProcessState.Error)
                 {
-                    SetProcessState(ProcessState.Error, $"{unitKey} 환경 알람 발생");
+                    SetProcessState(ProcessState.Error, $"{EquipmentRegionHelper.FormatUnitLabel(unitKey)} 환경 알람 발생");
                 }
             }
             else

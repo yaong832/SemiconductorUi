@@ -14,7 +14,7 @@ namespace SemiconductorUi.Controls
     public class PmStatusPanel : Control
     {
         // 표시할 데이터
-        private string _title = "PM";
+        private string _title = "Chamber";
         private string _statusText = "Idle";
         private string _recipeName = "-";
         private string _stepName = "-";

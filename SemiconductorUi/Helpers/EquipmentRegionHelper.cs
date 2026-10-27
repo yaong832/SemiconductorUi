@@ -101,6 +101,25 @@ namespace SemiconductorUi.Helpers
         }
 
         /// <summary>
+        /// 유닛 키(PMA/PMB/PMC)를 화면에 보일 이름(Chamber A/B/C)으로 바꿉니다.
+        /// 키 자체는 내부 데이터와 파일에서 그대로 쓰고, 화면 글자만 이 이름을 씁니다.
+        /// </summary>
+        public static string FormatUnitLabel(string unitKey)
+        {
+            switch (unitKey)
+            {
+                case "PMA":
+                    return "Chamber A";
+                case "PMB":
+                    return "Chamber B";
+                case "PMC":
+                    return "Chamber C";
+                default:
+                    return unitKey;
+            }
+        }
+
+        /// <summary>
         /// Region이 도어가 필요한지 확인
         /// </summary>
         /// <param name="region">EquipmentRegion</param>
