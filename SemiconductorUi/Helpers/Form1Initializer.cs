@@ -484,13 +484,13 @@ namespace SemiconductorUi.Helpers
         public void InitializePmStatusPanels()
         {
             // PMA 패널
-            form.pmStatusPanelA = form.CreatePmStatusPanel("PMA", form.panelSummaryPMA);
+            form.pmStatusPanelA = form.CreatePmStatusPanel("Chamber A", form.panelSummaryPMA);
             
             // PMB 패널
-            form.pmStatusPanelB = form.CreatePmStatusPanel("PMB", form.panelSummaryPMB);
+            form.pmStatusPanelB = form.CreatePmStatusPanel("Chamber B", form.panelSummaryPMB);
             
             // PMC 패널
-            form.pmStatusPanelC = form.CreatePmStatusPanel("PMC", form.panelSummaryPMC);
+            form.pmStatusPanelC = form.CreatePmStatusPanel("Chamber C", form.panelSummaryPMC);
         }
 
         /// <summary>

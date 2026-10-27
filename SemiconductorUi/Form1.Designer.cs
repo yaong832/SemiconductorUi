@@ -914,7 +914,7 @@ namespace SemiconductorUi
             this.labelHeaderCardPMATitle.Name = "labelHeaderCardPMATitle";
             this.labelHeaderCardPMATitle.Size = new System.Drawing.Size(33, 15);
             this.labelHeaderCardPMATitle.TabIndex = 0;
-            this.labelHeaderCardPMATitle.Text = "PMA";
+            this.labelHeaderCardPMATitle.Text = "Chamber A";
             // 
             // panelHeaderCardPMB
             // 
@@ -949,7 +949,7 @@ namespace SemiconductorUi
             this.labelHeaderCardPMBTitle.Name = "labelHeaderCardPMBTitle";
             this.labelHeaderCardPMBTitle.Size = new System.Drawing.Size(33, 15);
             this.labelHeaderCardPMBTitle.TabIndex = 0;
-            this.labelHeaderCardPMBTitle.Text = "PMB";
+            this.labelHeaderCardPMBTitle.Text = "Chamber B";
             // 
             // panelHeaderCardPMC
             // 
@@ -984,7 +984,7 @@ namespace SemiconductorUi
             this.labelHeaderCardPMCTitle.Name = "labelHeaderCardPMCTitle";
             this.labelHeaderCardPMCTitle.Size = new System.Drawing.Size(32, 15);
             this.labelHeaderCardPMCTitle.TabIndex = 0;
-            this.labelHeaderCardPMCTitle.Text = "PMC";
+            this.labelHeaderCardPMCTitle.Text = "Chamber C";
             // 
             // panelHeaderAlarm
             // 
@@ -1427,7 +1427,7 @@ namespace SemiconductorUi
             this.labelPmStatusTitle.Padding = new System.Windows.Forms.Padding(0, 0, 0, 6);
             this.labelPmStatusTitle.Size = new System.Drawing.Size(100, 26);
             this.labelPmStatusTitle.TabIndex = 0;
-            this.labelPmStatusTitle.Text = "PM 진행 현황";
+            this.labelPmStatusTitle.Text = "Chamber 진행 현황";
             // 
             // tableProcessMetrics
             // 

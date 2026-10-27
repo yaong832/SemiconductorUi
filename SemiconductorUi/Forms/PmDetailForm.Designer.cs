@@ -282,7 +282,7 @@ namespace SemiconductorUi.Forms
             this.MinimizeBox = false;
             this.Name = "PmDetailForm";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
-            this.Text = "PM Detail";
+            this.Text = "Chamber Detail";
             this.tableLayoutDetail.ResumeLayout(false);
             this.ResumeLayout(false);
             this.PerformLayout();

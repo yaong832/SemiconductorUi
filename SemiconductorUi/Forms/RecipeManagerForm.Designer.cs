@@ -223,7 +223,7 @@ namespace SemiconductorUi.Forms
 			this.chkSecond.Text = "2차 노광 사용"; this.chkSecond.ForeColor = System.Drawing.Color.FromArgb(40, 40, 40); this.chkSecond.AutoSize = true; this.chkSecond.Location = new System.Drawing.Point(x1, y); y += gap;
 
 			// PMA
-			grpPMA.Text = "PMA"; grpPMA.ForeColor = System.Drawing.Color.FromArgb(40, 40, 40); grpPMA.BackColor = System.Drawing.Color.FromArgb(240, 240, 245); grpPMA.Size = new System.Drawing.Size(360, 150);
+			grpPMA.Text = "Chamber A"; grpPMA.ForeColor = System.Drawing.Color.FromArgb(40, 40, 40); grpPMA.BackColor = System.Drawing.Color.FromArgb(240, 240, 245); grpPMA.Size = new System.Drawing.Size(360, 150);
 			grpPMA.Margin = new System.Windows.Forms.Padding(8, 6, 8, 6);
 			lblPmaT.Text = "Temp(°C)"; lblPmaT.ForeColor = System.Drawing.Color.FromArgb(40, 40, 40); lblPmaT.AutoSize = true; lblPmaT.Location = new System.Drawing.Point(12, 24);
 			this.pmaT.Minimum = 0; this.pmaT.Maximum = 400; this.pmaT.Location = new System.Drawing.Point(120, 22); this.pmaT.Width = 100; this.pmaT.BackColor = System.Drawing.Color.FromArgb(240, 240, 245); this.pmaT.ForeColor = System.Drawing.Color.FromArgb(40, 40, 40); this.pmaT.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
@@ -234,7 +234,7 @@ namespace SemiconductorUi.Forms
 			grpPMA.Controls.Add(lblPmaT); grpPMA.Controls.Add(this.pmaT); grpPMA.Controls.Add(lblPmaP); grpPMA.Controls.Add(this.pmaP); grpPMA.Controls.Add(lblPmaH); grpPMA.Controls.Add(this.pmaH);
 
 			// PMB
-			grpPMB.Text = "PMB"; grpPMB.ForeColor = System.Drawing.Color.FromArgb(40, 40, 40); grpPMB.BackColor = System.Drawing.Color.FromArgb(240, 240, 245); grpPMB.Size = new System.Drawing.Size(360, 150);
+			grpPMB.Text = "Chamber B"; grpPMB.ForeColor = System.Drawing.Color.FromArgb(40, 40, 40); grpPMB.BackColor = System.Drawing.Color.FromArgb(240, 240, 245); grpPMB.Size = new System.Drawing.Size(360, 150);
 			grpPMB.Margin = new System.Windows.Forms.Padding(8, 6, 8, 6);
 			lblPmbT.Text = "Temp(°C)"; lblPmbT.ForeColor = System.Drawing.Color.FromArgb(40, 40, 40); lblPmbT.AutoSize = true; lblPmbT.Location = new System.Drawing.Point(12, 24);
 			this.pmbT.Minimum = 0; this.pmbT.Maximum = 400; this.pmbT.Location = new System.Drawing.Point(120, 22); this.pmbT.Width = 100; this.pmbT.BackColor = System.Drawing.Color.FromArgb(240, 240, 245); this.pmbT.ForeColor = System.Drawing.Color.FromArgb(40, 40, 40); this.pmbT.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
@@ -245,7 +245,7 @@ namespace SemiconductorUi.Forms
 			grpPMB.Controls.Add(lblPmbT); grpPMB.Controls.Add(this.pmbT); grpPMB.Controls.Add(lblPmbP); grpPMB.Controls.Add(this.pmbP); grpPMB.Controls.Add(lblPmbH); grpPMB.Controls.Add(this.pmbH);
 
 			// PMC
-			grpPMC.Text = "PMC"; grpPMC.ForeColor = System.Drawing.Color.FromArgb(40, 40, 40); grpPMC.BackColor = System.Drawing.Color.FromArgb(240, 240, 245); grpPMC.Size = new System.Drawing.Size(360, 150);
+			grpPMC.Text = "Chamber C"; grpPMC.ForeColor = System.Drawing.Color.FromArgb(40, 40, 40); grpPMC.BackColor = System.Drawing.Color.FromArgb(240, 240, 245); grpPMC.Size = new System.Drawing.Size(360, 150);
 			grpPMC.Margin = new System.Windows.Forms.Padding(8, 6, 8, 6);
 			lblPmcT.Text = "Temp(°C)"; lblPmcT.ForeColor = System.Drawing.Color.FromArgb(40, 40, 40); lblPmcT.AutoSize = true; lblPmcT.Location = new System.Drawing.Point(12, 24);
 			this.pmcT.Minimum = 0; this.pmcT.Maximum = 400; this.pmcT.Location = new System.Drawing.Point(120, 22); this.pmcT.Width = 100; this.pmcT.BackColor = System.Drawing.Color.FromArgb(240, 240, 245); this.pmcT.ForeColor = System.Drawing.Color.FromArgb(40, 40, 40); this.pmcT.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
@@ -256,7 +256,7 @@ namespace SemiconductorUi.Forms
 			grpPMC.Controls.Add(lblPmcT); grpPMC.Controls.Add(this.pmcT); grpPMC.Controls.Add(lblPmcP); grpPMC.Controls.Add(this.pmcP); grpPMC.Controls.Add(lblPmcH); grpPMC.Controls.Add(this.pmcH);
 
 			// Gas group PMA
-			grpGas.Text = "PMA Gas/RF"; grpGas.ForeColor = System.Drawing.Color.FromArgb(40, 40, 40); grpGas.BackColor = System.Drawing.Color.FromArgb(240, 240, 245); grpGas.Size = new System.Drawing.Size(360, 160);
+			grpGas.Text = "Chamber A Gas/RF"; grpGas.ForeColor = System.Drawing.Color.FromArgb(40, 40, 40); grpGas.BackColor = System.Drawing.Color.FromArgb(240, 240, 245); grpGas.Size = new System.Drawing.Size(360, 160);
 			grpGas.Margin = new System.Windows.Forms.Padding(8, 6, 8, 6);
 			lblNF3.Text = "NF3"; lblNF3.ForeColor = System.Drawing.Color.FromArgb(40, 40, 40); lblNF3.AutoSize = true; lblNF3.Location = new System.Drawing.Point(12, 28);
 			this.gasNF3.Minimum = 0; this.gasNF3.Maximum = 5000; this.gasNF3.Width = 120; this.gasNF3.Location = new System.Drawing.Point(60, 26); this.gasNF3.BackColor = System.Drawing.Color.FromArgb(240, 240, 245); this.gasNF3.ForeColor = System.Drawing.Color.FromArgb(40, 40, 40); this.gasNF3.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
@@ -269,7 +269,7 @@ namespace SemiconductorUi.Forms
 			grpGas.Controls.Add(lblNF3); grpGas.Controls.Add(this.gasNF3); grpGas.Controls.Add(lblO2); grpGas.Controls.Add(this.gasO2); grpGas.Controls.Add(lblCF4); grpGas.Controls.Add(this.gasCF4); grpGas.Controls.Add(lblRF); grpGas.Controls.Add(this.gasRF);
 
 			// Gas group PMB
-			grpGasPMB.Text = "PMB Gas/RF"; grpGasPMB.ForeColor = System.Drawing.Color.FromArgb(40, 40, 40); grpGasPMB.BackColor = System.Drawing.Color.FromArgb(240, 240, 245); grpGasPMB.Size = new System.Drawing.Size(360, 160);
+			grpGasPMB.Text = "Chamber B Gas/RF"; grpGasPMB.ForeColor = System.Drawing.Color.FromArgb(40, 40, 40); grpGasPMB.BackColor = System.Drawing.Color.FromArgb(240, 240, 245); grpGasPMB.Size = new System.Drawing.Size(360, 160);
 			grpGasPMB.Margin = new System.Windows.Forms.Padding(8, 6, 8, 6);
 			lblB_NF3.Text = "NF3"; lblB_NF3.ForeColor = System.Drawing.Color.FromArgb(40, 40, 40); lblB_NF3.AutoSize = true; lblB_NF3.Location = new System.Drawing.Point(12, 28);
 			gasB_NF3.Minimum = 0; gasB_NF3.Maximum = 5000; gasB_NF3.Width = 120; gasB_NF3.Location = new System.Drawing.Point(60, 26); gasB_NF3.BackColor = System.Drawing.Color.FromArgb(240, 240, 245); gasB_NF3.ForeColor = System.Drawing.Color.FromArgb(40, 40, 40); gasB_NF3.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle; gasB_NF3.Name = "gasB_NF3";
@@ -282,7 +282,7 @@ namespace SemiconductorUi.Forms
 			grpGasPMB.Controls.Add(lblB_NF3); grpGasPMB.Controls.Add(gasB_NF3); grpGasPMB.Controls.Add(lblB_O2); grpGasPMB.Controls.Add(gasB_O2); grpGasPMB.Controls.Add(lblB_CF4); grpGasPMB.Controls.Add(gasB_CF4); grpGasPMB.Controls.Add(lblB_RF); grpGasPMB.Controls.Add(gasB_RF);
 
 			// Gas group PMC
-			grpGasPMC.Text = "PMC Gas/RF"; grpGasPMC.ForeColor = System.Drawing.Color.FromArgb(40, 40, 40); grpGasPMC.BackColor = System.Drawing.Color.FromArgb(240, 240, 245); grpGasPMC.Size = new System.Drawing.Size(360, 160);
+			grpGasPMC.Text = "Chamber C Gas/RF"; grpGasPMC.ForeColor = System.Drawing.Color.FromArgb(40, 40, 40); grpGasPMC.BackColor = System.Drawing.Color.FromArgb(240, 240, 245); grpGasPMC.Size = new System.Drawing.Size(360, 160);
 			grpGasPMC.Margin = new System.Windows.Forms.Padding(8, 6, 8, 6);
 			lblC_NF3.Text = "NF3"; lblC_NF3.ForeColor = System.Drawing.Color.FromArgb(40, 40, 40); lblC_NF3.AutoSize = true; lblC_NF3.Location = new System.Drawing.Point(12, 28);
 			gasC_NF3.Minimum = 0; gasC_NF3.Maximum = 5000; gasC_NF3.Width = 120; gasC_NF3.Location = new System.Drawing.Point(60, 26); gasC_NF3.BackColor = System.Drawing.Color.FromArgb(240, 240, 245); gasC_NF3.ForeColor = System.Drawing.Color.FromArgb(40, 40, 40); gasC_NF3.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle; gasC_NF3.Name = "gasC_NF3";

@@ -55,7 +55,7 @@ namespace SemiconductorUi.Forms
 
         public void SetUnit(string unitKey)
         {
-            labelUnit.Text = $"{unitKey} 환경 상세";
+            labelUnit.Text = $"{SemiconductorUi.Helpers.EquipmentRegionHelper.FormatUnitLabel(unitKey)} 환경 상세";
         }
 
         public void SetSetpoints(double svNF3, double svO2, double svCF4, double svPressTorr, double svRfW, double svTempC)
