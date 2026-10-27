@@ -75,6 +75,17 @@ namespace SemiconductorUi.Helpers
             button.Paint += (s, e) => PaintLampButton(button, e.Graphics, null, primary, false);
         }
 
+        /// <summary>
+        /// 램프 없는 버튼에 동작 종류를 나타내는 작은 색 점을 글자 앞에 붙입니다 (수동 제어 창의 ON/OFF/열기 같은 버튼).
+        /// 점은 상태가 아니라 "이 버튼이 무엇을 하는지"만 나타냅니다.
+        /// </summary>
+        public static void AttachTagged(Button button, LampTone tag)
+        {
+            if (button == null) return;
+            HookPressState(button);
+            button.Paint += (s, e) => PaintLampButton(button, e.Graphics, () => new LampState(tag, null, null), false, false);
+        }
+
         /// <summary>긴급 정지: 빨간 바탕에 진한 테두리, 가운데 글자.</summary>
         public static void AttachEmergency(Button button)
         {
@@ -246,8 +257,28 @@ namespace SemiconductorUi.Helpers
 
             if (!showLamp)
             {
-                TextRenderer.DrawText(g, button.Text, button.Font, face, textColor,
-                    TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis | TextFormatFlags.SingleLine | TextFormatFlags.NoPadding);
+                if (stateProvider == null)
+                {
+                    TextRenderer.DrawText(g, button.Text, button.Font, face, textColor,
+                        TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis | TextFormatFlags.SingleLine | TextFormatFlags.NoPadding);
+                }
+                else
+                {
+                    // 색 점 + 글자를 한 덩어리로 가운데 정렬
+                    const int dot = 7, dotGap = 5;
+                    var textSize = TextRenderer.MeasureText(g, button.Text, button.Font, Size.Empty, TextFormatFlags.NoPadding | TextFormatFlags.SingleLine);
+                    int blockWidth = Math.Min(face.Width - 8, dot + dotGap + textSize.Width);
+                    int left = face.X + (face.Width - blockWidth) / 2;
+                    var dotRect = new RectangleF(left, face.Y + (face.Height - dot) / 2f, dot, dot);
+                    var tone = enabled ? state.Tone : LampTone.Off;
+                    using (var brush = new SolidBrush(enabled ? ToneColor(tone) : BorderDisabled))
+                    {
+                        g.FillEllipse(brush, dotRect);
+                    }
+                    var tagTextRect = new Rectangle(left + dot + dotGap, face.Y, Math.Max(10, face.Right - (left + dot + dotGap)), face.Height);
+                    TextRenderer.DrawText(g, button.Text, button.Font, tagTextRect, textColor,
+                        TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis | TextFormatFlags.SingleLine | TextFormatFlags.NoPadding);
+                }
                 DrawFocus(button, g, face);
                 return;
             }
