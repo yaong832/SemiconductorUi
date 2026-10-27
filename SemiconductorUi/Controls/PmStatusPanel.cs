@@ -2,6 +2,7 @@ using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Windows.Forms;
+using SemiconductorUi.Helpers;
 
 namespace SemiconductorUi.Controls
 {
@@ -33,23 +34,26 @@ namespace SemiconductorUi.Controls
         private double _cf4PV = 0, _cf4SV = 0;
         private double _rfPV = 0, _rfSV = 0;
 
-        // 색상 설정
-        private readonly Color _backgroundColor = Color.FromArgb(250, 250, 255);
-        private readonly Color _borderColor = Color.FromArgb(220, 220, 230);
-        private readonly Color _titleColor = Color.FromArgb(40, 40, 40);
-        private readonly Color _labelColor = Color.FromArgb(60, 60, 60);
-        private readonly Color _valueColor = Color.FromArgb(40, 40, 40);
-        private readonly Color _progressBackColor = Color.FromArgb(230, 230, 240);
-        private readonly Color _progressForeColor = Color.FromArgb(76, 175, 80);
-        private readonly Color _processingColor = Color.FromArgb(200, 230, 210);
-        private readonly Color _idleColor = Color.FromArgb(250, 250, 255);
-        private readonly Color _alarmColor = Color.FromArgb(255, 200, 200); // 알람 배경색 (연한 빨강)
+        // 색상 설정 (밝은 테마). 상태는 바탕색 대신 제목 옆 램프(대기/진행/알람)로 보여 줍니다.
+        private readonly Color _backgroundColor = UiTheme.Surface;
+        private readonly Color _borderColor = UiTheme.Border;
+        private readonly Color _titleColor = UiTheme.TextPrimary;
+        private readonly Color _labelColor = UiTheme.TextSecondary;
+        private readonly Color _valueColor = UiTheme.TextPrimary;
+        private readonly Color _readoutBack = UiTheme.SurfaceAlt;
+        private readonly Color _pvActiveBack = Color.FromArgb(228, 243, 234);
+        private readonly Color _pvActiveText = Color.FromArgb(28, 122, 73);
+        private readonly Color _emptyText = Color.FromArgb(140, 150, 164);
+        private readonly Color _progressBackColor = Color.FromArgb(230, 234, 240);
 
         // 폰트 (패널 크기에 맞춰 다시 만듭니다)
         private Font _titleFont;
         private Font _labelFont;
+        private Font _lampFont;
         private Font _valueFont;
         private Font _stepMessageFont;
+        private Font _readoutFont;
+        private Font _readoutBoldFont;
         private float _fontScale;
 
         // 레이아웃 설정 (기준 크기, 패널 높이에 맞춰 늘리거나 줄입니다)
@@ -229,30 +233,14 @@ namespace SemiconductorUi.Controls
 
             var bounds = ClientRectangle;
             
-            // 배경 (알람 상태에 따라 색상 변경)
-            Color bgColor;
-            if (_hasAlarm)
-            {
-                bgColor = _alarmColor;
-            }
-            else if (_isProcessing)
-            {
-                bgColor = _processingColor;
-            }
-            else
-            {
-                bgColor = _backgroundColor;
-            }
-            
-            using (var bgBrush = new SolidBrush(bgColor))
+            // 배경은 늘 흰색, 알람이면 테두리만 빨갛게 두껍게
+            using (var bgBrush = new SolidBrush(_backgroundColor))
             {
                 g.FillRectangle(bgBrush, bounds);
             }
-
-            // 테두리
-            using (var borderPen = new Pen(_borderColor, 1))
+            using (var borderPen = new Pen(_hasAlarm ? UiTheme.Danger : _borderColor, _hasAlarm ? 2f : 1f))
             {
-                g.DrawRectangle(borderPen, 0, 0, bounds.Width - 1, bounds.Height - 1);
+                g.DrawRectangle(borderPen, _hasAlarm ? 1 : 0, _hasAlarm ? 1 : 0, bounds.Width - (_hasAlarm ? 2 : 1), bounds.Height - (_hasAlarm ? 2 : 1));
             }
 
             _layoutScale = Math.Max(MinLayoutScale, Math.Min(MaxLayoutScale, bounds.Height / (float)DesignHeight));
@@ -311,16 +299,49 @@ namespace SemiconductorUi.Controls
             _fontScale = scale;
             _titleFont = new Font("Segoe UI", 10f * scale, FontStyle.Bold);
             _labelFont = new Font("Segoe UI", 8f * scale, FontStyle.Bold);
+            _lampFont = new Font("Segoe UI", 9f * scale, FontStyle.Bold);
             _valueFont = new Font("Segoe UI", 9f * scale, FontStyle.Regular);
             _stepMessageFont = new Font("Segoe UI", 9f * scale, FontStyle.Bold);
+            _readoutFont = new Font("Consolas", 9.5f * scale, FontStyle.Regular);
+            _readoutBoldFont = new Font("Consolas", 9.5f * scale, FontStyle.Bold);
         }
 
         private void DisposeFonts()
         {
             _titleFont?.Dispose();
             _labelFont?.Dispose();
+            _lampFont?.Dispose();
             _valueFont?.Dispose();
             _stepMessageFont?.Dispose();
+            _readoutFont?.Dispose();
+            _readoutBoldFont?.Dispose();
+        }
+
+        /// <summary>값 표시창: 둥근 연회색 칸.</summary>
+        private static void FillReadout(Graphics g, Rectangle rect, Color back)
+        {
+            using (var path = RoundedRect(rect, 4))
+            using (var brush = new SolidBrush(back))
+            {
+                g.FillPath(brush, path);
+            }
+        }
+
+        private static GraphicsPath RoundedRect(Rectangle rect, int radius)
+        {
+            var path = new GraphicsPath();
+            int d = Math.Min(radius * 2, Math.Min(rect.Width, rect.Height));
+            if (d <= 0)
+            {
+                path.AddRectangle(rect);
+                return path;
+            }
+            path.AddArc(rect.X, rect.Y, d, d, 180, 90);
+            path.AddArc(rect.Right - d, rect.Y, d, d, 270, 90);
+            path.AddArc(rect.Right - d, rect.Bottom - d, d, d, 0, 90);
+            path.AddArc(rect.X, rect.Bottom - d, d, d, 90, 90);
+            path.CloseFigure();
+            return path;
         }
 
         private void DrawTitle(Graphics g, ref int y, int width)
@@ -330,12 +351,25 @@ namespace SemiconductorUi.Controls
             TextRenderer.DrawText(g, _title, _titleFont, titleRect, _titleColor,
                 TextFormatFlags.Left | TextFormatFlags.VerticalCenter);
 
-            // 상태 텍스트 (우측)
-            if (!string.IsNullOrWhiteSpace(_statusText))
+            // 상태 램프 (우측): 대기 / 진행 / 알람 중 하나가 켜집니다.
+            var lamps = new[]
             {
-                var statusColor = _isProcessing ? Color.FromArgb(76, 175, 80) : Color.FromArgb(100, 100, 100);
-                TextRenderer.DrawText(g, _statusText, _valueFont, titleRect, statusColor,
-                    TextFormatFlags.Right | TextFormatFlags.VerticalCenter);
+                Tuple.Create("알람", LampTone.Red, _hasAlarm),
+                Tuple.Create("진행", LampTone.Green, !_hasAlarm && _isProcessing),
+                Tuple.Create("대기", LampTone.Amber, !_hasAlarm && !_isProcessing)
+            };
+            int right = titleRect.Right;
+            int lampSize = Math.Max(10, (int)Math.Round(13 * _fontScale));
+            int centerY = titleRect.Y + titleRect.Height / 2;
+            foreach (var lamp in lamps)
+            {
+                var textSize = TextRenderer.MeasureText(g, lamp.Item1, _lampFont, Size.Empty, TextFormatFlags.NoPadding);
+                int textX = right - textSize.Width;
+                TextRenderer.DrawText(g, lamp.Item1, _lampFont, new Point(textX, centerY - textSize.Height / 2),
+                    lamp.Item3 ? _titleColor : _emptyText, TextFormatFlags.NoPadding);
+                var lampRect = new RectangleF(textX - 6 - lampSize, centerY - lampSize / 2f, lampSize, lampSize);
+                LampButtonPainter.DrawLamp(g, lampRect, lamp.Item3 ? lamp.Item2 : LampTone.Off);
+                right = (int)lampRect.Left - 14;
             }
 
             y += V(TitleHeight);
@@ -355,24 +389,13 @@ namespace SemiconductorUi.Controls
             var labelRect = new Rectangle(ContentPadding, y, ScaledLabelWidth, rowHeight);
             var valueRect = new Rectangle(ContentPadding + ScaledLabelWidth + 4, y, width - ContentPadding * 2 - ScaledLabelWidth - 4, rowHeight);
 
-            // 라벨 배경 (밝은 회색)
-            using (var labelBgBrush = new SolidBrush(Color.FromArgb(235, 235, 245)))
-            {
-                g.FillRectangle(labelBgBrush, labelRect);
-            }
-
-            // 라벨 테두리
-            using (var borderPen = new Pen(Color.FromArgb(200, 200, 210), 1))
-            {
-                g.DrawRectangle(borderPen, labelRect);
-                g.DrawRectangle(borderPen, valueRect);
-            }
-
-            // 텍스트
+            // 라벨은 글자만, 값은 표시창 안에 고정폭 글꼴로
             TextRenderer.DrawText(g, label, _labelFont, labelRect, _labelColor,
-                TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
-            TextRenderer.DrawText(g, value, _valueFont, valueRect, _valueColor,
-                TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis);
+                TextFormatFlags.Left | TextFormatFlags.VerticalCenter);
+            FillReadout(g, valueRect, _readoutBack);
+            var valueTextRect = Rectangle.Inflate(valueRect, -8, 0);
+            TextRenderer.DrawText(g, value, _readoutFont, valueTextRect, _valueColor,
+                TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPadding);
 
             y += rowHeight + V(2);
         }
@@ -396,8 +419,8 @@ namespace SemiconductorUi.Controls
             int height = V(EnvHeaderHeight);
             var flags = TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter;
 
-            TextRenderer.DrawText(g, "현재값", _labelFont, new Rectangle(pvX, y, valueWidth, height), Color.FromArgb(76, 175, 80), flags);
-            TextRenderer.DrawText(g, "설정값", _labelFont, new Rectangle(svX, y, valueWidth, height), Color.FromArgb(33, 150, 243), flags);
+            TextRenderer.DrawText(g, "현재값 PV", _labelFont, new Rectangle(pvX, y, valueWidth, height), _pvActiveText, flags);
+            TextRenderer.DrawText(g, "설정값 SV", _labelFont, new Rectangle(svX, y, valueWidth, height), UiTheme.Primary, flags);
 
             y += height;
         }
@@ -410,47 +433,25 @@ namespace SemiconductorUi.Controls
             var pvRect = new Rectangle(pvX, y, valueWidth, rowHeight - V(2));
             var svRect = new Rectangle(svX, y, valueWidth, rowHeight - V(2));
 
-            // 라벨 배경
-            using (var labelBgBrush = new SolidBrush(Color.FromArgb(235, 235, 245)))
-            {
-                g.FillRectangle(labelBgBrush, labelRect);
-            }
+            bool hasPv = _isProcessing && pv > 0;
 
-            // PV 배경 (공정 중이고 값이 있으면 약간 밝게)
-            var pvBgColor = (_isProcessing && pv > 0) ? Color.FromArgb(240, 245, 250) : Color.FromArgb(245, 245, 250);
-            using (var pvBgBrush = new SolidBrush(pvBgColor))
-            {
-                g.FillRectangle(pvBgBrush, pvRect);
-            }
+            // 라벨
+            TextRenderer.DrawText(g, label, _labelFont, labelRect, UiTheme.TextPrimary,
+                TextFormatFlags.Left | TextFormatFlags.VerticalCenter);
 
-            // SV 배경
-            using (var svBgBrush = new SolidBrush(Color.FromArgb(245, 245, 250)))
-            {
-                g.FillRectangle(svBgBrush, svRect);
-            }
+            // PV: 공정 중 값이 있으면 연한 초록 표시창
+            FillReadout(g, pvRect, hasPv ? _pvActiveBack : _readoutBack);
+            string pvText = hasPv ? WithUnit(g, FormatValue(pv, unit), unit, pvRect.Width) : "-";
+            TextRenderer.DrawText(g, pvText, hasPv ? _readoutBoldFont : _readoutFont, Rectangle.Inflate(pvRect, -8, 0),
+                hasPv ? _pvActiveText : _emptyText,
+                TextFormatFlags.Right | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding);
 
-            // 테두리
-            using (var borderPen = new Pen(Color.FromArgb(200, 200, 210), 1))
-            {
-                g.DrawRectangle(borderPen, labelRect);
-                g.DrawRectangle(borderPen, pvRect);
-                g.DrawRectangle(borderPen, svRect);
-            }
-
-            // 라벨 텍스트
-            TextRenderer.DrawText(g, label, _labelFont, labelRect, _labelColor,
-                TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
-
-            // PV 값 (공정 중이면 값 표시, 아니면 "-")
-            string pvText = (_isProcessing && pv > 0) ? WithUnit(g, FormatValue(pv, unit), unit, pvRect.Width) : "-";
-            var pvColor = (_isProcessing && pv > 0) ? Color.FromArgb(76, 175, 80) : Color.FromArgb(100, 100, 100);
-            TextRenderer.DrawText(g, pvText, _valueFont, pvRect, pvColor,
-                TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
-
-            // SV 값 (설정값이 있으면 표시)
+            // SV: 설정값이 있으면 파란 글자
+            FillReadout(g, svRect, _readoutBack);
             string svText = (sv > 0) ? WithUnit(g, FormatValue(sv, unit), unit, svRect.Width) : "-";
-            TextRenderer.DrawText(g, svText, _valueFont, svRect, Color.FromArgb(33, 150, 243),
-                TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
+            TextRenderer.DrawText(g, svText, _readoutFont, Rectangle.Inflate(svRect, -8, 0),
+                sv > 0 ? UiTheme.Primary : _emptyText,
+                TextFormatFlags.Right | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding);
 
             y += rowHeight;
         }
@@ -461,8 +462,8 @@ namespace SemiconductorUi.Controls
             if (value == "-" || string.IsNullOrEmpty(unit)) return value;
 
             string withUnit = value + " " + unit;
-            var size = TextRenderer.MeasureText(g, withUnit, _valueFont, Size.Empty, TextFormatFlags.NoPadding);
-            return size.Width + 8 <= cellWidth ? withUnit : value;
+            var size = TextRenderer.MeasureText(g, withUnit, _readoutBoldFont, Size.Empty, TextFormatFlags.NoPadding);
+            return size.Width + 16 <= cellWidth ? withUnit : value;
         }
 
         private string FormatValue(double value, string unit)
@@ -494,28 +495,21 @@ namespace SemiconductorUi.Controls
 
             var barRect = new Rectangle(ContentPadding, y, width - ContentPadding * 2, Math.Max(4, V(ProgressBarHeight)));
 
-            // 배경
+            // 배경 홈과 채움 (알람이면 빨강)
+            using (var path = RoundedRect(barRect, barRect.Height / 2))
             using (var bgBrush = new SolidBrush(_progressBackColor))
             {
-                g.FillRectangle(bgBrush, barRect);
+                g.FillPath(bgBrush, path);
             }
-
-            // 진행률
             if (_progressPercent > 0)
             {
-                var fillWidth = (int)((barRect.Width - 2) * (_progressPercent / 100.0));
-                var fillRect = new Rectangle(barRect.X + 1, barRect.Y + 1, fillWidth, barRect.Height - 2);
-                
-                using (var fillBrush = new SolidBrush(_progressForeColor))
+                var fillWidth = Math.Max(barRect.Height, (int)(barRect.Width * (_progressPercent / 100.0)));
+                var fillRect = new Rectangle(barRect.X, barRect.Y, fillWidth, barRect.Height);
+                using (var path = RoundedRect(fillRect, barRect.Height / 2))
+                using (var fillBrush = new SolidBrush(_hasAlarm ? UiTheme.Danger : UiTheme.Success))
                 {
-                    g.FillRectangle(fillBrush, fillRect);
+                    g.FillPath(fillBrush, path);
                 }
-            }
-
-            // 테두리
-            using (var borderPen = new Pen(Color.FromArgb(200, 200, 210), 1))
-            {
-                g.DrawRectangle(borderPen, barRect);
             }
 
             // 상태 메시지를 프로그레스바 위에 표시 (우측 정렬)
