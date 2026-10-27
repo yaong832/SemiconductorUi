@@ -73,6 +73,9 @@ namespace SemiconductorUi.Forms
         private Label labelStatus;
         private Button buttonClose;
         private Button buttonEmergencyStop;
+
+        // 스크롤되는 제어 그룹 영역 (위 상태 바와 아래 닫기 바는 고정)
+        private Panel contentPanel;
         
         // 상태 업데이트 타이머
         private System.Windows.Forms.Timer statusUpdateTimer;
@@ -132,20 +135,60 @@ namespace SemiconductorUi.Forms
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;
             this.MinimizeBox = false;
-            this.AutoScroll = true;
             this.BackColor = UiTheme.Surface;
             this.ClientSize = new Size(820, 720);
+
+            // 위 고정 바: 연결 상태와 긴급 정지. 아래 내용을 스크롤해도 항상 보입니다.
+            const int topBarHeight = 60;
+            var topBar = new Panel();
+            // 오른쪽 고정(Anchor) 위치가 맞도록 처음부터 창 폭으로 만듭니다.
+            topBar.Size = new Size(820, topBarHeight);
+            topBar.Dock = DockStyle.Top;
+            topBar.BackColor = UiTheme.SurfaceAlt;
+            topBar.Paint += (s, e) =>
+            {
+                using (var pen = new Pen(UiTheme.Border))
+                {
+                    e.Graphics.DrawLine(pen, 0, topBar.Height - 1, topBar.Width, topBar.Height - 1);
+                }
+            };
 
             // 상태 레이블
             labelStatus = new Label();
             labelStatus.Text = isConnected ? "EtherCAT 연결됨" : "EtherCAT 미연결";
             labelStatus.ForeColor = isConnected ? UiTheme.Success : UiTheme.Danger;
+            labelStatus.BackColor = UiTheme.SurfaceAlt;
             labelStatus.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
-            labelStatus.Location = new Point(16, 12);
-            labelStatus.Size = new Size(760, 24);
+            labelStatus.Location = new Point(16, 18);
+            labelStatus.Size = new Size(540, 24);
+            labelStatus.AutoEllipsis = true;
             labelStatus.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
 
-            int yPos = 50;
+            // 긴급 정지: 위 고정 바 오른쪽. 스크롤 위치와 상관없이 누를 수 있습니다.
+            buttonEmergencyStop = new Button();
+            buttonEmergencyStop.Text = "긴급 정지 (서보 OFF)";
+            buttonEmergencyStop.Size = new Size(220, 42);
+            buttonEmergencyStop.Location = new Point(820 - 16 - 220, (topBarHeight - 42) / 2);
+            buttonEmergencyStop.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            buttonEmergencyStop.BackColor = Color.FromArgb(206, 56, 66);
+            buttonEmergencyStop.FlatStyle = FlatStyle.Flat;
+            buttonEmergencyStop.FlatAppearance.BorderSize = 0;
+            buttonEmergencyStop.ForeColor = Color.White;
+            buttonEmergencyStop.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            buttonEmergencyStop.Click += (s, e) => ControlEmergencyStop();
+            LampButtonPainter.AttachEmergency(buttonEmergencyStop);
+
+            topBar.Controls.Add(labelStatus);
+            topBar.Controls.Add(buttonEmergencyStop);
+
+            // 제어 그룹은 이 영역 안에서만 스크롤됩니다.
+            contentPanel = new Panel();
+            contentPanel.Size = new Size(820, 600);
+            contentPanel.Dock = DockStyle.Fill;
+            contentPanel.AutoScroll = true;
+            contentPanel.BackColor = UiTheme.Surface;
+
+            int yPos = 14;
 
             // Chamber A 제어 그룹
             var groupChamberA = CreateChamberGroup("Chamber A", "ChamberA", yPos, 
@@ -155,7 +198,7 @@ namespace SemiconductorUi.Forms
                 () => ControlChamberLamp(3, false),
                 () => ControlChamberDoor(4, 5, true),
                 () => ControlChamberDoor(4, 5, false));
-            this.Controls.Add(groupChamberA);
+            contentPanel.Controls.Add(groupChamberA);
             yPos += 130;
 
             // Chamber B 제어 그룹
@@ -166,7 +209,7 @@ namespace SemiconductorUi.Forms
                 () => ControlChamberLamp(6, false),
                 () => ControlChamberDoor(7, 8, true),
                 () => ControlChamberDoor(7, 8, false));
-            this.Controls.Add(groupChamberB);
+            contentPanel.Controls.Add(groupChamberB);
             yPos += 130;
 
             // Chamber C 제어 그룹
@@ -177,31 +220,35 @@ namespace SemiconductorUi.Forms
                 () => ControlChamberLamp(9, false),
                 () => ControlChamberDoor(10, 11, true),
                 () => ControlChamberDoor(10, 11, false));
-            this.Controls.Add(groupChamberC);
+            contentPanel.Controls.Add(groupChamberC);
             yPos += 130;
 
             // 3색 램프 제어 그룹
             var groupMainLamp = CreateMainLampGroup(yPos);
-            this.Controls.Add(groupMainLamp);
+            contentPanel.Controls.Add(groupMainLamp);
             yPos += 110;
 
             // 일괄 제어 그룹
             var groupBatchControl = CreateBatchControlGroup(yPos);
-            this.Controls.Add(groupBatchControl);
+            contentPanel.Controls.Add(groupBatchControl);
             yPos += 100;
 
             // 서보 모터 제어 그룹 (TM 제어)
             var groupServoControl = CreateServoControlGroup(yPos);
-            this.Controls.Add(groupServoControl);
+            contentPanel.Controls.Add(groupServoControl);
             yPos += 170;
 
-            // 폼 높이 조정
-            this.ClientSize = new Size(820, Math.Min(yPos + 60, 780));
+            // 스크롤 끝에서 마지막 그룹이 아래 바에 붙지 않게 여백을 둡니다.
+            contentPanel.AutoScrollMargin = new Size(0, 14);
+
+            // 폼 높이 조정 (위 바 + 내용 + 아래 바, 최대 780)
+            const int bottomBarHeight = 52;
+            this.ClientSize = new Size(820, Math.Min(topBarHeight + yPos + bottomBarHeight, 780));
 
             // 닫기 버튼
             var bottomPanel = new FlowLayoutPanel();
             bottomPanel.Dock = DockStyle.Bottom;
-            bottomPanel.Height = 52;
+            bottomPanel.Height = bottomBarHeight;
             bottomPanel.Padding = new Padding(0, 8, 12, 8);
             bottomPanel.FlowDirection = FlowDirection.RightToLeft;
             bottomPanel.WrapContents = false;
@@ -220,24 +267,12 @@ namespace SemiconductorUi.Forms
             buttonClose.Click += (s, e) => this.Close();
             LampButtonPainter.AttachPlain(buttonClose);
 
-            // 긴급 정지: 하단 바의 닫기 버튼 왼쪽에 둡니다.
-            buttonEmergencyStop = new Button();
-            buttonEmergencyStop.Text = "긴급 정지 (서보 OFF)";
-            buttonEmergencyStop.Width = 180;
-            buttonEmergencyStop.Height = 32;
-            buttonEmergencyStop.Margin = new Padding(8, 8, 32, 8);
-            buttonEmergencyStop.BackColor = Color.FromArgb(206, 56, 66);
-            buttonEmergencyStop.FlatStyle = FlatStyle.Flat;
-            buttonEmergencyStop.FlatAppearance.BorderSize = 0;
-            buttonEmergencyStop.ForeColor = Color.White;
-            buttonEmergencyStop.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-            buttonEmergencyStop.Click += (s, e) => ControlEmergencyStop();
-            LampButtonPainter.AttachEmergency(buttonEmergencyStop);
-
             bottomPanel.Controls.Add(buttonClose);
-            bottomPanel.Controls.Add(buttonEmergencyStop);
+
+            // Fill 영역을 먼저 넣어야 위/아래 바가 먼저 자리를 잡습니다.
+            this.Controls.Add(contentPanel);
+            this.Controls.Add(topBar);
             this.Controls.Add(bottomPanel);
-            this.Controls.Add(labelStatus);
 
             UpdateButtonStates();
         }
@@ -767,7 +802,7 @@ namespace SemiconductorUi.Forms
             if (buttonExhaustOff != null) buttonExhaustOff.Enabled = enabled;
 
             // 일괄 제어 / 타이머 실행 버튼 활성화
-            foreach (Control ctrl in this.Controls)
+            foreach (Control ctrl in contentPanel.Controls)
             {
                 if (ctrl is GroupBox)
                 {
