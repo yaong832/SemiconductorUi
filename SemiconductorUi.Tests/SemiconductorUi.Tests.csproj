@@ -59,6 +59,7 @@
     <Compile Include="EmergencyStopTests.cs" />
     <Compile Include="ServoFaultMonitorTests.cs" />
     <Compile Include="TmHeightEstimatorTests.cs" />
+    <Compile Include="ResetHomingSequenceTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\SemiconductorUi\SemiconductorUi.csproj">
