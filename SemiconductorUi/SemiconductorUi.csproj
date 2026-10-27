@@ -128,10 +128,12 @@
     <Compile Include="Hardware\EmergencyStopActiveException.cs" />
     <Compile Include="Hardware\EmergencyStopPolicy.cs" />
     <Compile Include="Hardware\EthercatCommunicationStatus.cs" />
+    <Compile Include="Hardware\HardwareInterlockException.cs" />
     <Compile Include="Hardware\HardwareOperation.cs" />
     <Compile Include="Hardware\IEthercatDevice.cs" />
     <Compile Include="Hardware\Ieg3268Device.cs" />
     <Compile Include="Hardware\ServoFaultMonitor.cs" />
+    <Compile Include="Hardware\TmMotionInterlock.cs" />
     <Compile Include="Helpers\EquipmentRegionHelper.cs" />
     <Compile Include="Helpers\RecipeValidator.cs" />
     <Compile Include="Helpers\ChamberHardwareHelper.cs" />
