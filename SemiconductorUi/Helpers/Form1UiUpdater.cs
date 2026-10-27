@@ -664,9 +664,11 @@ namespace SemiconductorUi.Helpers
                         : (form.SimulationRunning ? "공정 진행" : "대기");
             var foupAStatus = $"{foupAStatePrefix} · 웨이퍼 {displayFoupACount}장";
 
-            var foupBStatePrefix = form.WaferLoadState == MainFormViewModel.WaferLoadStateType.Unloading
-                ? "언로딩 진행"
-                : (displayFoupBCount > 0 ? "완료 적재" : "대기");
+            var foupBStatePrefix = !form.IsFoupBMounted
+                ? "FOUP B 미장착"
+                : form.WaferLoadState == MainFormViewModel.WaferLoadStateType.Unloading
+                    ? "언로딩 진행"
+                    : (displayFoupBCount > 0 ? "완료 적재" : "대기");
             var foupBStatus = $"{foupBStatePrefix} · 완료 {displayFoupBCount}/{AppSettings.MaxFoupCapacity}";
 
             var exchangeState = form.SimulationRunning
@@ -677,9 +679,11 @@ namespace SemiconductorUi.Helpers
             var foupALock = !form.IsFoupAMounted
                 ? "미장착"
                 : (form.SimulationRunning && !form.SimulationPaused ? "Locked" : "Released");
-            var foupBLock = (displayFoupBCount > 0 || form.WaferLoadState == MainFormViewModel.WaferLoadStateType.Unloading)
-                ? "Locked"
-                : "Released";
+            var foupBLock = !form.IsFoupBMounted
+                ? "미장착"
+                : (displayFoupBCount > 0 || form.WaferLoadState == MainFormViewModel.WaferLoadStateType.Unloading)
+                    ? "Locked"
+                    : "Released";
 
             UpdateFoupStatusCards(
                 foupAStatus, displayFoupACount, "CM1", form.LastSelectedRecipe, "LOT-A01", "MID-A", foupALock,
