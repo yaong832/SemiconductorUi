@@ -62,6 +62,10 @@
       <DependentUpon>Form1.cs</DependentUpon>
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="Form1.LampPanel.cs">
+      <DependentUpon>Form1.cs</DependentUpon>
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="Form1.Shell.cs">
       <DependentUpon>Form1.cs</DependentUpon>
       <SubType>Form</SubType>
@@ -139,6 +143,7 @@
     <Compile Include="Helpers\EquipmentRegionHelper.cs" />
     <Compile Include="Helpers\RecipeValidator.cs" />
     <Compile Include="Helpers\CanvasText.cs" />
+    <Compile Include="Helpers\LampButtonPainter.cs" />
     <Compile Include="Helpers\ChamberHardwareHelper.cs" />
     <Compile Include="Helpers\ChamberStatusTexts.cs" />
     <Compile Include="Helpers\EquipmentCanvasStyler.cs" />

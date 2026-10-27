@@ -981,6 +981,9 @@ namespace SemiconductorUi
             {
                 groupBoxRecipe.Paint += paintEventHandlers.GroupBox_Paint;
             }
+
+            // 오른쪽 제어 패널: 램프 버튼과 연회색 판 (그리기만 바꿈)
+            ApplyLampPanelStyle();
             
             // 탭 버튼 클릭 이벤트 연결
             if (buttonTabMain != null)
@@ -2202,55 +2205,43 @@ namespace SemiconductorUi
                 hasWafer = foupBList.Any(w => w.Id == layer);
             }
             
-            // 패널 테두리 영역 (전체 패널 크기)
-            RectangleF panelRect = rect;
-            
-            // 웨이퍼와 패널 테두리 사이 간격 (FOUP에 장착된 느낌을 주기 위해)
-            float waferMargin = 2f; // 좌우상하 여백 2px
-            
-            // 웨이퍼 영역 (패널 테두리보다 약간 작게)
-            RectangleF waferRect = new RectangleF(
-                panelRect.X + waferMargin,
-                panelRect.Y + waferMargin,
-                panelRect.Width - waferMargin * 2,
-                panelRect.Height - waferMargin * 2
-            );
-            
-            // 배경 그리기
-            using (var bgBrush = new SolidBrush(trackPanel.BackColor))
+            // 슬롯 한 칸: 램프 + "슬롯 n" + 상태 글자 (밝은 표시창)
+            bool mounted = FoupAQueue != null ? IsFoupAMounted : IsFoupBMounted;
+            g.Clear(trackPanel.Parent?.BackColor ?? AppSettings.BorderColor);
+
+            var slotRect = new Rectangle(0, 0, rect.Width - 1, rect.Height - 1);
+            Color back = !mounted ? UiTheme.SurfaceAlt : hasWafer ? Color.FromArgb(232, 239, 250) : UiTheme.Surface;
+            Color border = hasWafer && mounted ? Color.FromArgb(160, 186, 230) : UiTheme.Border;
+            using (var path = ShellDraw.RoundedRect(slotRect, 4))
             {
-                g.FillRectangle(bgBrush, panelRect);
-            }
-            
-            // 웨이퍼가 있으면 표시 (실제 웨이퍼처럼 좌우로 길고 상하로 얇게)
-            if (hasWafer)
-            {
-                using (var waferBrush = new SolidBrush(AppSettings.WaferBrushColor))
-                using (var waferPen = new Pen(AppSettings.WaferPenColor, 1f))
+                using (var brush = new SolidBrush(back))
                 {
-                    g.FillRectangle(waferBrush, waferRect);
-                    g.DrawRectangle(waferPen, waferRect.X, waferRect.Y, waferRect.Width, waferRect.Height);
+                    g.FillPath(brush, path);
                 }
-            }
-            
-            // 슬롯 테두리: 패널 크기에 맞춰 그리기
-            using (var borderPen = new Pen(AppSettings.BorderColor, 1f))
-            {
-                g.DrawRectangle(borderPen, panelRect.X, panelRect.Y, panelRect.Width, panelRect.Height);
+                using (var pen = new Pen(border) { DashStyle = mounted ? System.Drawing.Drawing2D.DashStyle.Solid : System.Drawing.Drawing2D.DashStyle.Dash })
+                {
+                    g.DrawPath(pen, path);
+                }
             }
 
-            // 슬롯 번호와 웨이퍼 유무 글자 (칸이 너무 얇으면 생략)
-            if (rect.Height >= 12)
+            if (rect.Height < 12)
             {
-                var textColor = hasWafer ? Color.White : Color.FromArgb(120, 130, 145);
-                using (var font = new Font("Segoe UI", Math.Min(14f, rect.Height * 0.5f), FontStyle.Bold, GraphicsUnit.Pixel))
-                {
-                    var textRect = Rectangle.Inflate(rect, -6, 0);
-                    TextRenderer.DrawText(g, layer.ToString(), font, textRect, textColor,
-                        TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding | TextFormatFlags.SingleLine);
-                    TextRenderer.DrawText(g, hasWafer ? "웨이퍼" : "비어 있음", font, textRect, textColor,
-                        TextFormatFlags.Right | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding | TextFormatFlags.SingleLine);
-                }
+                return;
+            }
+
+            float lampSize = Math.Max(6f, Math.Min(10f, rect.Height * 0.4f));
+            var lampRect = new RectangleF(8, (rect.Height - lampSize) / 2f, lampSize, lampSize);
+            LampButtonPainter.DrawLamp(g, lampRect, mounted && hasWafer ? LampTone.Blue : LampTone.Off);
+
+            using (var font = new Font("Segoe UI", Math.Min(13f, rect.Height * 0.48f), FontStyle.Bold, GraphicsUnit.Pixel))
+            {
+                var textRect = new Rectangle((int)lampRect.Right + 6, 0, rect.Width - (int)lampRect.Right - 14, rect.Height);
+                TextRenderer.DrawText(g, "슬롯 " + layer, font, textRect, mounted ? UiTheme.TextSecondary : Color.FromArgb(160, 168, 180),
+                    TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding | TextFormatFlags.SingleLine);
+                string state = !mounted ? "미장착" : hasWafer ? "웨이퍼" : "비어 있음";
+                Color stateColor = !mounted ? Color.FromArgb(160, 168, 180) : hasWafer ? UiTheme.Primary : UiTheme.TextSecondary;
+                TextRenderer.DrawText(g, state, font, textRect, stateColor,
+                    TextFormatFlags.Right | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding | TextFormatFlags.SingleLine);
             }
         }
 

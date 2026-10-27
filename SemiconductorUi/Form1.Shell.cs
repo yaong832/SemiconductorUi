@@ -387,6 +387,7 @@ namespace SemiconductorUi
         {
             shellTopBar?.Invalidate();
             shellUserCard?.Invalidate();
+            RefreshLampButtons();
         }
 
         private ShellStatePill GetShellStatePill()
