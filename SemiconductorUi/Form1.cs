@@ -964,6 +964,9 @@ namespace SemiconductorUi
 
             // 상단 바 + 왼쪽 메뉴 틀 (기존 버튼을 자리만 옮김)
             BuildMainShell();
+
+            // 오른쪽 제어 패널 버튼을 창 크기에 맞춰 배치
+            HookControlPanelLayout();
             
             // GroupBox 테두리를 검은색으로 그리기 위한 Paint 이벤트 연결
             if (groupBoxControlButtons != null)
@@ -2234,6 +2237,20 @@ namespace SemiconductorUi
             using (var borderPen = new Pen(AppSettings.BorderColor, 1f))
             {
                 g.DrawRectangle(borderPen, panelRect.X, panelRect.Y, panelRect.Width, panelRect.Height);
+            }
+
+            // 슬롯 번호와 웨이퍼 유무 글자 (칸이 너무 얇으면 생략)
+            if (rect.Height >= 12)
+            {
+                var textColor = hasWafer ? Color.White : Color.FromArgb(120, 130, 145);
+                using (var font = new Font("Segoe UI", Math.Min(14f, rect.Height * 0.5f), FontStyle.Bold, GraphicsUnit.Pixel))
+                {
+                    var textRect = Rectangle.Inflate(rect, -6, 0);
+                    TextRenderer.DrawText(g, layer.ToString(), font, textRect, textColor,
+                        TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding | TextFormatFlags.SingleLine);
+                    TextRenderer.DrawText(g, hasWafer ? "웨이퍼" : "비어 있음", font, textRect, textColor,
+                        TextFormatFlags.Right | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding | TextFormatFlags.SingleLine);
+                }
             }
         }
 
@@ -6230,7 +6247,8 @@ namespace SemiconductorUi
                 Padding = new Padding(0)
             };
 
-            // 부모 패널에 추가
+            // 부모 패널에 추가 (안쪽 여백을 없애 그림이 카드 전체를 쓰게 함)
+            parentPanel.Padding = new Padding(0);
             parentPanel.Controls.Add(panel);
             panel.BringToFront();
 

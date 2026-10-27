@@ -38,6 +38,11 @@ namespace SemiconductorUi.Controls
         private static readonly Font TitleFont = new Font("Segoe UI", 11F, FontStyle.Bold);
         private static readonly Font SubFont = new Font("Segoe UI", 8F);
         private static readonly Font PillFont = new Font("Segoe UI", 11F, FontStyle.Bold);
+        private static readonly Font LargeTitleFont = new Font("Segoe UI", 12.5F, FontStyle.Bold);
+        private static readonly Font LargeSubFont = new Font("Segoe UI", 9F);
+        private static readonly Font LargePillFont = new Font("Segoe UI", 12.5F, FontStyle.Bold);
+
+        private bool large;
 
         private readonly FlowLayoutPanel rightArea;
 
@@ -73,6 +78,36 @@ namespace SemiconductorUi.Controls
         public Func<ShellStatePill> StateProvider { get; set; }
 
         /// <summary>
+        /// 넓은 화면용 큰 글자. 오른쪽 줄 컨트롤 크기는 바꾼 쪽에서 정하고, 여기서는 세로 가운데만 다시 맞춥니다.
+        /// </summary>
+        public bool Large
+        {
+            get => large;
+            set
+            {
+                if (large == value) return;
+                large = value;
+                foreach (Control control in rightArea.Controls)
+                {
+                    // 세로 구분선
+                    if (control.Width == 1) control.Height = large ? 32 : 28;
+                }
+                RecenterRightArea();
+                Invalidate();
+            }
+        }
+
+        /// <summary>오른쪽 줄 컨트롤의 높이가 바뀐 뒤 세로 가운데를 다시 맞춥니다.</summary>
+        public void RecenterRightArea()
+        {
+            foreach (Control control in rightArea.Controls)
+            {
+                int top = Math.Max(0, (BarHeight - 1 - control.Height) / 2);
+                control.Margin = new Padding(control.Margin.Left, top, 0, 0);
+            }
+        }
+
+        /// <summary>
         /// 오른쪽 줄에 넣을 컨트롤의 위아래 여백을 맞춰 세로 가운데에 오게 합니다.
         /// </summary>
         public void AddRight(Control control, int leftGap)
@@ -102,15 +137,20 @@ namespace SemiconductorUi.Controls
 
             // 큰 상태 표시의 크기를 먼저 재서, 창이 좁아 오른쪽 줄과 겹칠 것 같으면 장비 이름 글자를 빼고 로고만 둡니다.
             ShellStatePill? state = StateProvider?.Invoke();
+            var titleFont = large ? LargeTitleFont : TitleFont;
+            var subFont = large ? LargeSubFont : SubFont;
+            var pillFont = large ? LargePillFont : PillFont;
+            int pillHeight = large ? 38 : 34;
             int pillWidth = 0;
             Size pillTextSize = Size.Empty;
             if (state.HasValue)
             {
-                pillTextSize = TextRenderer.MeasureText(g, state.Value.Text, PillFont, Size.Empty, TextFormatFlags.NoPadding);
+                pillTextSize = TextRenderer.MeasureText(g, state.Value.Text, pillFont, Size.Empty, TextFormatFlags.NoPadding);
                 pillWidth = pillTextSize.Width + 46;
             }
-            int brandWidth = BrandWidth;
-            if (BrandWidth + 18 + pillWidth + 12 > rightArea.Left)
+            int fullBrandWidth = large ? BrandWidth + 24 : BrandWidth;
+            int brandWidth = fullBrandWidth;
+            if (fullBrandWidth + 18 + pillWidth + 12 > rightArea.Left)
             {
                 brandWidth = CompactBrandWidth;
             }
@@ -131,10 +171,10 @@ namespace SemiconductorUi.Controls
                 g.DrawLine(pen, logo.X + 11, logo.Y + 15, logo.Right - 11, logo.Y + 15);
                 g.DrawLine(pen, logo.X + 15, logo.Y + 11, logo.X + 15, logo.Bottom - 11);
             }
-            if (brandWidth == BrandWidth)
+            if (brandWidth == fullBrandWidth)
             {
-                TextRenderer.DrawText(g, "웨이퍼 이송 장비", TitleFont, new Point(logo.Right + 10, 12), UiTheme.TextPrimary, TextFormatFlags.NoPadding);
-                TextRenderer.DrawText(g, "SemiconductorUi", SubFont, new Point(logo.Right + 11, 33), UiTheme.TextSecondary, TextFormatFlags.NoPadding);
+                TextRenderer.DrawText(g, "웨이퍼 이송 장비", titleFont, new Point(logo.Right + 10, large ? 9 : 12), UiTheme.TextPrimary, TextFormatFlags.NoPadding);
+                TextRenderer.DrawText(g, "SemiconductorUi", subFont, new Point(logo.Right + 11, large ? 34 : 33), UiTheme.TextSecondary, TextFormatFlags.NoPadding);
             }
 
             using (var pen = new Pen(UiTheme.Border))
@@ -146,17 +186,17 @@ namespace SemiconductorUi.Controls
             // 큰 상태 표시
             if (state.HasValue)
             {
-                var pill = new Rectangle(brandWidth + 18, (BarHeight - 34) / 2, pillWidth, 34);
-                using (var path = ShellDraw.RoundedRect(pill, 17))
+                var pill = new Rectangle(brandWidth + 18, (BarHeight - pillHeight) / 2, pillWidth, pillHeight);
+                using (var path = ShellDraw.RoundedRect(pill, pillHeight / 2))
                 using (var brush = new SolidBrush(state.Value.Back))
                 {
                     g.FillPath(brush, path);
                 }
                 using (var brush = new SolidBrush(state.Value.Dot))
                 {
-                    g.FillEllipse(brush, pill.X + 15, pill.Y + 12, 10, 10);
+                    g.FillEllipse(brush, pill.X + 15, pill.Y + (pill.Height - 10) / 2, 10, 10);
                 }
-                TextRenderer.DrawText(g, state.Value.Text, PillFont,
+                TextRenderer.DrawText(g, state.Value.Text, pillFont,
                     new Point(pill.X + 32, pill.Y + (pill.Height - pillTextSize.Height) / 2),
                     state.Value.Fore, TextFormatFlags.NoPadding);
             }
@@ -175,7 +215,11 @@ namespace SemiconductorUi.Controls
     public sealed class ShellChip : Control
     {
         private const int ChipHeight = 28;
+        private const int LargeChipHeight = 32;
         private static readonly Font ChipFont = new Font("Segoe UI", 9F);
+        private static readonly Font LargeChipFont = new Font("Segoe UI", 10F);
+
+        private bool large;
 
         public ShellChip()
         {
@@ -190,12 +234,28 @@ namespace SemiconductorUi.Controls
         public Func<Color> DotProvider { get; set; }
         public int MaxChipWidth { get; set; }
 
+        /// <summary>넓은 화면용 큰 글자와 높이.</summary>
+        public bool Large
+        {
+            get => large;
+            set
+            {
+                if (large == value) return;
+                large = value;
+                Height = large ? LargeChipHeight : ChipHeight;
+                RefreshChip();
+            }
+        }
+
+        private Font CurrentFont => large ? LargeChipFont : ChipFont;
+
         /// <summary>글자에 맞춰 너비를 다시 잡고 다시 그립니다.</summary>
         public void RefreshChip()
         {
             string text = TextProvider?.Invoke() ?? "";
-            int width = TextRenderer.MeasureText(text, ChipFont, Size.Empty, TextFormatFlags.NoPadding).Width + 30;
-            width = Math.Min(MaxChipWidth, Math.Max(60, width));
+            int width = TextRenderer.MeasureText(text, CurrentFont, Size.Empty, TextFormatFlags.NoPadding).Width + 30;
+            int maxWidth = large ? MaxChipWidth + MaxChipWidth / 8 : MaxChipWidth;
+            width = Math.Min(maxWidth, Math.Max(60, width));
             if (Width != width)
             {
                 Width = width;
@@ -213,7 +273,7 @@ namespace SemiconductorUi.Controls
             ShellDraw.ToneFor(dot, out var back, out var fore, out var dotColor);
 
             var rect = new Rectangle(0, 0, Width - 1, Height - 1);
-            using (var path = ShellDraw.RoundedRect(rect, ChipHeight / 2))
+            using (var path = ShellDraw.RoundedRect(rect, Height / 2))
             using (var brush = new SolidBrush(back))
             {
                 g.FillPath(brush, path);
@@ -223,7 +283,7 @@ namespace SemiconductorUi.Controls
                 g.FillEllipse(brush, 11, (Height - 8) / 2, 8, 8);
             }
             var textRect = new Rectangle(24, 0, Width - 32, Height);
-            TextRenderer.DrawText(g, TextProvider?.Invoke() ?? "", ChipFont, textRect, fore,
+            TextRenderer.DrawText(g, TextProvider?.Invoke() ?? "", CurrentFont, textRect, fore,
                 TextFormatFlags.VerticalCenter | TextFormatFlags.Left | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPadding | TextFormatFlags.SingleLine);
         }
     }
@@ -235,6 +295,10 @@ namespace SemiconductorUi.Controls
     {
         private static readonly Font TimeFont = new Font("Segoe UI", 12F, FontStyle.Bold);
         private static readonly Font DateFont = new Font("Segoe UI", 8F);
+        private static readonly Font LargeTimeFont = new Font("Segoe UI", 13.5F, FontStyle.Bold);
+        private static readonly Font LargeDateFont = new Font("Segoe UI", 9F);
+
+        private bool large;
 
         public ShellClock()
         {
@@ -242,6 +306,19 @@ namespace SemiconductorUi.Controls
                 | ControlStyles.UserPaint | ControlStyles.ResizeRedraw, true);
             BackColor = UiTheme.Surface;
             Size = new Size(104, 40);
+        }
+
+        /// <summary>넓은 화면용 큰 글자.</summary>
+        public bool Large
+        {
+            get => large;
+            set
+            {
+                if (large == value) return;
+                large = value;
+                Size = large ? new Size(120, 46) : new Size(104, 40);
+                Invalidate();
+            }
         }
 
         protected override void OnPaint(PaintEventArgs e)
@@ -253,8 +330,8 @@ namespace SemiconductorUi.Controls
             {
                 g.DrawLine(pen, 0, 6, 0, Height - 7);
             }
-            TextRenderer.DrawText(g, now.ToString("HH:mm:ss"), TimeFont, new Point(14, 1), UiTheme.TextPrimary, TextFormatFlags.NoPadding);
-            TextRenderer.DrawText(g, now.ToString("yyyy-MM-dd"), DateFont, new Point(15, 23), UiTheme.TextSecondary, TextFormatFlags.NoPadding);
+            TextRenderer.DrawText(g, now.ToString("HH:mm:ss"), large ? LargeTimeFont : TimeFont, new Point(14, 1), UiTheme.TextPrimary, TextFormatFlags.NoPadding);
+            TextRenderer.DrawText(g, now.ToString("yyyy-MM-dd"), large ? LargeDateFont : DateFont, new Point(15, large ? 27 : 23), UiTheme.TextSecondary, TextFormatFlags.NoPadding);
         }
     }
 

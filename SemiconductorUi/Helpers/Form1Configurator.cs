@@ -25,7 +25,31 @@ namespace SemiconductorUi.Helpers
         }
 
         /// <summary>
+        /// 장비 그림을 원래 크기로 그리는 캔버스 크기. 캔버스가 이보다 크면 그만큼 그림을 키운다.
+        /// 1920x1080 화면의 최대화 창에서 캔버스가 대략 이 크기다.
+        /// </summary>
+        private const float DesignCanvasWidth = 1000f;
+        private const float DesignCanvasHeight = 560f;
+        private const float MaxCanvasScale = 1.8f;
+
+        // 챔버 카드 안 웨이퍼 표시의 원래 위치와 크기. 확대할 때 기준으로 쓴다.
+        private readonly System.Collections.Generic.Dictionary<Control, Rectangle> designChildBounds =
+            new System.Collections.Generic.Dictionary<Control, Rectangle>();
+
+        /// <summary>
+        /// 캔버스 크기에 맞춘 장비 그림 배율. 원래 크기보다 작게는 그리지 않는다.
+        /// </summary>
+        internal static float GetCanvasScale(Size canvasSize)
+        {
+            float k = Math.Min(canvasSize.Width / DesignCanvasWidth, canvasSize.Height / DesignCanvasHeight);
+            k = Math.Max(1f, Math.Min(MaxCanvasScale, k));
+            // 창 크기를 조금 바꿀 때마다 그림이 흔들리지 않게 0.05 단위로 맞춘다.
+            return (float)Math.Floor(k * 20f) / 20f;
+        }
+
+        /// <summary>
         /// 중앙 장비 레이아웃을 구성합니다.
+        /// 배치는 확대 전 좌표(캔버스 크기 / 배율)로 계산하고, 컨트롤 위치와 크기에 배율을 곱합니다.
         /// </summary>
         public void LayoutCentralEquipment()
         {
@@ -34,11 +58,15 @@ namespace SemiconductorUi.Helpers
                 return;
             }
 
-            var canvasSize = form.panelEquipmentCanvas.ClientSize;
-            if (canvasSize.Width <= 0 || canvasSize.Height <= 0)
+            var pixelSize = form.panelEquipmentCanvas.ClientSize;
+            if (pixelSize.Width <= 0 || pixelSize.Height <= 0)
             {
                 return;
             }
+
+            float k = GetCanvasScale(pixelSize);
+            EquipmentCanvasStyler.DrawScale = k;
+            var canvasSize = new Size((int)(pixelSize.Width / k), (int)(pixelSize.Height / k));
 
             // 배치: Chamber B는 위, A/C는 좌우, FOUP A/B는 아래 양쪽. TM은 그 사이 중앙.
             const int margin = 14;
@@ -71,19 +99,38 @@ namespace SemiconductorUi.Helpers
             }
             sideDistance = Math.Min(sideDistance, Math.Max(tmClearance + chamberW / 2f, maxSideDistance));
 
-            PlaceCentered(form.panelChamberB, new PointF(cx, topY + chamberH / 2f));
-            PlaceCentered(form.panelChamberA, new PointF(cx - sideDistance, cy));
-            PlaceCentered(form.panelChamberC, new PointF(cx + sideDistance, cy));
-            PlaceCentered(form.panelFoupA, new PointF(cx - foupOffset, foupY + foupH / 2f));
-            PlaceCentered(form.panelFoupB, new PointF(cx + foupOffset, foupY + foupH / 2f));
-            FaceFoupToward(form.foupVisualizationControlA, form.panelFoupA, new PointF(cx, cy));
-            FaceFoupToward(form.foupVisualizationControlB, form.panelFoupB, new PointF(cx, cy));
+            var chamberSize = new Size(chamberW, chamberH);
+            var foupSize = new Size(foupW, foupH);
+            PlaceCentered(form.panelChamberB, new PointF(cx, topY + chamberH / 2f), chamberSize, k);
+            PlaceCentered(form.panelChamberA, new PointF(cx - sideDistance, cy), chamberSize, k);
+            PlaceCentered(form.panelChamberC, new PointF(cx + sideDistance, cy), chamberSize, k);
+            PlaceCentered(form.panelFoupA, new PointF(cx - foupOffset, foupY + foupH / 2f), foupSize, k);
+            PlaceCentered(form.panelFoupB, new PointF(cx + foupOffset, foupY + foupH / 2f), foupSize, k);
+            foreach (var chamber in new Control[] { form.panelChamberA, form.panelChamberB, form.panelChamberC })
+            {
+                ScaleChildren(chamber, k);
+                chamber?.Invalidate();
+            }
+            var tmCenter = new PointF(cx * k, cy * k);
+            foreach (var foup in new[] { form.foupVisualizationControlA, form.foupVisualizationControlB })
+            {
+                if (foup != null)
+                {
+                    foup.DrawScale = k;
+                }
+            }
+            FaceFoupToward(form.foupVisualizationControlA, form.panelFoupA, tmCenter);
+            FaceFoupToward(form.foupVisualizationControlB, form.panelFoupB, tmCenter);
 
             int sideViewLeft = canvasSize.Width - margin - sideViewWidth;
+            const int lampWidth = 262;
+            const int lampHeight = 34;
             if (form.panelMainLamp != null)
             {
                 // TM 기준 화면이 있으면 상태 램프 범례는 그 칸 위로 옮긴다 (왼쪽 위는 Chamber B와 가까워짐).
-                form.panelMainLamp.Location = showSideView ? new Point(sideViewLeft, margin) : new Point(margin, margin);
+                var lampLocation = showSideView ? new Point(sideViewLeft, margin) : new Point(margin, margin);
+                form.panelMainLamp.Bounds = ScaleRect(new Rectangle(lampLocation, new Size(lampWidth, lampHeight)), k);
+                form.panelMainLamp.Invalidate();
                 form.panelMainLamp.BringToFront();
             }
 
@@ -92,8 +139,10 @@ namespace SemiconductorUi.Helpers
                 form.tmSideViewControl.Visible = showSideView;
                 if (showSideView)
                 {
-                    int sideTop = margin + (form.panelMainLamp?.Height ?? 0) + 8;
-                    form.tmSideViewControl.Bounds = new Rectangle(sideViewLeft, sideTop, sideViewWidth, Math.Max(120, canvasSize.Height - margin - sideTop));
+                    int sideTop = margin + lampHeight + 8;
+                    form.tmSideViewControl.DrawScale = k;
+                    form.tmSideViewControl.Bounds = ScaleRect(
+                        new Rectangle(sideViewLeft, sideTop, sideViewWidth, Math.Max(120, canvasSize.Height - margin - sideTop)), k);
                     form.tmSideViewControl.BringToFront();
                 }
             }
@@ -101,7 +150,8 @@ namespace SemiconductorUi.Helpers
             if (form.tmVisualizationControl != null)
             {
                 form.tmVisualizationControl.Location = Point.Empty;
-                form.tmVisualizationControl.Size = canvasSize;
+                form.tmVisualizationControl.Size = pixelSize;
+                form.tmVisualizationControl.DrawScale = k;
                 form.tmVisualizationControl.SendToBack();
 
                 var anchors = new System.Collections.Generic.Dictionary<EquipmentRegion, PointF>();
@@ -118,10 +168,36 @@ namespace SemiconductorUi.Helpers
                         modules.Add(panel.Bounds);
                     }
                 }
-                form.tmVisualizationControl.SetLayout(new PointF(cx, cy), anchors, modules);
+                form.tmVisualizationControl.SetLayout(tmCenter, anchors, modules);
             }
 
             form.panelEquipmentCanvas.Invalidate();
+        }
+
+        private static Rectangle ScaleRect(Rectangle rect, float k)
+        {
+            return Rectangle.Round(new RectangleF(rect.X * k, rect.Y * k, rect.Width * k, rect.Height * k));
+        }
+
+        /// <summary>
+        /// 챔버 카드 안의 웨이퍼 표시를 카드와 같은 배율로 옮기고 키운다.
+        /// </summary>
+        private void ScaleChildren(Control parent, float k)
+        {
+            if (parent == null)
+            {
+                return;
+            }
+
+            foreach (Control child in parent.Controls)
+            {
+                if (!designChildBounds.TryGetValue(child, out var design))
+                {
+                    design = child.Bounds;
+                    designChildBounds[child] = design;
+                }
+                child.Bounds = ScaleRect(design, k);
+            }
         }
 
         /// <summary>
@@ -139,16 +215,20 @@ namespace SemiconductorUi.Helpers
             foup.FacingDegrees = (float)(Math.Atan2(tmCenter.Y - hy, tmCenter.X - hx) * 180.0 / Math.PI);
         }
 
-        private void PlaceCentered(Control control, PointF center)
+        /// <summary>
+        /// 확대 전 좌표의 중심과 크기로 컨트롤을 놓는다. 위치와 크기에 배율을 곱한다.
+        /// </summary>
+        private void PlaceCentered(Control control, PointF center, Size logicalSize, float k)
         {
             if (control == null)
             {
                 return;
             }
 
+            control.Size = new Size((int)Math.Round(logicalSize.Width * k), (int)Math.Round(logicalSize.Height * k));
             var desired = new Point(
-                (int)Math.Round(center.X - control.Width / 2f),
-                (int)Math.Round(center.Y - control.Height / 2f));
+                (int)Math.Round(center.X * k - control.Width / 2f),
+                (int)Math.Round(center.Y * k - control.Height / 2f));
             control.Location = ClampToCanvas(desired, control);
         }
 

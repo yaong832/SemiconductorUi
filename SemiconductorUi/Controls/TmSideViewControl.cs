@@ -118,7 +118,34 @@ namespace SemiconductorUi.Controls
 
         #region 머리글 / 전환 버튼
 
-        private Rectangle CardRect => new Rectangle(0, 0, Math.Max(1, ClientSize.Width - 1), Math.Max(1, ClientSize.Height - 1));
+        /// <summary>
+        /// 그림을 얼마나 키워 그릴지(1이면 원래 크기). 원래 크기 기준으로 그린 뒤 확대한다.
+        /// </summary>
+        [System.ComponentModel.Browsable(false), System.ComponentModel.DesignerSerializationVisibility(System.ComponentModel.DesignerSerializationVisibility.Hidden)]
+        public float DrawScale
+        {
+            get => drawScale;
+            set
+            {
+                float scale = Math.Max(0.5f, value);
+                if (Math.Abs(drawScale - scale) < 0.001f)
+                {
+                    return;
+                }
+                drawScale = scale;
+                Invalidate();
+            }
+        }
+
+        private float drawScale = 1f;
+
+        /// <summary>확대 전 기준의 카드 영역.</summary>
+        private Rectangle CardRect => new Rectangle(0, 0,
+            Math.Max(1, (int)Math.Round(ClientSize.Width / drawScale) - 1),
+            Math.Max(1, (int)Math.Round(ClientSize.Height / drawScale) - 1));
+
+        /// <summary>마우스 위치를 확대 전 좌표로 바꾼다.</summary>
+        private Point ToLogical(Point p) => new Point((int)(p.X / drawScale), (int)(p.Y / drawScale));
 
         private Rectangle FrontToggleRect => new Rectangle(CardRect.Right - Pad - ToggleWidth * 2 - 2, (HeaderHeight - ToggleHeight) / 2 + 1, ToggleWidth, ToggleHeight);
 
@@ -127,11 +154,12 @@ namespace SemiconductorUi.Controls
         protected override void OnMouseClick(MouseEventArgs e)
         {
             base.OnMouseClick(e);
-            if (FrontToggleRect.Contains(e.Location))
+            var p = ToLogical(e.Location);
+            if (FrontToggleRect.Contains(p))
             {
                 Mode = ViewMode.Front;
             }
-            else if (CutToggleRect.Contains(e.Location))
+            else if (CutToggleRect.Contains(p))
             {
                 Mode = ViewMode.Cut;
             }
@@ -140,7 +168,8 @@ namespace SemiconductorUi.Controls
         protected override void OnMouseMove(MouseEventArgs e)
         {
             base.OnMouseMove(e);
-            bool overToggle = FrontToggleRect.Contains(e.Location) || CutToggleRect.Contains(e.Location);
+            var p = ToLogical(e.Location);
+            bool overToggle = FrontToggleRect.Contains(p) || CutToggleRect.Contains(p);
             Cursor = overToggle ? Cursors.Hand : Cursors.Default;
         }
 
@@ -150,7 +179,7 @@ namespace SemiconductorUi.Controls
             using (var font = new Font("Segoe UI", 9F, FontStyle.Bold))
             {
                 var titleRect = new Rectangle(Pad, 0, FrontToggleRect.Left - Pad - 4, HeaderHeight);
-                TextRenderer.DrawText(g, title, font, titleRect, EquipmentCanvasStyler.CardTitle,
+                CanvasText.Draw(g, title, font, titleRect, EquipmentCanvasStyler.CardTitle,
                     TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPadding);
             }
 
@@ -173,7 +202,7 @@ namespace SemiconductorUi.Controls
 
             using (var font = new Font("Segoe UI", 8F, on ? FontStyle.Bold : FontStyle.Regular))
             {
-                TextRenderer.DrawText(g, text, font, rect, on ? UiTheme.Primary : UiTheme.TextSecondary,
+                CanvasText.Draw(g, text, font, rect, on ? UiTheme.Primary : UiTheme.TextSecondary,
                     TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding);
             }
         }
@@ -186,6 +215,10 @@ namespace SemiconductorUi.Controls
             var g = e.Graphics;
             g.SmoothingMode = SmoothingMode.AntiAlias;
             g.Clear(Parent?.BackColor ?? EquipmentCanvasStyler.CanvasBack);
+            if (drawScale != 1f)
+            {
+                g.ScaleTransform(drawScale, drawScale);
+            }
 
             using (var path = EquipmentCanvasStyler.CreateRoundedRectangle(CardRect, EquipmentCanvasStyler.CardRadius))
             using (var fill = new SolidBrush(EquipmentCanvasStyler.CardFill))
@@ -249,7 +282,7 @@ namespace SemiconductorUi.Controls
                     float y = MapY(body, maxHeight, h);
                     g.DrawLine(grid, body.Left + AxisWidth - 2, y, body.Right, y);
                     string label = h == 0 ? "0" : (h / 1000000) + "M";
-                    TextRenderer.DrawText(g, label, font, new Rectangle(body.Left, (int)y - 7, AxisWidth - 6, 14), AxisText,
+                    CanvasText.Draw(g, label, font, new Rectangle(body.Left, (int)y - 7, AxisWidth - 6, 14), AxisText,
                         TextFormatFlags.Right | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding);
                 }
             }
@@ -277,7 +310,7 @@ namespace SemiconductorUi.Controls
                         float y = MapY(body, maxHeight, TmHeightEstimator.GetLandHeight(state.Target, positions, level));
                         g.FillRectangle(shelf, box.Left + 6, y, 12, 3);
                         g.FillRectangle(shelf, box.Right - 18, y, 12, 3);
-                        TextRenderer.DrawText(g, level.ToString(), font, new Rectangle((int)box.Left + 6, (int)y - 13, 12, 12), AxisText,
+                        CanvasText.Draw(g, level.ToString(), font, new Rectangle((int)box.Left + 6, (int)y - 13, 12, 12), AxisText,
                             TextFormatFlags.HorizontalCenter | TextFormatFlags.NoPadding);
                         if (state.FoupLevels != null && level - 1 < state.FoupLevels.Length && state.FoupLevels[level - 1])
                         {
@@ -476,7 +509,7 @@ namespace SemiconductorUi.Controls
             var rect = new Rectangle(Pad, CardRect.Bottom - FooterHeight, CardRect.Width - Pad * 2, FooterHeight - 4);
             using (var font = new Font("Segoe UI", 8F))
             {
-                TextRenderer.DrawText(g, text, font, rect, EquipmentCanvasStyler.CardSubText,
+                CanvasText.Draw(g, text, font, rect, EquipmentCanvasStyler.CardSubText,
                     TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPadding);
             }
         }
@@ -597,7 +630,7 @@ namespace SemiconductorUi.Controls
         {
             using (var font = new Font("Segoe UI", 8F))
             {
-                TextRenderer.DrawText(g, text, font, rect, EquipmentCanvasStyler.CardSubText,
+                CanvasText.Draw(g, text, font, rect, EquipmentCanvasStyler.CardSubText,
                     TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.WordBreak);
             }
         }
