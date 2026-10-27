@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
+using SemiconductorUi.Helpers;
 using SemiconductorUi.Models;
 using SemiconductorUi.Repositories;
 using SemiconductorUi;
@@ -37,110 +38,148 @@ namespace SemiconductorUi.Forms
 			this.FormBorderStyle = FormBorderStyle.FixedDialog;
 			this.MaximizeBox = false;
 			this.MinimizeBox = false;
-			this.BackColor = Color.FromArgb(250, 250, 255);
-			this.ClientSize = new Size(700, 500);
+			this.BackColor = UiTheme.Surface;
+			this.ForeColor = UiTheme.TextPrimary;
+			this.Font = new Font("Segoe UI", 9.5F);
+			this.ClientSize = new Size(700, 540);
+
+			var labelTitle = new Label();
+			labelTitle.Text = "사용자 관리";
+			labelTitle.Font = new Font("Segoe UI", 12F, FontStyle.Bold);
+			labelTitle.ForeColor = UiTheme.TextPrimary;
+			labelTitle.AutoSize = true;
+			labelTitle.Location = new Point(20, 16);
 
 			// 사용자 목록
 			listUsers = new ListView();
-			listUsers.Location = new Point(16, 16);
-			listUsers.Size = new Size(660, 280);
+			listUsers.Location = new Point(20, 52);
+			listUsers.Size = new Size(660, 250);
 			listUsers.View = View.Details;
 			listUsers.FullRowSelect = true;
-			listUsers.GridLines = true;
-			listUsers.ForeColor = Color.FromArgb(40, 40, 40);
-			listUsers.BackColor = Color.FromArgb(240, 240, 245);
+			listUsers.GridLines = false;
+			listUsers.HideSelection = false;
+			listUsers.BorderStyle = BorderStyle.FixedSingle;
+			listUsers.ForeColor = UiTheme.TextPrimary;
+			listUsers.BackColor = UiTheme.Surface;
 			listUsers.Columns.Add("사용자명", 200);
 			listUsers.Columns.Add("역할", 150);
 			listUsers.Columns.Add("생성일", 250);
 			listUsers.SelectedIndexChanged += ListUsers_SelectedIndexChanged;
 
-			// 입력 필드
-			labelUsername = new Label();
-			labelUsername.Text = "사용자명:";
-			labelUsername.ForeColor = Color.FromArgb(40, 40, 40);
-			labelUsername.Location = new Point(16, 310);
-			labelUsername.Size = new Size(80, 20);
+			// 입력 필드: 연회색 판 안에 둡니다
+			var plate = new GroupBox();
+			plate.Text = "사용자 정보";
+			plate.Location = new Point(20, 316);
+			plate.Size = new Size(660, 128);
+			plate.Padding = new Padding(12, 3, 12, 3);
+			LampButtonPainter.AttachPlate(plate);
+
+			labelUsername = NewFieldLabel("사용자명", new Point(14, 40));
 
 			textBoxUsername = new TextBox();
-			textBoxUsername.Location = new Point(100, 308);
-			textBoxUsername.Size = new Size(200, 23);
-			textBoxUsername.BackColor = Color.FromArgb(240, 240, 245);
-			textBoxUsername.ForeColor = Color.FromArgb(40, 40, 40);
+			textBoxUsername.Location = new Point(96, 36);
+			textBoxUsername.Size = new Size(210, 25);
+			textBoxUsername.BorderStyle = BorderStyle.FixedSingle;
+			textBoxUsername.BackColor = UiTheme.Surface;
+			textBoxUsername.ForeColor = UiTheme.TextPrimary;
 
-			labelPassword = new Label();
-			labelPassword.Text = "비밀번호:";
-			labelPassword.ForeColor = Color.FromArgb(40, 40, 40);
-			labelPassword.Location = new Point(320, 310);
-			labelPassword.Size = new Size(80, 20);
+			labelPassword = NewFieldLabel("비밀번호", new Point(336, 40));
 
 			textBoxPassword = new TextBox();
-			textBoxPassword.Location = new Point(404, 308);
-			textBoxPassword.Size = new Size(200, 23);
+			textBoxPassword.Location = new Point(418, 36);
+			textBoxPassword.Size = new Size(226, 25);
 			textBoxPassword.UseSystemPasswordChar = true;
-			textBoxPassword.BackColor = Color.FromArgb(240, 240, 245);
-			textBoxPassword.ForeColor = Color.FromArgb(40, 40, 40);
+			textBoxPassword.BorderStyle = BorderStyle.FixedSingle;
+			textBoxPassword.BackColor = UiTheme.Surface;
+			textBoxPassword.ForeColor = UiTheme.TextPrimary;
 			
 			// 비밀번호 안내 레이블
 			var labelPasswordHint = new Label();
-			labelPasswordHint.Text = "(수정 시: 비밀번호를 변경하려면 새 비밀번호 입력)";
-			labelPasswordHint.ForeColor = Color.FromArgb(120, 120, 120);
-			labelPasswordHint.Location = new Point(320, 335);
-			labelPasswordHint.Size = new Size(300, 15);
-			labelPasswordHint.Font = new Font("Segoe UI", 8F);
+			labelPasswordHint.Text = "수정할 때는 비밀번호를 바꿀 때만 입력합니다.";
+			labelPasswordHint.ForeColor = UiTheme.TextSecondary;
+			labelPasswordHint.BackColor = LampButtonPainter.PlateBack;
+			labelPasswordHint.Location = new Point(336, 82);
+			labelPasswordHint.Size = new Size(310, 34);
+			labelPasswordHint.Font = new Font("Segoe UI", 8.5F);
 
-			labelRole = new Label();
-			labelRole.Text = "역할:";
-			labelRole.ForeColor = Color.FromArgb(40, 40, 40);
-			labelRole.Location = new Point(16, 345);
-			labelRole.Size = new Size(80, 20);
+			labelRole = NewFieldLabel("역할", new Point(14, 82));
 
 			comboBoxRole = new ComboBox();
 			comboBoxRole.DropDownStyle = ComboBoxStyle.DropDownList;
 			comboBoxRole.Items.AddRange(new object[] { "관리자", "작업자" });
 			comboBoxRole.SelectedIndex = 1; // 기본값: 작업자
-			comboBoxRole.Location = new Point(100, 343);
-			comboBoxRole.Size = new Size(200, 23);
-			comboBoxRole.BackColor = Color.FromArgb(240, 240, 245);
-			comboBoxRole.ForeColor = Color.FromArgb(40, 40, 40);
+			comboBoxRole.Location = new Point(96, 78);
+			comboBoxRole.Size = new Size(210, 25);
+			comboBoxRole.BackColor = UiTheme.Surface;
+			comboBoxRole.ForeColor = UiTheme.TextPrimary;
 
-			// 버튼
-			var buttonPanel = new FlowLayoutPanel();
-			buttonPanel.Location = new Point(16, 380);
-			buttonPanel.Size = new Size(660, 40);
-			buttonPanel.FlowDirection = FlowDirection.LeftToRight;
-			buttonPanel.WrapContents = false;
+			plate.Controls.Add(labelUsername);
+			plate.Controls.Add(textBoxUsername);
+			plate.Controls.Add(labelPassword);
+			plate.Controls.Add(textBoxPassword);
+			plate.Controls.Add(labelPasswordHint);
+			plate.Controls.Add(labelRole);
+			plate.Controls.Add(comboBoxRole);
+
+			// 버튼: 왼쪽 추가/수정/삭제, 오른쪽 닫기
+			var buttonBar = new Panel();
+			buttonBar.Dock = DockStyle.Bottom;
+			buttonBar.Height = 72;
+			buttonBar.BackColor = UiTheme.Surface;
+			buttonBar.Paint += (s, e) =>
+			{
+				using (var pen = new Pen(UiTheme.Border))
+				{
+					e.Graphics.DrawLine(pen, 0, 0, buttonBar.Width, 0);
+				}
+			};
 
 			buttonAdd = CreateButton("추가", Color.FromArgb(100, 120, 130), ButtonAdd_Click);
 			buttonUpdate = CreateButton("수정", Color.FromArgb(100, 120, 130), ButtonUpdate_Click);
 			buttonDelete = CreateButton("삭제", Color.FromArgb(100, 120, 130), ButtonDelete_Click);
 			buttonClose = CreateButton("닫기", Color.FromArgb(100, 120, 130), ButtonClose_Click);
+			LampButtonPainter.AttachPlain(buttonAdd, primary: true);
+			LampButtonPainter.AttachPlain(buttonUpdate);
+			LampButtonPainter.AttachPlain(buttonDelete);
+			LampButtonPainter.AttachPlain(buttonClose);
 
-			buttonPanel.Controls.Add(buttonAdd);
-			buttonPanel.Controls.Add(buttonUpdate);
-			buttonPanel.Controls.Add(buttonDelete);
-			buttonPanel.Controls.Add(buttonClose);
+			buttonAdd.Location = new Point(20, 14);
+			buttonUpdate.Location = new Point(buttonAdd.Right + 10, 14);
+			buttonDelete.Location = new Point(buttonUpdate.Right + 10, 14);
+			buttonClose.Location = new Point(680 - buttonClose.Width, 14);
 
+			buttonBar.Controls.Add(buttonAdd);
+			buttonBar.Controls.Add(buttonUpdate);
+			buttonBar.Controls.Add(buttonDelete);
+			buttonBar.Controls.Add(buttonClose);
+
+			this.Controls.Add(labelTitle);
 			this.Controls.Add(listUsers);
-			this.Controls.Add(labelUsername);
-			this.Controls.Add(textBoxUsername);
-			this.Controls.Add(labelPassword);
-			this.Controls.Add(textBoxPassword);
-			this.Controls.Add(labelPasswordHint);
-			this.Controls.Add(labelRole);
-			this.Controls.Add(comboBoxRole);
-			this.Controls.Add(buttonPanel);
+			this.Controls.Add(plate);
+			this.Controls.Add(buttonBar);
+		}
+
+		private static Label NewFieldLabel(string text, Point location)
+		{
+			var label = new Label();
+			label.Text = text;
+			label.ForeColor = UiTheme.TextSecondary;
+			label.BackColor = LampButtonPainter.PlateBack;
+			label.AutoSize = true;
+			label.Location = location;
+			return label;
 		}
 
 		private Button CreateButton(string text, Color backColor, EventHandler clickHandler)
 		{
 			var button = new Button();
 			button.Text = text;
-			button.Size = new Size(100, 32);
+			button.Size = new Size(110, 44);
 			button.BackColor = backColor;
 			button.FlatStyle = FlatStyle.Flat;
 			button.FlatAppearance.BorderSize = 0;
 			button.ForeColor = Color.White;
-			button.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+			button.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
 			button.Margin = new Padding(5, 5, 5, 5);
 			button.Click += clickHandler;
 			return button;
