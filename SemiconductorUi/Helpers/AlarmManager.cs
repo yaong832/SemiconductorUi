@@ -73,12 +73,12 @@ namespace SemiconductorUi.Helpers
             var tempDiff = Math.Abs(pvTemp - svTemp);
             if (tempDiff > Thresholds.TempAlarmDiffC)
             {
-                _form.AddLogMessage($"{unitKey} 온도 이탈(알람): PV={pvTemp:0.0}°C, SV={svTemp:0.0}°C (Δ={tempDiff:0.0}°C)", "ALARM");
+                _form.AddLogMessage($"{EquipmentRegionHelper.FormatUnitLabel(unitKey)} 온도 이탈(알람): PV={pvTemp:0.0}°C, SV={svTemp:0.0}°C (Δ={tempDiff:0.0}°C)", "ALARM");
                 hasAlarmInChamber = true;
             }
             else if (tempDiff > Thresholds.TempWarnDiffC)
             {
-                _form.AddLogMessage($"{unitKey} 온도 이탈(주의): PV={pvTemp:0.0}°C, SV={svTemp:0.0}°C (Δ={tempDiff:0.0}°C)", "WARN");
+                _form.AddLogMessage($"{EquipmentRegionHelper.FormatUnitLabel(unitKey)} 온도 이탈(주의): PV={pvTemp:0.0}°C, SV={svTemp:0.0}°C (Δ={tempDiff:0.0}°C)", "WARN");
             }
 
             // 압력 평가: 고압/저압에 따라 비율 또는 절대값 기준 선택
@@ -105,12 +105,12 @@ namespace SemiconductorUi.Helpers
 
                 if (isAlarm)
                 {
-                    _form.AddLogMessage($"{unitKey} 압력 이탈(알람): PV={pvPress:0.###} Torr, SV={svPress:0.###} Torr (Δ={pressDiff:0.###} Torr)", "ALARM");
+                    _form.AddLogMessage($"{EquipmentRegionHelper.FormatUnitLabel(unitKey)} 압력 이탈(알람): PV={pvPress:0.###} Torr, SV={svPress:0.###} Torr (Δ={pressDiff:0.###} Torr)", "ALARM");
                     hasAlarmInChamber = true;
                 }
                 else if (isWarn)
                 {
-                    _form.AddLogMessage($"{unitKey} 압력 이탈(주의): PV={pvPress:0.###} Torr, SV={svPress:0.###} Torr (Δ={pressDiff:0.###} Torr)", "WARN");
+                    _form.AddLogMessage($"{EquipmentRegionHelper.FormatUnitLabel(unitKey)} 압력 이탈(주의): PV={pvPress:0.###} Torr, SV={svPress:0.###} Torr (Δ={pressDiff:0.###} Torr)", "WARN");
                 }
             }
 
@@ -120,12 +120,12 @@ namespace SemiconductorUi.Helpers
                 double rfRatio = Math.Abs(pvRf - svRf) / svRf;
                 if (rfRatio > Thresholds.RfAlarmRatio)
                 {
-                    _form.AddLogMessage($"{unitKey} RF 이탈(알람): PV={pvRf:0} W, SV={svRf:0} W", "ALARM");
+                    _form.AddLogMessage($"{EquipmentRegionHelper.FormatUnitLabel(unitKey)} RF 이탈(알람): PV={pvRf:0} W, SV={svRf:0} W", "ALARM");
                     hasAlarmInChamber = true;
                 }
                 else if (rfRatio > Thresholds.RfWarnRatio)
                 {
-                    _form.AddLogMessage($"{unitKey} RF 이탈(주의): PV={pvRf:0} W, SV={svRf:0} W", "WARN");
+                    _form.AddLogMessage($"{EquipmentRegionHelper.FormatUnitLabel(unitKey)} RF 이탈(주의): PV={pvRf:0} W, SV={svRf:0} W", "WARN");
                 }
             }
 
@@ -165,24 +165,24 @@ namespace SemiconductorUi.Helpers
                 double diff = Math.Abs(pv - sv);
                 if (diff > Thresholds.GasAlarmAbsSccm)
                 {
-                    _form.AddLogMessage($"{unitKey} {gasName} 유량 이탈(알람): PV={pv:0.0} sccm, SV={sv:0.0} sccm", "ALARM");
+                    _form.AddLogMessage($"{EquipmentRegionHelper.FormatUnitLabel(unitKey)} {gasName} 유량 이탈(알람): PV={pv:0.0} sccm, SV={sv:0.0} sccm", "ALARM");
                     localHasAlarm = true;
                 }
                 else if (diff > Thresholds.GasWarnAbsSccm)
                 {
-                    _form.AddLogMessage($"{unitKey} {gasName} 유량 이탈(주의): PV={pv:0.0} sccm, SV={sv:0.0} sccm", "WARN");
+                    _form.AddLogMessage($"{EquipmentRegionHelper.FormatUnitLabel(unitKey)} {gasName} 유량 이탈(주의): PV={pv:0.0} sccm, SV={sv:0.0} sccm", "WARN");
                 }
             }
             else
             {
                 if (pv > Thresholds.GasLeakAlarmSccm)
                 {
-                    _form.AddLogMessage($"{unitKey} {gasName} 누설 의심(알람): PV={pv:0.0} sccm (SV=0)", "ALARM");
+                    _form.AddLogMessage($"{EquipmentRegionHelper.FormatUnitLabel(unitKey)} {gasName} 누설 의심(알람): PV={pv:0.0} sccm (SV=0)", "ALARM");
                     localHasAlarm = true;
                 }
                 else if (pv > Thresholds.GasLeakWarnSccm)
                 {
-                    _form.AddLogMessage($"{unitKey} {gasName} 누설 의심(주의): PV={pv:0.0} sccm (SV=0)", "WARN");
+                    _form.AddLogMessage($"{EquipmentRegionHelper.FormatUnitLabel(unitKey)} {gasName} 누설 의심(주의): PV={pv:0.0} sccm (SV=0)", "WARN");
                 }
             }
             return localHasAlarm;

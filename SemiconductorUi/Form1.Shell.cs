@@ -18,6 +18,8 @@ namespace SemiconductorUi
     {
         private const int ShellNavWidth = 100;
         private const int ShellSubTabHeight = 46;
+        // 창이 이 폭 이상이면(2560x1440 최대화 등) 상단 바 글자와 버튼을 한 단계 키웁니다.
+        private const int ShellLargeMinWidth = 2200;
 
         private ShellTopBar shellTopBar;
         private ShellChip shellChipEthercat;
@@ -26,6 +28,7 @@ namespace SemiconductorUi
         private ShellClock shellClock;
         private ShellUserCard shellUserCard;
         private ToolTip shellToolTip;
+        private readonly System.Collections.Generic.List<Tuple<Button, int>> shellBarButtons = new System.Collections.Generic.List<Tuple<Button, int>>();
 
         private void BuildMainShell()
         {
@@ -102,6 +105,46 @@ namespace SemiconductorUi
 
             tableLayoutRoot.ResumeLayout(true);
             ResumeLayout(true);
+
+            Resize += (s, e) => ApplyShellSize();
+            ApplyShellSize();
+        }
+
+        /// <summary>창 폭에 따라 상단 바를 보통 크기 또는 큰 크기로 맞춥니다.</summary>
+        private void ApplyShellSize()
+        {
+            if (shellTopBar == null || WindowState == FormWindowState.Minimized) return;
+
+            bool large = ClientSize.Width >= ShellLargeMinWidth;
+            if (shellTopBar.Large == large) return;
+
+            shellTopBar.SuspendLayout();
+            foreach (var chip in new[] { shellChipEthercat, shellChipServo, shellChipAlarm })
+            {
+                if (chip != null) chip.Large = large;
+            }
+            if (shellClock != null) shellClock.Large = large;
+            foreach (var pair in shellBarButtons)
+            {
+                pair.Item1.Size = new Size(pair.Item2 + (large ? 12 : 0), large ? 32 : 28);
+                pair.Item1.Font = large ? ShellBarButtonLargeFont : ShellBarButtonFont;
+            }
+            shellTopBar.Large = large;
+            shellTopBar.ResumeLayout(true);
+        }
+
+        private static readonly Font ShellBarButtonFont = new Font("Segoe UI", 9F, FontStyle.Bold);
+        private static readonly Font ShellBarButtonLargeFont = new Font("Segoe UI", 10F, FontStyle.Bold);
+
+        private Button AddShellBarButton(Button button, string text, int width)
+        {
+            var styled = StyleShellBarButton(button, text, width);
+            if (styled != null)
+            {
+                styled.Font = ShellBarButtonFont;
+                shellBarButtons.Add(Tuple.Create(styled, width));
+            }
+            return styled;
         }
 
         private ShellTopBar BuildShellTopBar()
@@ -115,8 +158,8 @@ namespace SemiconductorUi
                 DotProvider = () => labelEthercatStatus?.ForeColor ?? UiTheme.TextSecondary
             };
             bar.AddRight(shellChipEthercat, 0);
-            bar.AddRight(StyleShellBarButton(buttonEthercatConnect, "연결", 52), 6);
-            bar.AddRight(StyleShellBarButton(buttonEthercatDisconnect, "해제", 52), 4);
+            bar.AddRight(AddShellBarButton(buttonEthercatConnect, "연결", 52), 6);
+            bar.AddRight(AddShellBarButton(buttonEthercatDisconnect, "해제", 52), 4);
             bar.AddDivider();
 
             shellChipServo = new ShellChip
@@ -127,8 +170,8 @@ namespace SemiconductorUi
                 DotProvider = () => labelServoStatus?.ForeColor ?? UiTheme.TextSecondary
             };
             bar.AddRight(shellChipServo, 12);
-            bar.AddRight(StyleShellBarButton(buttonServoOn, "서보 ON", 68), 6);
-            bar.AddRight(StyleShellBarButton(buttonServoOff, "서보 OFF", 72), 4);
+            bar.AddRight(AddShellBarButton(buttonServoOn, "서보 ON", 68), 6);
+            bar.AddRight(AddShellBarButton(buttonServoOff, "서보 OFF", 72), 4);
             bar.AddDivider();
 
             shellChipAlarm = new ShellChip
@@ -344,6 +387,7 @@ namespace SemiconductorUi
         {
             shellTopBar?.Invalidate();
             shellUserCard?.Invalidate();
+            RefreshLampButtons();
         }
 
         private ShellStatePill GetShellStatePill()

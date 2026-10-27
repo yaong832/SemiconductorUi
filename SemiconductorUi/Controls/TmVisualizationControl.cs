@@ -108,26 +108,38 @@ namespace SemiconductorUi.Controls
         }
 
         /// <summary>
+        /// 그림을 얼마나 키워 그릴지(1이면 원래 크기). SetLayout보다 먼저 정해야 한다.
+        /// 로봇 모양은 원래 크기 기준으로 그린 뒤 이 배율로 확대한다.
+        /// </summary>
+        [System.ComponentModel.Browsable(false), System.ComponentModel.DesignerSerializationVisibility(System.ComponentModel.DesignerSerializationVisibility.Hidden)]
+        public float DrawScale { get; set; } = 1f;
+
+        /// <summary>
         /// 모듈 카드 영역도 함께 받아, 회전 범위 고리가 카드에 겹치지 않을 만큼만 크게 그린다.
         /// </summary>
         public void SetLayout(PointF center, IDictionary<EquipmentRegion, PointF> moduleAnchors, IEnumerable<RectangleF> modules)
         {
-            hubCenter = center;
+            // 받은 좌표는 화면 픽셀이다. 그림은 확대 전 좌표로 그리므로 배율로 나눠 둔다.
+            float k = DrawScale > 0f ? DrawScale : 1f;
+            hubCenter = new PointF(center.X / k, center.Y / k);
             anchors.Clear();
             if (moduleAnchors != null)
             {
                 foreach (var pair in moduleAnchors)
                 {
-                    anchors[pair.Key] = pair.Value;
+                    anchors[pair.Key] = new PointF(pair.Value.X / k, pair.Value.Y / k);
                 }
             }
 
             moduleBounds.Clear();
             if (modules != null)
             {
-                moduleBounds.AddRange(modules);
+                foreach (var rect in modules)
+                {
+                    moduleBounds.Add(new RectangleF(rect.X / k, rect.Y / k, rect.Width / k, rect.Height / k));
+                }
             }
-            rangeRadius = CalculateRangeRadius(center);
+            rangeRadius = CalculateRangeRadius(hubCenter);
 
             hasLayout = true;
             targetAngleRad = GetBladeAngle(targetRegion, isSimulationMode);
@@ -143,7 +155,13 @@ namespace SemiconductorUi.Controls
             g.SmoothingMode = SmoothingMode.AntiAlias;
             g.Clear(Parent?.BackColor ?? EquipmentCanvasStyler.CanvasBack);
 
-            var center = hasLayout ? hubCenter : new PointF(ClientSize.Width / 2f, ClientSize.Height / 2f);
+            float k = DrawScale > 0f ? DrawScale : 1f;
+            if (k != 1f)
+            {
+                g.ScaleTransform(k, k);
+            }
+
+            var center = hasLayout ? hubCenter : new PointF(ClientSize.Width / 2f / k, ClientSize.Height / 2f / k);
 
             DrawRobotWell(g, center);
             DrawRotationRange(g, center);
@@ -431,7 +449,7 @@ namespace SemiconductorUi.Controls
             using (var font = new Font("Segoe UI", 8F, FontStyle.Bold))
             {
                 var rect = new Rectangle((int)(center.X - 16), (int)(center.Y - 8), 32, 16);
-                TextRenderer.DrawText(g, "TM", font, rect, Color.FromArgb(233, 237, 243),
+                CanvasText.Draw(g, "TM", font, rect, Color.FromArgb(233, 237, 243),
                     TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding);
             }
 

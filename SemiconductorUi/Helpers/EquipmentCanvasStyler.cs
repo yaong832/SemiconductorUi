@@ -30,6 +30,29 @@ namespace SemiconductorUi.Helpers
         public const int WellSize = 56;
 
         /// <summary>
+        /// 장비 그림을 얼마나 키워 그릴지. 1이면 원래 크기입니다.
+        /// 캔버스 배치(Form1Configurator.LayoutCentralEquipment)가 화면 크기에 맞춰 정하고,
+        /// 챔버 카드와 램프 범례는 원래 크기 기준으로 그린 뒤 이 배율로 확대합니다.
+        /// </summary>
+        public static float DrawScale { get; set; } = 1f;
+
+        /// <summary>확대 전 기준의 컨트롤 크기.</summary>
+        public static Size LogicalSize(Size pixels)
+        {
+            float k = DrawScale;
+            return k == 1f ? pixels : new Size((int)Math.Round(pixels.Width / k), (int)Math.Round(pixels.Height / k));
+        }
+
+        private static void BeginScaled(Graphics g)
+        {
+            float k = DrawScale;
+            if (k != 1f)
+            {
+                g.ScaleTransform(k, k);
+            }
+        }
+
+        /// <summary>
         /// 챔버 패널을 카드 형태로 바꾼다. valveSide는 TM을 향한 변(슬릿 밸브 위치)이다.
         /// </summary>
         public static void ApplyChamberCard(Panel chamber, Label title, Panel door, Panel wafer, Panel lamp, AnchorStyles valveSide)
@@ -78,8 +101,12 @@ namespace SemiconductorUi.Helpers
             }
 
             int closedHeight = well.Height;
-            chamber.Paint += (s, e) => PaintChamberCard(e.Graphics, chamber.ClientRectangle, title?.Text ?? chamber.Name,
-                lamp?.BackColor ?? LampOff, GetValveOpenRatio(door, closedHeight), valveSide);
+            chamber.Paint += (s, e) =>
+            {
+                BeginScaled(e.Graphics);
+                PaintChamberCard(e.Graphics, new Rectangle(Point.Empty, LogicalSize(chamber.ClientSize)), title?.Text ?? chamber.Name,
+                    lamp?.BackColor ?? LampOff, GetValveOpenRatio(door, closedHeight), valveSide);
+            };
             chamber.ResumeLayout(false);
             chamber.Invalidate();
         }
@@ -104,8 +131,9 @@ namespace SemiconductorUi.Helpers
         /// </summary>
         public static PointF GetWellCenter(Control chamber)
         {
-            var well = GetWellBounds(new Rectangle(Point.Empty, chamber.Size));
-            return new PointF(chamber.Left + well.X + well.Width / 2f, chamber.Top + well.Y + well.Height / 2f);
+            float k = DrawScale;
+            var well = GetWellBounds(new Rectangle(Point.Empty, LogicalSize(chamber.Size)));
+            return new PointF(chamber.Left + (well.X + well.Width / 2f) * k, chamber.Top + (well.Y + well.Height / 2f) * k);
         }
 
         /// <summary>
@@ -167,7 +195,9 @@ namespace SemiconductorUi.Helpers
             {
                 var g = e.Graphics;
                 g.SmoothingMode = SmoothingMode.AntiAlias;
-                var rect = new Rectangle(0, 0, host.Width - 1, host.Height - 1);
+                BeginScaled(g);
+                var size = LogicalSize(host.Size);
+                var rect = new Rectangle(0, 0, size.Width - 1, size.Height - 1);
                 using (var path = CreateRoundedRectangle(rect, rect.Height / 2f))
                 using (var fill = new SolidBrush(CardFill))
                 using (var pen = new Pen(CardBorder))
@@ -179,18 +209,18 @@ namespace SemiconductorUi.Helpers
                 var redColor = red?.BackColor ?? LampOff;
                 var yellowColor = yellow?.BackColor ?? LampOff;
                 var greenColor = green?.BackColor ?? LampOff;
-                DrawSignalTower(g, new Rectangle(16, 3, 12, host.Height - 6), redColor, yellowColor, greenColor);
+                DrawSignalTower(g, new Rectangle(16, 3, 12, size.Height - 6), redColor, yellowColor, greenColor);
 
                 using (var titleFont = new Font("Segoe UI", 8.5F, FontStyle.Bold))
                 using (var itemFont = new Font("Segoe UI", 8.5F))
                 {
-                    TextRenderer.DrawText(g, "상태 램프", titleFont, new Rectangle(36, 0, 60, host.Height), CardSubText,
+                    CanvasText.Draw(g, "상태 램프", titleFont, new Rectangle(36, 0, 60, size.Height), CardSubText,
                         TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding);
 
                     int x = 96;
-                    x = DrawLampItem(g, itemFont, x, host.Height, redColor, "오류");
-                    x = DrawLampItem(g, itemFont, x, host.Height, yellowColor, "대기");
-                    DrawLampItem(g, itemFont, x, host.Height, greenColor, "진행");
+                    x = DrawLampItem(g, itemFont, x, size.Height, redColor, "오류");
+                    x = DrawLampItem(g, itemFont, x, size.Height, yellowColor, "대기");
+                    DrawLampItem(g, itemFont, x, size.Height, greenColor, "진행");
                 }
             };
             host.ResumeLayout(false);
@@ -234,8 +264,8 @@ namespace SemiconductorUi.Helpers
             const int dot = 12;
             var dotRect = new Rectangle(x, (height - dot) / 2, dot, dot);
             DrawLampDot(g, dotRect, color);
-            var textSize = TextRenderer.MeasureText(g, text, font, Size.Empty, TextFormatFlags.NoPadding);
-            TextRenderer.DrawText(g, text, font, new Rectangle(x + dot + 6, 0, textSize.Width + 4, height), CardTitle,
+            var textSize = CanvasText.Measure(g, text, font, Size.Empty, TextFormatFlags.NoPadding);
+            CanvasText.Draw(g, text, font, new Rectangle(x + dot + 6, 0, textSize.Width + 4, height), CardTitle,
                 TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding);
             return x + dot + 6 + textSize.Width + 14;
         }
@@ -355,14 +385,14 @@ namespace SemiconductorUi.Helpers
             {
                 var flags = TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPadding;
                 int maxWidth = card.Width - 52;
-                var textSize = TextRenderer.MeasureText(g, title ?? string.Empty, font, new Size(maxWidth, HeaderHeight), flags);
+                var textSize = CanvasText.Measure(g, title ?? string.Empty, font, new Size(maxWidth, HeaderHeight), flags);
                 var plate = new Rectangle(card.Left + 8, card.Top + 5, Math.Min(maxWidth, textSize.Width) + 16, HeaderHeight - 9);
                 using (var path = CreateRoundedRectangle(plate, 4))
                 using (var fill = new SolidBrush(PlateFill))
                 {
                     g.FillPath(fill, path);
                 }
-                TextRenderer.DrawText(g, title ?? string.Empty, font, Rectangle.Inflate(plate, -8, 0), PlateText, flags);
+                CanvasText.Draw(g, title ?? string.Empty, font, Rectangle.Inflate(plate, -8, 0), PlateText, flags);
             }
         }
 

@@ -214,7 +214,7 @@ namespace SemiconductorUi.Helpers
                 chamber.StatusText = ChamberStatusTexts.Processing;
             }
 
-            _form.AddLogMessage($"{chamber.UnitKey} 공정 시작: 웨이퍼 #{wafer.Id} (예상 시간: {chamber.TotalSeconds}초)", "INFO");
+            _form.AddLogMessage($"{EquipmentRegionHelper.FormatUnitLabel(chamber.UnitKey)} 공정 시작: 웨이퍼 #{wafer.Id} (예상 시간: {chamber.TotalSeconds}초)", "INFO");
         }
     }
 }

@@ -974,7 +974,7 @@ namespace SemiconductorUi.Helpers
                 if (source.CurrentWafer != null && source.RemainingSeconds > 0)
                 {
                     DeferTransferUntilProcessReady(currentTask,
-                        $"[대기] Transfer 보류: {source.UnitKey} 웨이퍼 #{currentTask.Wafer?.Id} 공정 진행 중 " +
+                        $"[대기] Transfer 보류: {EquipmentRegionHelper.FormatUnitLabel(source.UnitKey)} 웨이퍼 #{currentTask.Wafer?.Id} 공정 진행 중 " +
                         $"(RemainingSeconds={source.RemainingSeconds})");
                     return;
                 }

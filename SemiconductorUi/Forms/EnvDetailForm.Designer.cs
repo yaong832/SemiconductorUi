@@ -33,7 +33,7 @@ namespace SemiconductorUi.Forms
             this.labelUnit.Name = "labelUnit";
             this.labelUnit.Size = new System.Drawing.Size(111, 25);
             this.labelUnit.TabIndex = 0;
-            this.labelUnit.Text = "PM Env Info";
+            this.labelUnit.Text = "Chamber Env Info";
             // 
             // tableEnv
             // 
