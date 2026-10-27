@@ -45,17 +45,34 @@ namespace SemiconductorUi.Controls
         private readonly Color _idleColor = Color.FromArgb(250, 250, 255);
         private readonly Color _alarmColor = Color.FromArgb(255, 200, 200); // 알람 배경색 (연한 빨강)
 
-        // 폰트
-        private readonly Font _titleFont = new Font("Segoe UI", 10f, FontStyle.Bold);
-        private readonly Font _labelFont = new Font("Segoe UI", 8f, FontStyle.Bold);
-        private readonly Font _valueFont = new Font("Segoe UI", 9f, FontStyle.Regular);
-        private readonly Font _stepMessageFont = new Font("Segoe UI", 9f, FontStyle.Bold);
+        // 폰트 (패널 크기에 맞춰 다시 만듭니다)
+        private Font _titleFont;
+        private Font _labelFont;
+        private Font _valueFont;
+        private Font _stepMessageFont;
+        private float _fontScale;
 
-        // 레이아웃 설정
+        // 레이아웃 설정 (기준 크기, 패널 높이에 맞춰 늘리거나 줄입니다)
         private const int ContentPadding = 12;
+        private const int TitleHeight = 24;
         private const int RowHeight = 22;
+        private const int EnvHeaderHeight = 16;
+        private const int StepMessageHeight = 18;
         private const int LabelWidth = 56;
         private const int ProgressBarHeight = 8;
+
+        // 위 기준 크기로 그렸을 때의 전체 높이
+        private const int DesignHeight =
+            ContentPadding + TitleHeight + 4 + 8 + (RowHeight + 2) * 4 + 4 + 6
+            + EnvHeaderHeight + RowHeight * 6 + 4 + StepMessageHeight + 2 + ProgressBarHeight + ContentPadding;
+
+        private const float MinLayoutScale = 0.7f;
+        private const float MaxLayoutScale = 1.4f;
+        private const float MinFontScale = 0.85f;
+        private const float MaxFontScale = 1.3f;
+
+        // 현재 그리기 배율 (OnPaint에서 정함)
+        private float _layoutScale = 1f;
 
         public PmStatusPanel()
         {
@@ -67,7 +84,9 @@ namespace SemiconductorUi.Controls
             UpdateStyles();
 
             BackColor = _backgroundColor;
-            MinimumSize = new Size(180, 300); // 상태 메시지가 프로그레스바 위에 표시되므로 높이 감소
+            // 높이는 패널에 맞춰 줄여 그리므로 최소 높이를 두지 않습니다.
+            MinimumSize = new Size(180, 0);
+            EnsureFonts(1f);
         }
 
         #region Properties
@@ -236,15 +255,18 @@ namespace SemiconductorUi.Controls
                 g.DrawRectangle(borderPen, 0, 0, bounds.Width - 1, bounds.Height - 1);
             }
 
-            int y = ContentPadding;
+            _layoutScale = Math.Max(MinLayoutScale, Math.Min(MaxLayoutScale, bounds.Height / (float)DesignHeight));
+            EnsureFonts(Math.Max(MinFontScale, Math.Min(MaxFontScale, _layoutScale)));
+
+            int y = V(ContentPadding);
 
             // 제목 (PM 이름)
             DrawTitle(g, ref y, bounds.Width);
 
             // 구분선
-            y += 4;
+            y += V(4);
             DrawSeparator(g, y, bounds.Width);
-            y += 8;
+            y += V(8);
 
             // 정보 행들
             DrawInfoRow(g, "레시피", _recipeName, ref y, bounds.Width);
@@ -253,11 +275,12 @@ namespace SemiconductorUi.Controls
             DrawInfoRow(g, "웨이퍼", _waferInfo, ref y, bounds.Width);
 
             // 환경 정보 구분선
-            y += 4;
+            y += V(4);
             DrawSeparator(g, y, bounds.Width);
-            y += 6;
+            y += V(6);
 
             // 환경 정보 (NF3, O2, CF4, 압력, RF, 온도)
+            DrawEnvHeader(g, ref y, bounds.Width);
             DrawEnvRow(g, "NF3", _nf3PV, _nf3SV, "sccm", ref y, bounds.Width);
             DrawEnvRow(g, "O2", _o2PV, _o2SV, "sccm", ref y, bounds.Width);
             DrawEnvRow(g, "CF4", _cf4PV, _cf4SV, "sccm", ref y, bounds.Width);
@@ -266,13 +289,43 @@ namespace SemiconductorUi.Controls
             DrawEnvRow(g, "온도", _tempPV, _tempSV, "°C", ref y, bounds.Width);
 
             // 진행률 바 (상태 메시지와 함께)
-            y += 6;
+            y += V(4);
             DrawProgressBar(g, ref y, bounds.Width);
+        }
+
+        /// <summary>기준 크기의 세로 길이를 현재 배율로 바꿉니다.</summary>
+        private int V(int designValue)
+        {
+            return (int)Math.Round(designValue * _layoutScale);
+        }
+
+        /// <summary>라벨 칸 폭. 글자 크기에 맞춰 늘어납니다.</summary>
+        private int ScaledLabelWidth => (int)Math.Round(LabelWidth * _fontScale);
+
+        private void EnsureFonts(float scale)
+        {
+            scale = (float)Math.Round(scale, 2);
+            if (_titleFont != null && Math.Abs(scale - _fontScale) < 0.01f) return;
+
+            DisposeFonts();
+            _fontScale = scale;
+            _titleFont = new Font("Segoe UI", 10f * scale, FontStyle.Bold);
+            _labelFont = new Font("Segoe UI", 8f * scale, FontStyle.Bold);
+            _valueFont = new Font("Segoe UI", 9f * scale, FontStyle.Regular);
+            _stepMessageFont = new Font("Segoe UI", 9f * scale, FontStyle.Bold);
+        }
+
+        private void DisposeFonts()
+        {
+            _titleFont?.Dispose();
+            _labelFont?.Dispose();
+            _valueFont?.Dispose();
+            _stepMessageFont?.Dispose();
         }
 
         private void DrawTitle(Graphics g, ref int y, int width)
         {
-            var titleRect = new Rectangle(ContentPadding, y, width - ContentPadding * 2, 24);
+            var titleRect = new Rectangle(ContentPadding, y, width - ContentPadding * 2, V(TitleHeight));
             
             TextRenderer.DrawText(g, _title, _titleFont, titleRect, _titleColor,
                 TextFormatFlags.Left | TextFormatFlags.VerticalCenter);
@@ -285,7 +338,7 @@ namespace SemiconductorUi.Controls
                     TextFormatFlags.Right | TextFormatFlags.VerticalCenter);
             }
 
-            y += 24;
+            y += V(TitleHeight);
         }
 
         private void DrawSeparator(Graphics g, int y, int width)
@@ -298,8 +351,9 @@ namespace SemiconductorUi.Controls
 
         private void DrawInfoRow(Graphics g, string label, string value, ref int y, int width)
         {
-            var labelRect = new Rectangle(ContentPadding, y, LabelWidth, RowHeight);
-            var valueRect = new Rectangle(ContentPadding + LabelWidth + 4, y, width - ContentPadding * 2 - LabelWidth - 4, RowHeight);
+            int rowHeight = V(RowHeight);
+            var labelRect = new Rectangle(ContentPadding, y, ScaledLabelWidth, rowHeight);
+            var valueRect = new Rectangle(ContentPadding + ScaledLabelWidth + 4, y, width - ContentPadding * 2 - ScaledLabelWidth - 4, rowHeight);
 
             // 라벨 배경 (밝은 회색)
             using (var labelBgBrush = new SolidBrush(Color.FromArgb(235, 235, 245)))
@@ -320,14 +374,41 @@ namespace SemiconductorUi.Controls
             TextRenderer.DrawText(g, value, _valueFont, valueRect, _valueColor,
                 TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis);
 
-            y += RowHeight + 2;
+            y += rowHeight + V(2);
+        }
+
+        /// <summary>
+        /// 환경 값 열 위치. 라벨 칸 뒤의 남은 폭을 현재값/설정값 두 칸이 반씩 나눠 씁니다.
+        /// </summary>
+        private void GetEnvColumns(int width, out int labelWidth, out int pvX, out int svX, out int valueWidth)
+        {
+            const int gap = 4;
+            labelWidth = ScaledLabelWidth;
+            pvX = ContentPadding + labelWidth + gap;
+            int remaining = width - ContentPadding - pvX;
+            valueWidth = Math.Max(20, (remaining - gap) / 2);
+            svX = pvX + valueWidth + gap;
+        }
+
+        private void DrawEnvHeader(Graphics g, ref int y, int width)
+        {
+            GetEnvColumns(width, out _, out int pvX, out int svX, out int valueWidth);
+            int height = V(EnvHeaderHeight);
+            var flags = TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter;
+
+            TextRenderer.DrawText(g, "현재값", _labelFont, new Rectangle(pvX, y, valueWidth, height), Color.FromArgb(76, 175, 80), flags);
+            TextRenderer.DrawText(g, "설정값", _labelFont, new Rectangle(svX, y, valueWidth, height), Color.FromArgb(33, 150, 243), flags);
+
+            y += height;
         }
 
         private void DrawEnvRow(Graphics g, string label, double pv, double sv, string unit, ref int y, int width)
         {
-            var labelRect = new Rectangle(ContentPadding, y, 40, RowHeight - 2);
-            var pvRect = new Rectangle(ContentPadding + 44, y, 58, RowHeight - 2);
-            var svRect = new Rectangle(ContentPadding + 106, y, 58, RowHeight - 2);
+            GetEnvColumns(width, out int labelWidth, out int pvX, out int svX, out int valueWidth);
+            int rowHeight = V(RowHeight);
+            var labelRect = new Rectangle(ContentPadding, y, labelWidth, rowHeight - V(2));
+            var pvRect = new Rectangle(pvX, y, valueWidth, rowHeight - V(2));
+            var svRect = new Rectangle(svX, y, valueWidth, rowHeight - V(2));
 
             // 라벨 배경
             using (var labelBgBrush = new SolidBrush(Color.FromArgb(235, 235, 245)))
@@ -361,17 +442,27 @@ namespace SemiconductorUi.Controls
                 TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
 
             // PV 값 (공정 중이면 값 표시, 아니면 "-")
-            string pvText = (_isProcessing && pv > 0) ? FormatValue(pv, unit) : "-";
+            string pvText = (_isProcessing && pv > 0) ? WithUnit(g, FormatValue(pv, unit), unit, pvRect.Width) : "-";
             var pvColor = (_isProcessing && pv > 0) ? Color.FromArgb(76, 175, 80) : Color.FromArgb(100, 100, 100);
             TextRenderer.DrawText(g, pvText, _valueFont, pvRect, pvColor,
                 TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
 
             // SV 값 (설정값이 있으면 표시)
-            string svText = (sv > 0) ? FormatValue(sv, unit) : "-";
+            string svText = (sv > 0) ? WithUnit(g, FormatValue(sv, unit), unit, svRect.Width) : "-";
             TextRenderer.DrawText(g, svText, _valueFont, svRect, Color.FromArgb(33, 150, 243),
                 TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
 
-            y += RowHeight;
+            y += rowHeight;
+        }
+
+        /// <summary>칸이 넉넉하면 값 뒤에 단위를 붙입니다.</summary>
+        private string WithUnit(Graphics g, string value, string unit, int cellWidth)
+        {
+            if (value == "-" || string.IsNullOrEmpty(unit)) return value;
+
+            string withUnit = value + " " + unit;
+            var size = TextRenderer.MeasureText(g, withUnit, _valueFont, Size.Empty, TextFormatFlags.NoPadding);
+            return size.Width + 8 <= cellWidth ? withUnit : value;
         }
 
         private string FormatValue(double value, string unit)
@@ -396,7 +487,12 @@ namespace SemiconductorUi.Controls
 
         private void DrawProgressBar(Graphics g, ref int y, int width)
         {
-            var barRect = new Rectangle(ContentPadding, y, width - ContentPadding * 2, ProgressBarHeight);
+            // 상태 메시지 줄을 진행률 바 위에 따로 둡니다 (환경 표와 겹치지 않게)
+            int msgHeight = V(StepMessageHeight);
+            var msgRect = new Rectangle(ContentPadding, y, width - ContentPadding * 2, msgHeight);
+            y += msgHeight + V(2);
+
+            var barRect = new Rectangle(ContentPadding, y, width - ContentPadding * 2, Math.Max(4, V(ProgressBarHeight)));
 
             // 배경
             using (var bgBrush = new SolidBrush(_progressBackColor))
@@ -422,17 +518,14 @@ namespace SemiconductorUi.Controls
                 g.DrawRectangle(borderPen, barRect);
             }
 
-            // 상태 메시지를 프로그레스바 위에 표시 (겹치지 않게)
+            // 상태 메시지를 프로그레스바 위에 표시 (우측 정렬)
             if (!string.IsNullOrWhiteSpace(_stepMessage))
             {
-                // 프로그레스바 위쪽에 메시지 표시 (우측 정렬, 겹치지 않게 여유 공간 확보)
-                var msgY = y - 20; // 프로그레스바 위 20px (메시지 높이 고려)
-                var msgRect = new Rectangle(ContentPadding, msgY, width - ContentPadding * 2, 18);
                 TextRenderer.DrawText(g, _stepMessage, _stepMessageFont, msgRect, _valueColor,
                     TextFormatFlags.Right | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis);
             }
 
-            y += ProgressBarHeight;
+            y += barRect.Height;
         }
 
         private void DrawStepMessage(Graphics g, ref int y, int width)
@@ -454,10 +547,7 @@ namespace SemiconductorUi.Controls
         {
             if (disposing)
             {
-                _titleFont?.Dispose();
-                _labelFont?.Dispose();
-                _valueFont?.Dispose();
-                _stepMessageFont?.Dispose();
+                DisposeFonts();
             }
             base.Dispose(disposing);
         }
