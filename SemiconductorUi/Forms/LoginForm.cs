@@ -1,5 +1,6 @@
 using System;
 using System.Windows.Forms;
+using SemiconductorUi.Helpers;
 
 namespace SemiconductorUi.Forms
 {
@@ -8,6 +9,8 @@ namespace SemiconductorUi.Forms
         public LoginForm()
         {
             InitializeComponent();
+            LampButtonPainter.AttachPlain(buttonOk, primary: true);
+            LampButtonPainter.AttachPlain(buttonCancel);
         }
 
         public string EnteredUsername => textBoxUsername.Text.Trim();

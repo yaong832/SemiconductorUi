@@ -964,6 +964,9 @@ namespace SemiconductorUi
 
             // 상단 바 + 왼쪽 메뉴 틀 (기존 버튼을 자리만 옮김)
             BuildMainShell();
+
+            // 오른쪽 제어 패널 버튼을 창 크기에 맞춰 배치
+            HookControlPanelLayout();
             
             // GroupBox 테두리를 검은색으로 그리기 위한 Paint 이벤트 연결
             if (groupBoxControlButtons != null)
@@ -978,6 +981,9 @@ namespace SemiconductorUi
             {
                 groupBoxRecipe.Paint += paintEventHandlers.GroupBox_Paint;
             }
+
+            // 오른쪽 제어 패널: 램프 버튼과 연회색 판 (그리기만 바꿈)
+            ApplyLampPanelStyle();
             
             // 탭 버튼 클릭 이벤트 연결
             if (buttonTabMain != null)
@@ -1648,7 +1654,7 @@ namespace SemiconductorUi
             ChamberEnvSpecs["PMC"] = new ChamberController.ChamberEnvironmentSpec(pmcTempStr, pmcPressStr, pmcRhStr, pmcNotes, pmcTemp, pmcPress, pmcRh);
 
             InitializeEnvironmentTelemetry();
-            AddLogMessage($"환경 설정 적용: {recipeKey} (PMA {pmaTempStr}, PMB {pmbPressStr}, PMC {pmcTempStr})", "INFO");
+            AddLogMessage($"환경 설정 적용: {recipeKey} (Chamber A {pmaTempStr}, Chamber B {pmbPressStr}, Chamber C {pmcTempStr})", "INFO");
         }
 
         internal void SetWaferLoadState(MainFormViewModel.WaferLoadStateType newState, bool logChange = true, bool refreshUi = true)
@@ -2199,41 +2205,43 @@ namespace SemiconductorUi
                 hasWafer = foupBList.Any(w => w.Id == layer);
             }
             
-            // 패널 테두리 영역 (전체 패널 크기)
-            RectangleF panelRect = rect;
-            
-            // 웨이퍼와 패널 테두리 사이 간격 (FOUP에 장착된 느낌을 주기 위해)
-            float waferMargin = 2f; // 좌우상하 여백 2px
-            
-            // 웨이퍼 영역 (패널 테두리보다 약간 작게)
-            RectangleF waferRect = new RectangleF(
-                panelRect.X + waferMargin,
-                panelRect.Y + waferMargin,
-                panelRect.Width - waferMargin * 2,
-                panelRect.Height - waferMargin * 2
-            );
-            
-            // 배경 그리기
-            using (var bgBrush = new SolidBrush(trackPanel.BackColor))
+            // 슬롯 한 칸: 램프 + "슬롯 n" + 상태 글자 (밝은 표시창)
+            bool mounted = FoupAQueue != null ? IsFoupAMounted : IsFoupBMounted;
+            g.Clear(trackPanel.Parent?.BackColor ?? AppSettings.BorderColor);
+
+            var slotRect = new Rectangle(0, 0, rect.Width - 1, rect.Height - 1);
+            Color back = !mounted ? UiTheme.SurfaceAlt : hasWafer ? Color.FromArgb(232, 239, 250) : UiTheme.Surface;
+            Color border = hasWafer && mounted ? Color.FromArgb(160, 186, 230) : UiTheme.Border;
+            using (var path = ShellDraw.RoundedRect(slotRect, 4))
             {
-                g.FillRectangle(bgBrush, panelRect);
-            }
-            
-            // 웨이퍼가 있으면 표시 (실제 웨이퍼처럼 좌우로 길고 상하로 얇게)
-            if (hasWafer)
-            {
-                using (var waferBrush = new SolidBrush(AppSettings.WaferBrushColor))
-                using (var waferPen = new Pen(AppSettings.WaferPenColor, 1f))
+                using (var brush = new SolidBrush(back))
                 {
-                    g.FillRectangle(waferBrush, waferRect);
-                    g.DrawRectangle(waferPen, waferRect.X, waferRect.Y, waferRect.Width, waferRect.Height);
+                    g.FillPath(brush, path);
+                }
+                using (var pen = new Pen(border) { DashStyle = mounted ? System.Drawing.Drawing2D.DashStyle.Solid : System.Drawing.Drawing2D.DashStyle.Dash })
+                {
+                    g.DrawPath(pen, path);
                 }
             }
-            
-            // 슬롯 테두리: 패널 크기에 맞춰 그리기
-            using (var borderPen = new Pen(AppSettings.BorderColor, 1f))
+
+            if (rect.Height < 12)
             {
-                g.DrawRectangle(borderPen, panelRect.X, panelRect.Y, panelRect.Width, panelRect.Height);
+                return;
+            }
+
+            float lampSize = Math.Max(6f, Math.Min(10f, rect.Height * 0.4f));
+            var lampRect = new RectangleF(8, (rect.Height - lampSize) / 2f, lampSize, lampSize);
+            LampButtonPainter.DrawLamp(g, lampRect, mounted && hasWafer ? LampTone.Blue : LampTone.Off);
+
+            using (var font = new Font("Segoe UI", Math.Min(13f, rect.Height * 0.48f), FontStyle.Bold, GraphicsUnit.Pixel))
+            {
+                var textRect = new Rectangle((int)lampRect.Right + 6, 0, rect.Width - (int)lampRect.Right - 14, rect.Height);
+                TextRenderer.DrawText(g, "슬롯 " + layer, font, textRect, mounted ? UiTheme.TextSecondary : Color.FromArgb(160, 168, 180),
+                    TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding | TextFormatFlags.SingleLine);
+                string state = !mounted ? "미장착" : hasWafer ? "웨이퍼" : "비어 있음";
+                Color stateColor = !mounted ? Color.FromArgb(160, 168, 180) : hasWafer ? UiTheme.Primary : UiTheme.TextSecondary;
+                TextRenderer.DrawText(g, state, font, textRect, stateColor,
+                    TextFormatFlags.Right | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding | TextFormatFlags.SingleLine);
             }
         }
 
@@ -2287,7 +2295,7 @@ namespace SemiconductorUi
 
             using (var detailForm = new EquipmentDetailForm())
             {
-                detailForm.SetDetail(unitKey, status, description);
+                detailForm.SetDetail(EquipmentRegionHelper.FormatUnitLabel(unitKey), status, description);
                 detailForm.ShowDialog(this);
             }
         }
@@ -2302,7 +2310,7 @@ namespace SemiconductorUi
             using (var detailForm = new PmDetailForm())
             {
                 detailForm.SetDetail(
-                    unitKey,
+                    EquipmentRegionHelper.FormatUnitLabel(unitKey),
                     detail.StatusText,
                     detail.RecipeName,
                     detail.StepName,
@@ -2407,11 +2415,11 @@ namespace SemiconductorUi
                 case "TM":
                     return $"{processInfo}{Environment.NewLine}TM은 웨이퍼를 각 챔버로 이송하는 로봇입니다.";
                 case "PMA":
-                    return $"{processInfo}{Environment.NewLine}Chamber A(PMA)는 전처리 공정을 담당합니다.";
+                    return $"{processInfo}{Environment.NewLine}Chamber A는 전처리 공정을 담당합니다.";
                 case "PMB":
-                    return $"{processInfo}{Environment.NewLine}Chamber B(PMB)는 메인 공정을 수행합니다.";
+                    return $"{processInfo}{Environment.NewLine}Chamber B는 메인 공정을 수행합니다.";
                 case "PMC":
-                    return $"{processInfo}{Environment.NewLine}Chamber C(PMC)는 후처리 혹은 모니터링 용도로 사용됩니다.";
+                    return $"{processInfo}{Environment.NewLine}Chamber C는 후처리 혹은 모니터링 용도로 사용됩니다.";
                 case "FOUP A":
                     return $"{labelFoupAStatusHeadline.Text}{Environment.NewLine}"
                         + $"Path: {labelFoupAPathValue.Text}{Environment.NewLine}"
@@ -3198,7 +3206,7 @@ namespace SemiconductorUi
                         chamber.StatusText = "Transfer Ready";
                         chamber.ProcessingAccumulator = 0;
                         chamber.LastProcessedTime = DateTime.MinValue;
-                        AddLogMessage($"{chamber.UnitKey} 공정 완료 - TM 대기 중 (도어 닫힘 유지) (웨이퍼#{chamber.CurrentWafer?.Id})", "INFO");
+                        AddLogMessage($"{EquipmentRegionHelper.FormatUnitLabel(chamber.UnitKey)} 공정 완료 - TM 대기 중 (도어 닫힘 유지) (웨이퍼#{chamber.CurrentWafer?.Id})", "INFO");
                         break;
                     }
                 }
@@ -3216,7 +3224,7 @@ namespace SemiconductorUi
                     {
                         chamber.StatusText = "Transfer Ready";
                         chamber.ProcessingAccumulator = 0;
-                        AddLogMessage($"{chamber.UnitKey} 공정 완료 - TM 대기 중 (도어 닫힘 유지) (웨이퍼#{chamber.CurrentWafer?.Id})", "INFO");
+                        AddLogMessage($"{EquipmentRegionHelper.FormatUnitLabel(chamber.UnitKey)} 공정 완료 - TM 대기 중 (도어 닫힘 유지) (웨이퍼#{chamber.CurrentWafer?.Id})", "INFO");
                         break;
                     }
                 }
@@ -5494,12 +5502,12 @@ namespace SemiconductorUi
                         : (diffPress > 15.0);
                     if (failPress)
                     {
-                        failed.Add($"{unit} 압력 인터락 실패");
+                        failed.Add($"{EquipmentRegionHelper.FormatUnitLabel(unit)} 압력 인터락 실패");
                     }
                     var diffTemp = Math.Abs(live.TemperatureC - spec.TargetTemperatureC);
                     if (diffTemp > 10.0) // 온도 이탈 과대 시 실패
                     {
-                        failed.Add($"{unit} 온도 인터락 실패");
+                        failed.Add($"{EquipmentRegionHelper.FormatUnitLabel(unit)} 온도 인터락 실패");
                     }
                 }
             }
@@ -5521,12 +5529,12 @@ namespace SemiconductorUi
                         ? (live.PressureTorr <= spec.TargetPressureTorr * 5.0)
                         : (Math.Abs(live.PressureTorr - spec.TargetPressureTorr) <= 15.0);
                     bool tempOk = Math.Abs(live.TemperatureC - spec.TargetTemperatureC) <= 10.0;
-                    items.Add(($"{unit} 압력 범위", pressOk));
-                    items.Add(($"{unit} 온도 범위", tempOk));
+                    items.Add(($"{EquipmentRegionHelper.FormatUnitLabel(unit)} 압력 범위", pressOk));
+                    items.Add(($"{EquipmentRegionHelper.FormatUnitLabel(unit)} 온도 범위", tempOk));
                 }
                 else
                 {
-                    items.Add(($"{unit} 환경 데이터 준비", false));
+                    items.Add(($"{EquipmentRegionHelper.FormatUnitLabel(unit)} 환경 데이터 준비", false));
                 }
             }
             return items.ToArray();
@@ -5539,7 +5547,7 @@ namespace SemiconductorUi
             if (TmPhase == TransferController.TmPhase.Idle && (currentFoupACount > 0 || currentFoupBCount > 0))
             {
                 var source = currentFoupACount > 0 ? "FOUP A" : "FOUP B";
-                var target = "PMA";
+                var target = "Chamber A";
                 AddLogMessage($"이송 계획 생성: {source} → {target} (데모)", "INFO");
             }
         }
@@ -5635,9 +5643,9 @@ namespace SemiconductorUi
         {
             // 데모: 문 개폐 시퀀스 로그만 기록
             AddLogMessage("Door Cycle Test 시작: A,B,C 순차 개폐", "INFO");
-            AddLogMessage("PMA Door Open → Close", "INFO");
-            AddLogMessage("PMB Door Open → Close", "INFO");
-            AddLogMessage("PMC Door Open → Close", "INFO");
+            AddLogMessage("Chamber A Door Open → Close", "INFO");
+            AddLogMessage("Chamber B Door Open → Close", "INFO");
+            AddLogMessage("Chamber C Door Open → Close", "INFO");
             AddLogMessage("Door Cycle Test 완료", "INFO");
         }
 
@@ -6230,7 +6238,8 @@ namespace SemiconductorUi
                 Padding = new Padding(0)
             };
 
-            // 부모 패널에 추가
+            // 부모 패널에 추가 (안쪽 여백을 없애 그림이 카드 전체를 쓰게 함)
+            parentPanel.Padding = new Padding(0);
             parentPanel.Controls.Add(panel);
             panel.BringToFront();
 
@@ -6410,7 +6419,7 @@ namespace SemiconductorUi
                 HasAlarm = true;
                 if (CurrentProcessState != ProcessState.Error)
                 {
-                    SetProcessState(ProcessState.Error, $"{unitKey} 환경 알람 발생");
+                    SetProcessState(ProcessState.Error, $"{EquipmentRegionHelper.FormatUnitLabel(unitKey)} 환경 알람 발생");
                 }
             }
             else

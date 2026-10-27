@@ -1,6 +1,7 @@
 using System;
 using System.Windows.Forms;
 using System.Drawing;
+using SemiconductorUi.Helpers;
 
 namespace SemiconductorUi.Forms
 {
@@ -27,6 +28,15 @@ namespace SemiconductorUi.Forms
 
 		private NumericUpDown gasNF3, gasO2, gasCF4, gasRF;
 
+		// 레이아웃 크기 (창은 크기 고정)
+		private const int EditorLeft = 20;
+		private const int CardTop = 176;
+		private const int CardWidth = 246;
+		private const int CardGap = 10;
+		private const int RowLabelX = 14;
+		private const int RowFieldX = 124;
+		private const int RowFieldWidth = 106;
+
 		protected override void Dispose(bool disposing)
 		{
 			if (disposing && (components != null))
@@ -39,311 +49,272 @@ namespace SemiconductorUi.Forms
 		private void InitializeComponent()
 		{
 			this.components = new System.ComponentModel.Container();
-			this.Text = "Recipe Manager";
+			this.Text = "레시피 관리";
 			this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
 			this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
 			this.MaximizeBox = false;
 			this.MinimizeBox = false;
-			this.ClientSize = new System.Drawing.Size(1180, 740);
-			this.MinimumSize = new System.Drawing.Size(1100, 700);
-			this.BackColor = System.Drawing.Color.FromArgb(250, 250, 255);
+			this.ClientSize = new System.Drawing.Size(1180, 700);
+			this.BackColor = UiTheme.Surface;
+			this.ForeColor = UiTheme.TextPrimary;
+			this.Font = new System.Drawing.Font("Segoe UI", 10F);
 
 			this.splitContainer1 = new System.Windows.Forms.SplitContainer();
 			this.listRecipes = new System.Windows.Forms.ListBox();
-			var pnlLeftBottom = new System.Windows.Forms.FlowLayoutPanel();
 			this.btnNew = new System.Windows.Forms.Button();
 			this.btnSave = new System.Windows.Forms.Button();
 			this.btnDelete = new System.Windows.Forms.Button();
 			this.btnClose = new System.Windows.Forms.Button();
-
-			var pnlRight = new System.Windows.Forms.Panel();
-			var flRight = new System.Windows.Forms.FlowLayoutPanel();
-			var lblName = new System.Windows.Forms.Label();
 			this.txtName = new System.Windows.Forms.TextBox();
-			var lblWafer = new System.Windows.Forms.Label();
-			this.numWafer = new System.Windows.Forms.NumericUpDown();
-			var lblA = new System.Windows.Forms.Label();
-			this.numDurA = new System.Windows.Forms.NumericUpDown();
-			var lblB = new System.Windows.Forms.Label();
-			this.numDurB = new System.Windows.Forms.NumericUpDown();
-			var lblC = new System.Windows.Forms.Label();
-			this.numDurC = new System.Windows.Forms.NumericUpDown();
+			this.numWafer = NewNumber(1, 50);
+			this.numDurA = NewNumber(1, 600);
+			this.numDurB = NewNumber(1, 600);
+			this.numDurC = NewNumber(1, 600);
 			this.chkSecond = new System.Windows.Forms.CheckBox();
+			this.pmaT = NewNumber(0, 400); this.pmaP = NewNumber(0, 10000); this.pmaH = NewNumber(0, 100);
+			this.pmbT = NewNumber(0, 400); this.pmbP = NewNumber(0, 10000); this.pmbH = NewNumber(0, 100);
+			this.pmcT = NewNumber(0, 400); this.pmcP = NewNumber(0, 10000); this.pmcH = NewNumber(0, 100);
+			this.gasNF3 = NewNumber(0, 5000); this.gasO2 = NewNumber(0, 5000); this.gasCF4 = NewNumber(0, 5000); this.gasRF = NewNumber(0, 50000);
+			// Chamber B/C 가스는 이름으로 찾습니다 (FindGasControlsFor)
+			var gasB_NF3 = NewNumber(0, 5000, "gasB_NF3"); var gasB_O2 = NewNumber(0, 5000, "gasB_O2");
+			var gasB_CF4 = NewNumber(0, 5000, "gasB_CF4"); var gasB_RF = NewNumber(0, 50000, "gasB_RF");
+			var gasC_NF3 = NewNumber(0, 5000, "gasC_NF3"); var gasC_O2 = NewNumber(0, 5000, "gasC_O2");
+			var gasC_CF4 = NewNumber(0, 5000, "gasC_CF4"); var gasC_RF = NewNumber(0, 50000, "gasC_RF");
 
-			var grpPMA = new System.Windows.Forms.GroupBox();
-			var lblPmaT = new System.Windows.Forms.Label();
-			var lblPmaP = new System.Windows.Forms.Label();
-			var lblPmaH = new System.Windows.Forms.Label();
-			this.pmaT = new System.Windows.Forms.NumericUpDown();
-			this.pmaP = new System.Windows.Forms.NumericUpDown();
-			this.pmaH = new System.Windows.Forms.NumericUpDown();
-
-			var grpPMB = new System.Windows.Forms.GroupBox();
-			var lblPmbT = new System.Windows.Forms.Label();
-			var lblPmbP = new System.Windows.Forms.Label();
-			var lblPmbH = new System.Windows.Forms.Label();
-			this.pmbT = new System.Windows.Forms.NumericUpDown();
-			this.pmbP = new System.Windows.Forms.NumericUpDown();
-			this.pmbH = new System.Windows.Forms.NumericUpDown();
-
-			var grpPMC = new System.Windows.Forms.GroupBox();
-			var lblPmcT = new System.Windows.Forms.Label();
-			var lblPmcP = new System.Windows.Forms.Label();
-			var lblPmcH = new System.Windows.Forms.Label();
-			this.pmcT = new System.Windows.Forms.NumericUpDown();
-			this.pmcP = new System.Windows.Forms.NumericUpDown();
-			this.pmcH = new System.Windows.Forms.NumericUpDown();
-
-			var grpGas = new System.Windows.Forms.GroupBox();
-			var lblNF3 = new System.Windows.Forms.Label();
-			var lblO2 = new System.Windows.Forms.Label();
-			var lblCF4 = new System.Windows.Forms.Label();
-			var lblRF = new System.Windows.Forms.Label();
-			this.gasNF3 = new System.Windows.Forms.NumericUpDown();
-			this.gasO2 = new System.Windows.Forms.NumericUpDown();
-			this.gasCF4 = new System.Windows.Forms.NumericUpDown();
-			this.gasRF = new System.Windows.Forms.NumericUpDown();
-
-			var grpGasPMB = new System.Windows.Forms.GroupBox();
-			var lblB_NF3 = new System.Windows.Forms.Label();
-			var lblB_O2 = new System.Windows.Forms.Label();
-			var lblB_CF4 = new System.Windows.Forms.Label();
-			var lblB_RF = new System.Windows.Forms.Label();
-			var gasB_NF3 = new System.Windows.Forms.NumericUpDown();
-			var gasB_O2 = new System.Windows.Forms.NumericUpDown();
-			var gasB_CF4 = new System.Windows.Forms.NumericUpDown();
-			var gasB_RF = new System.Windows.Forms.NumericUpDown();
-
-			var grpGasPMC = new System.Windows.Forms.GroupBox();
-			var lblC_NF3 = new System.Windows.Forms.Label();
-			var lblC_O2 = new System.Windows.Forms.Label();
-			var lblC_CF4 = new System.Windows.Forms.Label();
-			var lblC_RF = new System.Windows.Forms.Label();
-			var gasC_NF3 = new System.Windows.Forms.NumericUpDown();
-			var gasC_O2 = new System.Windows.Forms.NumericUpDown();
-			var gasC_CF4 = new System.Windows.Forms.NumericUpDown();
-			var gasC_RF = new System.Windows.Forms.NumericUpDown();
-
-			// splitContainer
+			// splitContainer: 왼쪽 레시피 목록, 오른쪽 편집
 			this.splitContainer1.Dock = System.Windows.Forms.DockStyle.Fill;
-			this.splitContainer1.BackColor = this.BackColor;
+			this.splitContainer1.BackColor = UiTheme.Border;
 			this.splitContainer1.Orientation = System.Windows.Forms.Orientation.Vertical;
 			// 최소값 완화(초기 폭 0 시에도 예외 방지)
 			this.splitContainer1.Panel1MinSize = 0;
 			this.splitContainer1.Panel2MinSize = 0;
 			// 초기 분할 거리 0으로 설정(Load 이후 보정)
 			this.splitContainer1.SplitterDistance = 0;
+			this.splitContainer1.Panel1.BackColor = UiTheme.SurfaceAlt;
+			this.splitContainer1.Panel1.Padding = new System.Windows.Forms.Padding(16, 0, 16, 0);
+			this.splitContainer1.Panel2.BackColor = UiTheme.Surface;
 
-			// left list
+			// 왼쪽: 제목, 목록, 신규/삭제
+			var lblListTitle = NewTitle("레시피 목록");
+			lblListTitle.Dock = System.Windows.Forms.DockStyle.Top;
+			lblListTitle.Height = 52;
+			lblListTitle.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+
+			var listHost = new System.Windows.Forms.Panel();
+			listHost.Dock = System.Windows.Forms.DockStyle.Fill;
+			listHost.BackColor = UiTheme.Border;
+			listHost.Padding = new System.Windows.Forms.Padding(1);
+
 			this.listRecipes.Dock = System.Windows.Forms.DockStyle.Fill;
-			this.listRecipes.Font = new System.Drawing.Font("Segoe UI", 10F);
-			this.listRecipes.BackColor = System.Drawing.Color.FromArgb(240, 240, 245);
-			this.listRecipes.ForeColor = System.Drawing.Color.FromArgb(40, 40, 40);
+			this.listRecipes.BorderStyle = System.Windows.Forms.BorderStyle.None;
+			this.listRecipes.BackColor = UiTheme.Surface;
+			this.listRecipes.ForeColor = UiTheme.TextPrimary;
+			this.listRecipes.DrawMode = System.Windows.Forms.DrawMode.OwnerDrawFixed;
+			this.listRecipes.ItemHeight = 50;
+			this.listRecipes.IntegralHeight = false;
+			this.listRecipes.DrawItem += new System.Windows.Forms.DrawItemEventHandler(this.listRecipes_DrawItem);
 			this.listRecipes.SelectedIndexChanged += new System.EventHandler(this.listRecipes_SelectedIndexChanged);
+			listHost.Controls.Add(this.listRecipes);
 
-			// left bottom panel
+			var pnlLeftBottom = new System.Windows.Forms.TableLayoutPanel();
 			pnlLeftBottom.Dock = System.Windows.Forms.DockStyle.Bottom;
-			pnlLeftBottom.Height = 48;
-			pnlLeftBottom.FlowDirection = System.Windows.Forms.FlowDirection.LeftToRight;
-			pnlLeftBottom.Padding = new System.Windows.Forms.Padding(8);
+			pnlLeftBottom.Height = 68;
+			pnlLeftBottom.ColumnCount = 2;
+			pnlLeftBottom.RowCount = 1;
+			pnlLeftBottom.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
+			pnlLeftBottom.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
+			pnlLeftBottom.Padding = new System.Windows.Forms.Padding(0, 12, 0, 12);
 
 			this.btnNew.Text = "신규";
-			this.btnNew.Width = 80; this.btnNew.Height = 28;
-			this.btnNew.BackColor = System.Drawing.Color.FromArgb(33, 150, 243);
-			this.btnNew.FlatStyle = System.Windows.Forms.FlatStyle.Flat; this.btnNew.FlatAppearance.BorderSize = 0;
-			this.btnNew.ForeColor = System.Drawing.Color.FromArgb(40, 40, 40);
-			this.btnNew.BackColor = System.Drawing.Color.FromArgb(100, 120, 130);
+			this.btnNew.Dock = System.Windows.Forms.DockStyle.Fill;
+			this.btnNew.Margin = new System.Windows.Forms.Padding(0, 0, 5, 0);
 			this.btnNew.Click += new System.EventHandler(this.btnNew_Click);
 
-			this.btnSave.Text = "저장/수정";
-			this.btnSave.Width = 90; this.btnSave.Height = 28;
-			this.btnSave.BackColor = System.Drawing.Color.FromArgb(46, 125, 50);
-			this.btnSave.FlatStyle = System.Windows.Forms.FlatStyle.Flat; this.btnSave.FlatAppearance.BorderSize = 0;
-			this.btnSave.ForeColor = System.Drawing.Color.FromArgb(40, 40, 40);
-			this.btnSave.BackColor = System.Drawing.Color.FromArgb(100, 120, 130);
-			this.btnSave.Click += new System.EventHandler(this.btnSave_Click);
-
 			this.btnDelete.Text = "삭제";
-			this.btnDelete.Width = 80; this.btnDelete.Height = 28;
-			this.btnDelete.BackColor = System.Drawing.Color.FromArgb(198, 40, 40);
-			this.btnDelete.FlatStyle = System.Windows.Forms.FlatStyle.Flat; this.btnDelete.FlatAppearance.BorderSize = 0;
-			this.btnDelete.ForeColor = System.Drawing.Color.FromArgb(40, 40, 40);
-			this.btnDelete.BackColor = System.Drawing.Color.FromArgb(100, 120, 130);
+			this.btnDelete.Dock = System.Windows.Forms.DockStyle.Fill;
+			this.btnDelete.Margin = new System.Windows.Forms.Padding(5, 0, 0, 0);
 			this.btnDelete.Click += new System.EventHandler(this.btnDelete_Click);
 
+			pnlLeftBottom.Controls.Add(this.btnNew, 0, 0);
+			pnlLeftBottom.Controls.Add(this.btnDelete, 1, 0);
+
+			this.splitContainer1.Panel1.Controls.Add(listHost);
+			this.splitContainer1.Panel1.Controls.Add(pnlLeftBottom);
+			this.splitContainer1.Panel1.Controls.Add(lblListTitle);
+
+			// 오른쪽: 편집 영역 + 아래 저장/닫기
+			var pnlEditor = new System.Windows.Forms.Panel();
+			pnlEditor.Dock = System.Windows.Forms.DockStyle.Fill;
+			pnlEditor.BackColor = UiTheme.Surface;
+			pnlEditor.AutoScroll = true;
+
+			var lblEditorTitle = NewTitle("레시피 편집");
+			lblEditorTitle.Location = new System.Drawing.Point(EditorLeft, 16);
+			lblEditorTitle.AutoSize = true;
+			pnlEditor.Controls.Add(lblEditorTitle);
+
+			// 기본 정보
+			var grpBasic = NewPlate("기본 정보", EditorLeft, 56, CardWidth * 3 + CardGap * 2, 104);
+			var lblName = NewLabel("레시피 이름", 16, 38);
+			this.txtName.Location = new System.Drawing.Point(116, 34);
+			this.txtName.Width = 330;
+			this.txtName.BackColor = UiTheme.Surface;
+			this.txtName.ForeColor = UiTheme.TextPrimary;
+			this.txtName.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+			var lblWafer = NewLabel("웨이퍼 수 (장)", 478, 38);
+			this.numWafer.Location = new System.Drawing.Point(600, 34);
+			this.numWafer.Width = 90;
+			this.chkSecond.Text = "2차 노광 사용";
+			this.chkSecond.AutoSize = true;
+			this.chkSecond.ForeColor = UiTheme.TextPrimary;
+			this.chkSecond.BackColor = LampButtonPainter.PlateBack;
+			this.chkSecond.Location = new System.Drawing.Point(16, 70);
+			grpBasic.Controls.Add(lblName);
+			grpBasic.Controls.Add(this.txtName);
+			grpBasic.Controls.Add(lblWafer);
+			grpBasic.Controls.Add(this.numWafer);
+			grpBasic.Controls.Add(this.chkSecond);
+			pnlEditor.Controls.Add(grpBasic);
+
+			// Chamber 카드: 공정 시간, 환경, 가스·RF (변수 이름은 저장 키 PMA/PMB/PMC를 따릅니다)
+			pnlEditor.Controls.Add(NewChamberCard("Chamber A", 0, this.numDurA, this.pmaT, this.pmaP, this.pmaH, this.gasNF3, this.gasO2, this.gasCF4, this.gasRF));
+			pnlEditor.Controls.Add(NewChamberCard("Chamber B", 1, this.numDurB, this.pmbT, this.pmbP, this.pmbH, gasB_NF3, gasB_O2, gasB_CF4, gasB_RF));
+			pnlEditor.Controls.Add(NewChamberCard("Chamber C", 2, this.numDurC, this.pmcT, this.pmcP, this.pmcH, gasC_NF3, gasC_O2, gasC_CF4, gasC_RF));
+
+			var pnlActions = new System.Windows.Forms.Panel();
+			pnlActions.Dock = System.Windows.Forms.DockStyle.Bottom;
+			pnlActions.Height = 68;
+			pnlActions.BackColor = UiTheme.Surface;
+			pnlActions.Paint += (s, e) =>
+			{
+				using (var pen = new Pen(UiTheme.Border))
+				{
+					e.Graphics.DrawLine(pen, 0, 0, pnlActions.Width, 0);
+				}
+			};
+
+			this.btnSave.Text = "저장";
+			this.btnSave.Size = new System.Drawing.Size(140, 44);
+			this.btnSave.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
+			this.btnSave.Click += new System.EventHandler(this.btnSave_Click);
+
 			this.btnClose.Text = "닫기";
-			this.btnClose.Width = 80; this.btnClose.Height = 28;
-			this.btnClose.BackColor = System.Drawing.Color.FromArgb(120, 144, 156);
-			this.btnClose.FlatStyle = System.Windows.Forms.FlatStyle.Flat; this.btnClose.FlatAppearance.BorderSize = 0;
-			this.btnClose.ForeColor = System.Drawing.Color.FromArgb(40, 40, 40);
-			this.btnClose.BackColor = System.Drawing.Color.FromArgb(100, 120, 130);
+			this.btnClose.Size = new System.Drawing.Size(110, 44);
+			this.btnClose.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
 			this.btnClose.Click += new System.EventHandler(this.btnClose_Click);
 
-			pnlLeftBottom.Controls.Add(this.btnNew);
-			pnlLeftBottom.Controls.Add(this.btnSave);
-			pnlLeftBottom.Controls.Add(this.btnDelete);
-			pnlLeftBottom.Controls.Add(this.btnClose);
+			pnlActions.Controls.Add(this.btnSave);
+			pnlActions.Controls.Add(this.btnClose);
+			pnlActions.Layout += (s, e) =>
+			{
+				int right = EditorLeft + CardWidth * 3 + CardGap * 2;
+				this.btnSave.Location = new System.Drawing.Point(right - this.btnSave.Width, 12);
+				this.btnClose.Location = new System.Drawing.Point(this.btnSave.Left - 10 - this.btnClose.Width, 12);
+			};
 
-			this.splitContainer1.Panel1.Controls.Add(this.listRecipes);
-			this.splitContainer1.Panel1.Controls.Add(pnlLeftBottom);
+			this.splitContainer1.Panel2.Controls.Add(pnlEditor);
+			this.splitContainer1.Panel2.Controls.Add(pnlActions);
 
-			// right panel
-			pnlRight.Dock = System.Windows.Forms.DockStyle.Fill;
-			pnlRight.BackColor = this.BackColor;
-			pnlRight.Padding = new System.Windows.Forms.Padding(0);
+			foreach (var b in new[] { this.btnNew, this.btnDelete, this.btnClose })
+			{
+				b.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
+				LampButtonPainter.AttachPlain(b);
+			}
+			this.btnSave.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
+			LampButtonPainter.AttachPlain(this.btnSave, primary: true);
 
-			// right flow panel (auto layout)
-			flRight.Dock = System.Windows.Forms.DockStyle.Fill;
-			flRight.BackColor = this.BackColor;
-			flRight.AutoScroll = true;
-			flRight.AutoScrollMargin = new System.Drawing.Size(12, 12);
-			flRight.WrapContents = true;
-			flRight.FlowDirection = System.Windows.Forms.FlowDirection.LeftToRight;
-			flRight.Padding = new System.Windows.Forms.Padding(12);
-			flRight.Margin = new System.Windows.Forms.Padding(0);
-
-			int x1 = 20; int y = 20; int wLbl = 140; int gap = 32;
-
-			lblName.Text = "레시피 이름"; lblName.ForeColor = System.Drawing.Color.FromArgb(40, 40, 40); lblName.AutoSize = true; lblName.Location = new System.Drawing.Point(x1, y + 4);
-			this.txtName = new System.Windows.Forms.TextBox(); this.txtName.Width = 260; this.txtName.Location = new System.Drawing.Point(x1 + wLbl + 8, y); this.txtName.BackColor = System.Drawing.Color.FromArgb(240, 240, 245); this.txtName.ForeColor = System.Drawing.Color.FromArgb(40, 40, 40); this.txtName.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle; y += gap;
-
-			lblWafer.Text = "웨이퍼 수"; lblWafer.ForeColor = System.Drawing.Color.FromArgb(40, 40, 40); lblWafer.AutoSize = true; lblWafer.Location = new System.Drawing.Point(x1, y + 4);
-			this.numWafer = new System.Windows.Forms.NumericUpDown(); this.numWafer.Minimum = 1; this.numWafer.Maximum = 50; this.numWafer.Width = 120; this.numWafer.Location = new System.Drawing.Point(x1 + wLbl + 8, y); this.numWafer.BackColor = System.Drawing.Color.FromArgb(240, 240, 245); this.numWafer.ForeColor = System.Drawing.Color.FromArgb(40, 40, 40); this.numWafer.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-			y += gap;
-
-			lblA.Text = "Duration A (s)"; lblA.ForeColor = System.Drawing.Color.FromArgb(40, 40, 40); lblA.AutoSize = true; lblA.Location = new System.Drawing.Point(x1, y + 4);
-			this.numDurA = new System.Windows.Forms.NumericUpDown(); this.numDurA.Minimum = 1; this.numDurA.Maximum = 600; this.numDurA.Width = 120; this.numDurA.Location = new System.Drawing.Point(x1 + wLbl + 8, y); this.numDurA.BackColor = System.Drawing.Color.FromArgb(240, 240, 245); this.numDurA.ForeColor = System.Drawing.Color.FromArgb(40, 40, 40); this.numDurA.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle; y += gap;
-
-			lblB.Text = "Duration B (s)"; lblB.ForeColor = System.Drawing.Color.FromArgb(40, 40, 40); lblB.AutoSize = true; lblB.Location = new System.Drawing.Point(x1, y + 4);
-			this.numDurB = new System.Windows.Forms.NumericUpDown(); this.numDurB.Minimum = 1; this.numDurB.Maximum = 600; this.numDurB.Width = 120; this.numDurB.Location = new System.Drawing.Point(x1 + wLbl + 8, y); this.numDurB.BackColor = System.Drawing.Color.FromArgb(240, 240, 245); this.numDurB.ForeColor = System.Drawing.Color.FromArgb(40, 40, 40); this.numDurB.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle; y += gap;
-
-			lblC.Text = "Duration C (s)"; lblC.ForeColor = System.Drawing.Color.FromArgb(40, 40, 40); lblC.AutoSize = true; lblC.Location = new System.Drawing.Point(x1, y + 4);
-			this.numDurC = new System.Windows.Forms.NumericUpDown(); this.numDurC.Minimum = 1; this.numDurC.Maximum = 600; this.numDurC.Width = 120; this.numDurC.Location = new System.Drawing.Point(x1 + wLbl + 8, y); this.numDurC.BackColor = System.Drawing.Color.FromArgb(240, 240, 245); this.numDurC.ForeColor = System.Drawing.Color.FromArgb(40, 40, 40); this.numDurC.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle; y += gap;
-
-			this.chkSecond.Text = "2차 노광 사용"; this.chkSecond.ForeColor = System.Drawing.Color.FromArgb(40, 40, 40); this.chkSecond.AutoSize = true; this.chkSecond.Location = new System.Drawing.Point(x1, y); y += gap;
-
-			// PMA
-			grpPMA.Text = "PMA"; grpPMA.ForeColor = System.Drawing.Color.FromArgb(40, 40, 40); grpPMA.BackColor = System.Drawing.Color.FromArgb(240, 240, 245); grpPMA.Size = new System.Drawing.Size(360, 150);
-			grpPMA.Margin = new System.Windows.Forms.Padding(8, 6, 8, 6);
-			lblPmaT.Text = "Temp(°C)"; lblPmaT.ForeColor = System.Drawing.Color.FromArgb(40, 40, 40); lblPmaT.AutoSize = true; lblPmaT.Location = new System.Drawing.Point(12, 24);
-			this.pmaT.Minimum = 0; this.pmaT.Maximum = 400; this.pmaT.Location = new System.Drawing.Point(120, 22); this.pmaT.Width = 100; this.pmaT.BackColor = System.Drawing.Color.FromArgb(240, 240, 245); this.pmaT.ForeColor = System.Drawing.Color.FromArgb(40, 40, 40); this.pmaT.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-			lblPmaP.Text = "Press(Torr)"; lblPmaP.ForeColor = System.Drawing.Color.FromArgb(40, 40, 40); lblPmaP.AutoSize = true; lblPmaP.Location = new System.Drawing.Point(12, 54);
-			this.pmaP.Minimum = 0; this.pmaP.Maximum = 10000; this.pmaP.Location = new System.Drawing.Point(120, 52); this.pmaP.Width = 100; this.pmaP.BackColor = System.Drawing.Color.FromArgb(240, 240, 245); this.pmaP.ForeColor = System.Drawing.Color.FromArgb(40, 40, 40); this.pmaP.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-			lblPmaH.Text = "Hum(%)"; lblPmaH.ForeColor = System.Drawing.Color.FromArgb(40, 40, 40); lblPmaH.AutoSize = true; lblPmaH.Location = new System.Drawing.Point(12, 84);
-			this.pmaH.Minimum = 0; this.pmaH.Maximum = 100; this.pmaH.Location = new System.Drawing.Point(120, 82); this.pmaH.Width = 100; this.pmaH.BackColor = System.Drawing.Color.FromArgb(240, 240, 245); this.pmaH.ForeColor = System.Drawing.Color.FromArgb(40, 40, 40); this.pmaH.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-			grpPMA.Controls.Add(lblPmaT); grpPMA.Controls.Add(this.pmaT); grpPMA.Controls.Add(lblPmaP); grpPMA.Controls.Add(this.pmaP); grpPMA.Controls.Add(lblPmaH); grpPMA.Controls.Add(this.pmaH);
-
-			// PMB
-			grpPMB.Text = "PMB"; grpPMB.ForeColor = System.Drawing.Color.FromArgb(40, 40, 40); grpPMB.BackColor = System.Drawing.Color.FromArgb(240, 240, 245); grpPMB.Size = new System.Drawing.Size(360, 150);
-			grpPMB.Margin = new System.Windows.Forms.Padding(8, 6, 8, 6);
-			lblPmbT.Text = "Temp(°C)"; lblPmbT.ForeColor = System.Drawing.Color.FromArgb(40, 40, 40); lblPmbT.AutoSize = true; lblPmbT.Location = new System.Drawing.Point(12, 24);
-			this.pmbT.Minimum = 0; this.pmbT.Maximum = 400; this.pmbT.Location = new System.Drawing.Point(120, 22); this.pmbT.Width = 100; this.pmbT.BackColor = System.Drawing.Color.FromArgb(240, 240, 245); this.pmbT.ForeColor = System.Drawing.Color.FromArgb(40, 40, 40); this.pmbT.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-			lblPmbP.Text = "Press(Torr)"; lblPmbP.ForeColor = System.Drawing.Color.FromArgb(40, 40, 40); lblPmbP.AutoSize = true; lblPmbP.Location = new System.Drawing.Point(12, 54);
-			this.pmbP.Minimum = 0; this.pmbP.Maximum = 10000; this.pmbP.Location = new System.Drawing.Point(120, 52); this.pmbP.Width = 100; this.pmbP.BackColor = System.Drawing.Color.FromArgb(240, 240, 245); this.pmbP.ForeColor = System.Drawing.Color.FromArgb(40, 40, 40); this.pmbP.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-			lblPmbH.Text = "Hum(%)"; lblPmbH.ForeColor = System.Drawing.Color.FromArgb(40, 40, 40); lblPmbH.AutoSize = true; lblPmbH.Location = new System.Drawing.Point(12, 84);
-			this.pmbH.Minimum = 0; this.pmbH.Maximum = 100; this.pmbH.Location = new System.Drawing.Point(120, 82); this.pmbH.Width = 100; this.pmbH.BackColor = System.Drawing.Color.FromArgb(240, 240, 245); this.pmbH.ForeColor = System.Drawing.Color.FromArgb(40, 40, 40); this.pmbH.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-			grpPMB.Controls.Add(lblPmbT); grpPMB.Controls.Add(this.pmbT); grpPMB.Controls.Add(lblPmbP); grpPMB.Controls.Add(this.pmbP); grpPMB.Controls.Add(lblPmbH); grpPMB.Controls.Add(this.pmbH);
-
-			// PMC
-			grpPMC.Text = "PMC"; grpPMC.ForeColor = System.Drawing.Color.FromArgb(40, 40, 40); grpPMC.BackColor = System.Drawing.Color.FromArgb(240, 240, 245); grpPMC.Size = new System.Drawing.Size(360, 150);
-			grpPMC.Margin = new System.Windows.Forms.Padding(8, 6, 8, 6);
-			lblPmcT.Text = "Temp(°C)"; lblPmcT.ForeColor = System.Drawing.Color.FromArgb(40, 40, 40); lblPmcT.AutoSize = true; lblPmcT.Location = new System.Drawing.Point(12, 24);
-			this.pmcT.Minimum = 0; this.pmcT.Maximum = 400; this.pmcT.Location = new System.Drawing.Point(120, 22); this.pmcT.Width = 100; this.pmcT.BackColor = System.Drawing.Color.FromArgb(240, 240, 245); this.pmcT.ForeColor = System.Drawing.Color.FromArgb(40, 40, 40); this.pmcT.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-			lblPmcP.Text = "Press(Torr)"; lblPmcP.ForeColor = System.Drawing.Color.FromArgb(40, 40, 40); lblPmcP.AutoSize = true; lblPmcP.Location = new System.Drawing.Point(12, 54);
-			this.pmcP.Minimum = 0; this.pmcP.Maximum = 10000; this.pmcP.Location = new System.Drawing.Point(120, 52); this.pmcP.Width = 100; this.pmcP.BackColor = System.Drawing.Color.FromArgb(240, 240, 245); this.pmcP.ForeColor = System.Drawing.Color.FromArgb(40, 40, 40); this.pmcP.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-			lblPmcH.Text = "Hum(%)"; lblPmcH.ForeColor = System.Drawing.Color.FromArgb(40, 40, 40); lblPmcH.AutoSize = true; lblPmcH.Location = new System.Drawing.Point(12, 84);
-			this.pmcH.Minimum = 0; this.pmcH.Maximum = 100; this.pmcH.Location = new System.Drawing.Point(120, 82); this.pmcH.Width = 100; this.pmcH.BackColor = System.Drawing.Color.FromArgb(240, 240, 245); this.pmcH.ForeColor = System.Drawing.Color.FromArgb(40, 40, 40); this.pmcH.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-			grpPMC.Controls.Add(lblPmcT); grpPMC.Controls.Add(this.pmcT); grpPMC.Controls.Add(lblPmcP); grpPMC.Controls.Add(this.pmcP); grpPMC.Controls.Add(lblPmcH); grpPMC.Controls.Add(this.pmcH);
-
-			// Gas group PMA
-			grpGas.Text = "PMA Gas/RF"; grpGas.ForeColor = System.Drawing.Color.FromArgb(40, 40, 40); grpGas.BackColor = System.Drawing.Color.FromArgb(240, 240, 245); grpGas.Size = new System.Drawing.Size(360, 160);
-			grpGas.Margin = new System.Windows.Forms.Padding(8, 6, 8, 6);
-			lblNF3.Text = "NF3"; lblNF3.ForeColor = System.Drawing.Color.FromArgb(40, 40, 40); lblNF3.AutoSize = true; lblNF3.Location = new System.Drawing.Point(12, 28);
-			this.gasNF3.Minimum = 0; this.gasNF3.Maximum = 5000; this.gasNF3.Width = 120; this.gasNF3.Location = new System.Drawing.Point(60, 26); this.gasNF3.BackColor = System.Drawing.Color.FromArgb(240, 240, 245); this.gasNF3.ForeColor = System.Drawing.Color.FromArgb(40, 40, 40); this.gasNF3.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-			lblO2.Text = "O2"; lblO2.ForeColor = System.Drawing.Color.FromArgb(40, 40, 40); lblO2.AutoSize = true; lblO2.Location = new System.Drawing.Point(200, 28);
-			this.gasO2.Minimum = 0; this.gasO2.Maximum = 5000; this.gasO2.Width = 120; this.gasO2.Location = new System.Drawing.Point(230, 26); this.gasO2.BackColor = System.Drawing.Color.FromArgb(240, 240, 245); this.gasO2.ForeColor = System.Drawing.Color.FromArgb(40, 40, 40); this.gasO2.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-			lblCF4.Text = "CF4"; lblCF4.ForeColor = System.Drawing.Color.FromArgb(40, 40, 40); lblCF4.AutoSize = true; lblCF4.Location = new System.Drawing.Point(12, 78);
-			this.gasCF4.Minimum = 0; this.gasCF4.Maximum = 5000; this.gasCF4.Width = 120; this.gasCF4.Location = new System.Drawing.Point(60, 76); this.gasCF4.BackColor = System.Drawing.Color.FromArgb(240, 240, 245); this.gasCF4.ForeColor = System.Drawing.Color.FromArgb(40, 40, 40); this.gasCF4.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-			lblRF.Text = "RF"; lblRF.ForeColor = System.Drawing.Color.FromArgb(40, 40, 40); lblRF.AutoSize = true; lblRF.Location = new System.Drawing.Point(200, 78);
-			this.gasRF.Minimum = 0; this.gasRF.Maximum = 50000; this.gasRF.Width = 120; this.gasRF.Location = new System.Drawing.Point(230, 76); this.gasRF.BackColor = System.Drawing.Color.FromArgb(240, 240, 245); this.gasRF.ForeColor = System.Drawing.Color.FromArgb(40, 40, 40); this.gasRF.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-			grpGas.Controls.Add(lblNF3); grpGas.Controls.Add(this.gasNF3); grpGas.Controls.Add(lblO2); grpGas.Controls.Add(this.gasO2); grpGas.Controls.Add(lblCF4); grpGas.Controls.Add(this.gasCF4); grpGas.Controls.Add(lblRF); grpGas.Controls.Add(this.gasRF);
-
-			// Gas group PMB
-			grpGasPMB.Text = "PMB Gas/RF"; grpGasPMB.ForeColor = System.Drawing.Color.FromArgb(40, 40, 40); grpGasPMB.BackColor = System.Drawing.Color.FromArgb(240, 240, 245); grpGasPMB.Size = new System.Drawing.Size(360, 160);
-			grpGasPMB.Margin = new System.Windows.Forms.Padding(8, 6, 8, 6);
-			lblB_NF3.Text = "NF3"; lblB_NF3.ForeColor = System.Drawing.Color.FromArgb(40, 40, 40); lblB_NF3.AutoSize = true; lblB_NF3.Location = new System.Drawing.Point(12, 28);
-			gasB_NF3.Minimum = 0; gasB_NF3.Maximum = 5000; gasB_NF3.Width = 120; gasB_NF3.Location = new System.Drawing.Point(60, 26); gasB_NF3.BackColor = System.Drawing.Color.FromArgb(240, 240, 245); gasB_NF3.ForeColor = System.Drawing.Color.FromArgb(40, 40, 40); gasB_NF3.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle; gasB_NF3.Name = "gasB_NF3";
-			lblB_O2.Text = "O2"; lblB_O2.ForeColor = System.Drawing.Color.FromArgb(40, 40, 40); lblB_O2.AutoSize = true; lblB_O2.Location = new System.Drawing.Point(200, 28);
-			gasB_O2.Minimum = 0; gasB_O2.Maximum = 5000; gasB_O2.Width = 120; gasB_O2.Location = new System.Drawing.Point(230, 26); gasB_O2.BackColor = System.Drawing.Color.FromArgb(240, 240, 245); gasB_O2.ForeColor = System.Drawing.Color.FromArgb(40, 40, 40); gasB_O2.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle; gasB_O2.Name = "gasB_O2";
-			lblB_CF4.Text = "CF4"; lblB_CF4.ForeColor = System.Drawing.Color.FromArgb(40, 40, 40); lblB_CF4.AutoSize = true; lblB_CF4.Location = new System.Drawing.Point(12, 78);
-			gasB_CF4.Minimum = 0; gasB_CF4.Maximum = 5000; gasB_CF4.Width = 120; gasB_CF4.Location = new System.Drawing.Point(60, 76); gasB_CF4.BackColor = System.Drawing.Color.FromArgb(240, 240, 245); gasB_CF4.ForeColor = System.Drawing.Color.FromArgb(40, 40, 40); gasB_CF4.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle; gasB_CF4.Name = "gasB_CF4";
-			lblB_RF.Text = "RF"; lblB_RF.ForeColor = System.Drawing.Color.FromArgb(40, 40, 40); lblB_RF.AutoSize = true; lblB_RF.Location = new System.Drawing.Point(200, 78);
-			gasB_RF.Minimum = 0; gasB_RF.Maximum = 50000; gasB_RF.Width = 120; gasB_RF.Location = new System.Drawing.Point(230, 76); gasB_RF.BackColor = System.Drawing.Color.FromArgb(240, 240, 245); gasB_RF.ForeColor = System.Drawing.Color.FromArgb(40, 40, 40); gasB_RF.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle; gasB_RF.Name = "gasB_RF";
-			grpGasPMB.Controls.Add(lblB_NF3); grpGasPMB.Controls.Add(gasB_NF3); grpGasPMB.Controls.Add(lblB_O2); grpGasPMB.Controls.Add(gasB_O2); grpGasPMB.Controls.Add(lblB_CF4); grpGasPMB.Controls.Add(gasB_CF4); grpGasPMB.Controls.Add(lblB_RF); grpGasPMB.Controls.Add(gasB_RF);
-
-			// Gas group PMC
-			grpGasPMC.Text = "PMC Gas/RF"; grpGasPMC.ForeColor = System.Drawing.Color.FromArgb(40, 40, 40); grpGasPMC.BackColor = System.Drawing.Color.FromArgb(240, 240, 245); grpGasPMC.Size = new System.Drawing.Size(360, 160);
-			grpGasPMC.Margin = new System.Windows.Forms.Padding(8, 6, 8, 6);
-			lblC_NF3.Text = "NF3"; lblC_NF3.ForeColor = System.Drawing.Color.FromArgb(40, 40, 40); lblC_NF3.AutoSize = true; lblC_NF3.Location = new System.Drawing.Point(12, 28);
-			gasC_NF3.Minimum = 0; gasC_NF3.Maximum = 5000; gasC_NF3.Width = 120; gasC_NF3.Location = new System.Drawing.Point(60, 26); gasC_NF3.BackColor = System.Drawing.Color.FromArgb(240, 240, 245); gasC_NF3.ForeColor = System.Drawing.Color.FromArgb(40, 40, 40); gasC_NF3.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle; gasC_NF3.Name = "gasC_NF3";
-			lblC_O2.Text = "O2"; lblC_O2.ForeColor = System.Drawing.Color.FromArgb(40, 40, 40); lblC_O2.AutoSize = true; lblC_O2.Location = new System.Drawing.Point(200, 28);
-			gasC_O2.Minimum = 0; gasC_O2.Maximum = 5000; gasC_O2.Width = 120; gasC_O2.Location = new System.Drawing.Point(230, 26); gasC_O2.BackColor = System.Drawing.Color.FromArgb(240, 240, 245); gasC_O2.ForeColor = System.Drawing.Color.FromArgb(40, 40, 40); gasC_O2.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle; gasC_O2.Name = "gasC_O2";
-			lblC_CF4.Text = "CF4"; lblC_CF4.ForeColor = System.Drawing.Color.FromArgb(40, 40, 40); lblC_CF4.AutoSize = true; lblC_CF4.Location = new System.Drawing.Point(12, 78);
-			gasC_CF4.Minimum = 0; gasC_CF4.Maximum = 5000; gasC_CF4.Width = 120; gasC_CF4.Location = new System.Drawing.Point(60, 76); gasC_CF4.BackColor = System.Drawing.Color.FromArgb(240, 240, 245); gasC_CF4.ForeColor = System.Drawing.Color.FromArgb(40, 40, 40); gasC_CF4.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle; gasC_CF4.Name = "gasC_CF4";
-			lblC_RF.Text = "RF"; lblC_RF.ForeColor = System.Drawing.Color.FromArgb(40, 40, 40); lblC_RF.AutoSize = true; lblC_RF.Location = new System.Drawing.Point(200, 78);
-			gasC_RF.Minimum = 0; gasC_RF.Maximum = 50000; gasC_RF.Width = 120; gasC_RF.Location = new System.Drawing.Point(230, 76); gasC_RF.BackColor = System.Drawing.Color.FromArgb(240, 240, 245); gasC_RF.ForeColor = System.Drawing.Color.FromArgb(40, 40, 40); gasC_RF.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle; gasC_RF.Name = "gasC_RF";
-			grpGasPMC.Controls.Add(lblC_NF3); grpGasPMC.Controls.Add(gasC_NF3); grpGasPMC.Controls.Add(lblC_O2); grpGasPMC.Controls.Add(gasC_O2); grpGasPMC.Controls.Add(lblC_CF4); grpGasPMC.Controls.Add(gasC_CF4); grpGasPMC.Controls.Add(lblC_RF); grpGasPMC.Controls.Add(gasC_RF);
-
-			// header fields keep absolute at top (inside flow as a block panel)
-			var headerPanel = new System.Windows.Forms.Panel();
-			headerPanel.Width = 920;
-			headerPanel.Height = 240; // 충분한 높이로 확대
-			headerPanel.MinimumSize = new System.Drawing.Size(920, 200);
-			headerPanel.AutoSize = false;
-			headerPanel.Margin = new System.Windows.Forms.Padding(8, 4, 8, 8);
-			headerPanel.BackColor = this.BackColor;
-			headerPanel.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-
-			this.txtName.Location = new System.Drawing.Point(x1 + wLbl + 8, 20);
-			lblName.Location = new System.Drawing.Point(x1, 24);
-			this.numWafer.Location = new System.Drawing.Point(x1 + wLbl + 8, 20 + gap);
-			lblWafer.Location = new System.Drawing.Point(x1, 24 + gap);
-			this.numDurA.Location = new System.Drawing.Point(x1 + wLbl + 8, 20 + gap * 2);
-			lblA.Location = new System.Drawing.Point(x1, 24 + gap * 2);
-			this.numDurB.Location = new System.Drawing.Point(x1 + wLbl + 8, 20 + gap * 3);
-			lblB.Location = new System.Drawing.Point(x1, 24 + gap * 3);
-			this.numDurC.Location = new System.Drawing.Point(x1 + wLbl + 8, 20 + gap * 4);
-			lblC.Location = new System.Drawing.Point(x1, 24 + gap * 4);
-			this.chkSecond.Location = new System.Drawing.Point(x1, 20 + gap * 5);
-
-			headerPanel.Controls.Add(lblName);
-			headerPanel.Controls.Add(this.txtName);
-			headerPanel.Controls.Add(lblWafer);
-			headerPanel.Controls.Add(this.numWafer);
-			headerPanel.Controls.Add(lblA);
-			headerPanel.Controls.Add(this.numDurA);
-			headerPanel.Controls.Add(lblB);
-			headerPanel.Controls.Add(this.numDurB);
-			headerPanel.Controls.Add(lblC);
-			headerPanel.Controls.Add(this.numDurC);
-			headerPanel.Controls.Add(this.chkSecond);
-
-			flRight.Controls.Add(headerPanel);
-			flRight.Controls.Add(grpPMA);
-			flRight.Controls.Add(grpPMB);
-			flRight.Controls.Add(grpPMC);
-			flRight.Controls.Add(grpGas);
-			flRight.Controls.Add(grpGasPMB);
-			flRight.Controls.Add(grpGasPMC);
-			// 줄바꿈 강제: Gas/RF는 다음 줄로 배치
-			flRight.SetFlowBreak(grpPMC, true);
-
-			pnlRight.Controls.Add(flRight);
-
-			this.splitContainer1.Panel2.Controls.Add(pnlRight);
 			this.Controls.Add(this.splitContainer1);
+		}
+
+		/// <summary>Chamber 한 대의 설정 카드. 위에서부터 공정 시간, 환경, 가스·RF 순서입니다.</summary>
+		private GroupBox NewChamberCard(string title, int column, NumericUpDown duration,
+			NumericUpDown temp, NumericUpDown press, NumericUpDown hum,
+			NumericUpDown nf3, NumericUpDown o2, NumericUpDown cf4, NumericUpDown rf)
+		{
+			var card = NewPlate(title, EditorLeft + column * (CardWidth + CardGap), CardTop, CardWidth, 0);
+			int y = 34;
+			AddCaption(card, "공정", ref y);
+			AddRow(card, "공정 시간 (초)", duration, ref y);
+			y += 6;
+			AddCaption(card, "환경", ref y);
+			AddRow(card, "온도 (°C)", temp, ref y);
+			AddRow(card, "압력 (Torr)", press, ref y);
+			AddRow(card, "습도 (%)", hum, ref y);
+			y += 6;
+			AddCaption(card, "가스 · RF", ref y);
+			AddRow(card, "NF3 (sccm)", nf3, ref y);
+			AddRow(card, "O2 (sccm)", o2, ref y);
+			AddRow(card, "CF4 (sccm)", cf4, ref y);
+			AddRow(card, "RF (W)", rf, ref y);
+			card.Height = y + 10;
+			return card;
+		}
+
+		private static void AddCaption(Control card, string text, ref int y)
+		{
+			var caption = new System.Windows.Forms.Label();
+			caption.Text = text;
+			caption.AutoSize = true;
+			caption.Font = new System.Drawing.Font("Segoe UI", 8.5F, System.Drawing.FontStyle.Bold);
+			caption.ForeColor = UiTheme.Primary;
+			caption.BackColor = LampButtonPainter.PlateBack;
+			caption.Location = new System.Drawing.Point(RowLabelX, y);
+			card.Controls.Add(caption);
+			y += 22;
+		}
+
+		private static void AddRow(Control card, string label, NumericUpDown field, ref int y)
+		{
+			card.Controls.Add(NewLabel(label, RowLabelX, y + 4));
+			field.Location = new System.Drawing.Point(RowFieldX, y);
+			field.Width = RowFieldWidth;
+			card.Controls.Add(field);
+			y += 32;
+		}
+
+		private static NumericUpDown NewNumber(int min, int max, string name = null)
+		{
+			var n = new System.Windows.Forms.NumericUpDown();
+			n.Minimum = min;
+			n.Maximum = max;
+			n.BackColor = UiTheme.Surface;
+			n.ForeColor = UiTheme.TextPrimary;
+			n.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+			if (name != null) n.Name = name;
+			return n;
+		}
+
+		private static Label NewLabel(string text, int x, int y)
+		{
+			var label = new System.Windows.Forms.Label();
+			label.Text = text;
+			label.AutoSize = true;
+			label.ForeColor = UiTheme.TextSecondary;
+			label.BackColor = LampButtonPainter.PlateBack;
+			label.Font = new System.Drawing.Font("Segoe UI", 9F);
+			label.Location = new System.Drawing.Point(x, y);
+			return label;
+		}
+
+		private static Label NewTitle(string text)
+		{
+			var label = new System.Windows.Forms.Label();
+			label.Text = text;
+			label.ForeColor = UiTheme.TextPrimary;
+			label.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold);
+			return label;
+		}
+
+		private static GroupBox NewPlate(string title, int x, int y, int width, int height)
+		{
+			var plate = new System.Windows.Forms.GroupBox();
+			plate.Text = title;
+			plate.ForeColor = UiTheme.TextPrimary;
+			plate.Location = new System.Drawing.Point(x, y);
+			plate.Size = new System.Drawing.Size(width, height);
+			plate.Padding = new System.Windows.Forms.Padding(12, 3, 12, 3);
+			LampButtonPainter.AttachPlate(plate);
+			return plate;
 		}
 	}
 }
-

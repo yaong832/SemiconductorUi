@@ -193,6 +193,31 @@ namespace SemiconductorUi.Controls
             }
         }
 
+        private float drawScale = 1f;
+
+        /// <summary>
+        /// 그림을 얼마나 키워 그릴지(1이면 원래 크기). 모양과 글자는 원래 크기 기준으로 그린 뒤 확대한다.
+        /// </summary>
+        [Browsable(false), DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        public float DrawScale
+        {
+            get => drawScale;
+            set
+            {
+                float scale = Math.Max(0.5f, value);
+                if (Math.Abs(drawScale - scale) < 0.001f)
+                {
+                    return;
+                }
+                drawScale = scale;
+                Invalidate();
+            }
+        }
+
+        private Size LogicalSize => drawScale == 1f
+            ? ClientSize
+            : new Size((int)Math.Round(ClientSize.Width / drawScale), (int)Math.Round(ClientSize.Height / drawScale));
+
         /// <summary>
         /// 로드포트에 FOUP이 올라가 있는지. false면 빈 로드포트만 그린다.
         /// </summary>
@@ -226,12 +251,18 @@ namespace SemiconductorUi.Controls
             g.SmoothingMode = SmoothingMode.AntiAlias;
             g.Clear(Parent?.BackColor ?? BackColor);
 
-            if (ClientSize.Width <= 40 || ClientSize.Height <= 40)
+            var size = LogicalSize;
+            if (size.Width <= 40 || size.Height <= 40)
             {
                 return;
             }
 
-            var center = new PointF(ClientSize.Width / 2f, ClientSize.Height / 2f);
+            if (drawScale != 1f)
+            {
+                g.ScaleTransform(drawScale, drawScale);
+            }
+
+            var center = new PointF(size.Width / 2f, size.Height / 2f);
             var state = g.Save();
             g.TranslateTransform(center.X, center.Y);
             g.RotateTransform(facingDegrees);
@@ -362,24 +393,24 @@ namespace SemiconductorUi.Controls
             using (var countFont = new Font("Segoe UI", 9F, FontStyle.Bold))
             {
                 var flags = TextFormatFlags.NoPadding | TextFormatFlags.VerticalCenter | TextFormatFlags.HorizontalCenter;
-                var textSize = TextRenderer.MeasureText(g, title ?? string.Empty, plateFont, Size.Empty, TextFormatFlags.NoPadding);
+                var textSize = CanvasText.Measure(g, title ?? string.Empty, plateFont, Size.Empty, TextFormatFlags.NoPadding);
                 int plateWidth = textSize.Width + 14;
                 const int plateHeight = 19;
-                int x = tmOnRight ? margin : ClientSize.Width - margin - plateWidth;
+                int x = tmOnRight ? margin : LogicalSize.Width - margin - plateWidth;
                 var plate = new Rectangle(x, margin, plateWidth, plateHeight);
                 using (var path = EquipmentCanvasStyler.CreateRoundedRectangle(plate, 4))
                 using (var fill = new SolidBrush(PlateFill))
                 {
                     g.FillPath(fill, path);
                 }
-                TextRenderer.DrawText(g, title ?? string.Empty, plateFont, plate, PlateText, flags);
+                CanvasText.Draw(g, title ?? string.Empty, plateFont, plate, PlateText, flags);
 
                 string count = mounted ? $"{Math.Max(0, waferCount)}/{capacity}" : "미장착";
-                var countSize = TextRenderer.MeasureText(g, count, countFont, Size.Empty, TextFormatFlags.NoPadding);
+                var countSize = CanvasText.Measure(g, count, countFont, Size.Empty, TextFormatFlags.NoPadding);
                 // 매수는 이름판 바로 아래에 둔다
                 int countX = tmOnRight ? plate.Left + 2 : plate.Right - 2 - countSize.Width;
                 var countRect = new Rectangle(countX, plate.Bottom + 4, countSize.Width + 2, countSize.Height + 2);
-                TextRenderer.DrawText(g, count, countFont, countRect, mounted ? EquipmentCanvasStyler.CardTitle : AlertText,
+                CanvasText.Draw(g, count, countFont, countRect, mounted ? EquipmentCanvasStyler.CardTitle : AlertText,
                     TextFormatFlags.NoPadding | TextFormatFlags.Left | TextFormatFlags.VerticalCenter);
             }
         }

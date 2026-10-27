@@ -3,6 +3,7 @@ using System.Drawing;
 using System.Globalization;
 using System.Windows.Forms;
 using SemiconductorUi.Hardware;
+using SemiconductorUi.Helpers;
 using SemiconductorUi.Controllers;
 using SemiconductorUi.Models;
 using SemiconductorUi.Repositories;
@@ -53,8 +54,9 @@ namespace SemiconductorUi.Forms
             MaximizeBox = true;
             Size = new Size(920, 720);
             MinimumSize = new Size(860, 640);
-            BackColor = Color.FromArgb(248, 249, 251);
-            Font = new Font("Segoe UI", 9F);
+            BackColor = UiTheme.Surface;
+            ForeColor = UiTheme.TextPrimary;
+            Font = new Font("Segoe UI", 9.5F);
 
             BuildUi();
             LoadToUi(_working);
@@ -66,38 +68,63 @@ namespace SemiconductorUi.Forms
             var top = new Panel
             {
                 Dock = DockStyle.Top,
-                Height = 72,
-                Padding = new Padding(12),
-                BackColor = Color.FromArgb(236, 239, 244)
+                Height = 112,
+                Padding = new Padding(20, 14, 20, 12),
+                BackColor = UiTheme.Surface
+            };
+            var heading = new Label
+            {
+                AutoSize = false,
+                Dock = DockStyle.Top,
+                Height = 30,
+                Text = "TM 티칭 위치",
+                Font = new Font("Segoe UI", 12F, FontStyle.Bold),
+                ForeColor = UiTheme.TextPrimary
             };
             var title = new Label
             {
                 AutoSize = false,
                 Dock = DockStyle.Top,
-                Height = 28,
+                Height = 24,
                 Text = "챔버·FOUP 좌표와 Home(원점) 티칭값을 편집합니다. 저장 시 TeachingPositions.xml에 기록됩니다.",
-                Font = new Font("Segoe UI", 9.5F, FontStyle.Bold)
+                Font = new Font("Segoe UI", 9F),
+                ForeColor = UiTheme.TextSecondary
+            };
+            // 현재 서보 위치: 표시창 모양 (연회색 바탕, 고정폭 글꼴)
+            var posHost = new Panel
+            {
+                Dock = DockStyle.Top,
+                Height = 34,
+                Padding = new Padding(1),
+                BackColor = UiTheme.Border
             };
             labelCurrentPos = new Label
             {
                 AutoSize = false,
                 Dock = DockStyle.Fill,
                 Text = "현재 서보 위치: (미연결)",
-                TextAlign = ContentAlignment.MiddleLeft
+                TextAlign = ContentAlignment.MiddleLeft,
+                Padding = new Padding(10, 0, 10, 0),
+                Font = new Font("Consolas", 10F),
+                ForeColor = UiTheme.TextPrimary,
+                BackColor = UiTheme.SurfaceAlt
             };
-            top.Controls.Add(labelCurrentPos);
+            posHost.Controls.Add(labelCurrentPos);
+            top.Controls.Add(posHost);
             top.Controls.Add(title);
+            top.Controls.Add(heading);
             Controls.Add(top);
 
             var bottom = new FlowLayoutPanel
             {
                 Dock = DockStyle.Bottom,
-                Height = 56,
+                Height = 68,
                 FlowDirection = FlowDirection.RightToLeft,
-                Padding = new Padding(10),
-                BackColor = Color.FromArgb(236, 239, 244)
+                Padding = new Padding(14, 12, 14, 12),
+                BackColor = UiTheme.SurfaceAlt
             };
             var btnSave = MakeButton("저장 및 적용", Color.FromArgb(46, 125, 90));
+            btnSave.Width = 140;
             var btnCancel = MakeButton("닫기", Color.FromArgb(90, 90, 90));
             var btnReset = MakeButton("기본값 복원", Color.FromArgb(140, 70, 70));
             var btnReadPos = MakeButton("현재위치 읽기", Color.FromArgb(55, 95, 140));
@@ -115,6 +142,11 @@ namespace SemiconductorUi.Forms
             };
             btnReadPos.Click += (s, e) => ReadCurrentIntoFocused();
             btnRefresh.Click += (s, e) => RefreshCurrentPositionLabel();
+            LampButtonPainter.AttachPlain(btnSave, primary: true);
+            foreach (var b in new[] { btnCancel, btnReset, btnReadPos, btnRefresh })
+            {
+                LampButtonPainter.AttachPlain(b);
+            }
             bottom.Controls.Add(btnSave);
             bottom.Controls.Add(btnCancel);
             bottom.Controls.Add(btnReset);
@@ -137,7 +169,7 @@ namespace SemiconductorUi.Forms
 
         private TabPage BuildCommonTab()
         {
-            var page = new TabPage("공통 / Home");
+            var page = NewPage("공통 / Home");
             var panel = new TableLayoutPanel
             {
                 Dock = DockStyle.Top,
@@ -157,6 +189,7 @@ namespace SemiconductorUi.Forms
 
             var hint = new Label
             {
+                ForeColor = UiTheme.TextSecondary,
                 AutoSize = true,
                 MaximumSize = new Size(800, 0),
                 Margin = new Padding(16, 8, 16, 8),
@@ -175,7 +208,7 @@ namespace SemiconductorUi.Forms
 
         private TabPage BuildChamberTab(string title, string key, out NumericUpDown x, out NumericUpDown land, out NumericUpDown raise)
         {
-            var page = new TabPage(title);
+            var page = NewPage(title);
             var panel = new TableLayoutPanel
             {
                 Dock = DockStyle.Top,
@@ -193,6 +226,8 @@ namespace SemiconductorUi.Forms
             AddRow(panel, $"{key} 상승 Y (Raise)", raise);
             var descendHint = new Label
             {
+                ForeColor = UiTheme.TextSecondary,
+                Padding = new Padding(19, 4, 16, 8),
                 AutoSize = true,
                 Margin = new Padding(16),
                 Text = $"하강 Y는 저장값 안착Y − DescendOffset 으로 자동 계산됩니다."
@@ -208,7 +243,7 @@ namespace SemiconductorUi.Forms
 
         private TabPage BuildFoupTab(string title, bool isA)
         {
-            var page = new TabPage(title);
+            var page = NewPage(title);
             var root = new TableLayoutPanel
             {
                 Dock = DockStyle.Top,
@@ -233,9 +268,9 @@ namespace SemiconductorUi.Forms
             grid.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 80));
             grid.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
             grid.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
-            grid.Controls.Add(new Label { Text = "층", AutoSize = true }, 0, 0);
-            grid.Controls.Add(new Label { Text = "안착 Y (Land)", AutoSize = true }, 1, 0);
-            grid.Controls.Add(new Label { Text = "상승 Y (Raise)", AutoSize = true }, 2, 0);
+            grid.Controls.Add(GridHeader("층"), 0, 0);
+            grid.Controls.Add(GridHeader("안착 Y (Land)"), 1, 0);
+            grid.Controls.Add(GridHeader("상승 Y (Raise)"), 2, 0);
 
             for (int i = 0; i < 5; i++)
             {
@@ -251,7 +286,7 @@ namespace SemiconductorUi.Forms
                     numFbLand[i] = land;
                     numFbRaise[i] = raise;
                 }
-                grid.Controls.Add(new Label { Text = $"{i + 1}층", AutoSize = true, Anchor = AnchorStyles.Left }, 0, i + 1);
+                grid.Controls.Add(new Label { Text = $"{i + 1}층", AutoSize = true, Anchor = AnchorStyles.Left, ForeColor = UiTheme.TextSecondary }, 0, i + 1);
                 grid.Controls.Add(land, 1, i + 1);
                 grid.Controls.Add(raise, 2, i + 1);
             }
@@ -265,6 +300,27 @@ namespace SemiconductorUi.Forms
             return page;
         }
 
+        private static Label GridHeader(string text)
+        {
+            return new Label
+            {
+                Text = text,
+                AutoSize = true,
+                Font = new Font("Segoe UI", 8.5F, FontStyle.Bold),
+                ForeColor = UiTheme.Primary
+            };
+        }
+
+        private static TabPage NewPage(string title)
+        {
+            return new TabPage(title)
+            {
+                UseVisualStyleBackColor = false,
+                BackColor = UiTheme.Surface,
+                Padding = new Padding(8)
+            };
+        }
+
         private static void AddRow(TableLayoutPanel panel, string label, Control editor)
         {
             int row = panel.RowCount++;
@@ -274,6 +330,7 @@ namespace SemiconductorUi.Forms
                 Text = label,
                 AutoSize = true,
                 Anchor = AnchorStyles.Left,
+                ForeColor = UiTheme.TextSecondary,
                 Margin = new Padding(3, 10, 3, 3)
             }, 0, row);
             panel.Controls.Add(editor, 1, row);
@@ -289,7 +346,11 @@ namespace SemiconductorUi.Forms
                 Increment = 1,
                 Width = 180,
                 ThousandsSeparator = false,
-                Anchor = AnchorStyles.Left
+                Anchor = AnchorStyles.Left,
+                BorderStyle = BorderStyle.FixedSingle,
+                BackColor = UiTheme.Surface,
+                ForeColor = UiTheme.TextPrimary,
+                Margin = new Padding(3, 5, 3, 5)
             };
         }
 
@@ -298,12 +359,13 @@ namespace SemiconductorUi.Forms
             return new Button
             {
                 Text = text,
-                Width = 120,
-                Height = 34,
+                Width = 124,
+                Height = 44,
                 BackColor = back,
                 ForeColor = Color.White,
                 FlatStyle = FlatStyle.Flat,
-                Margin = new Padding(6, 4, 6, 4)
+                Font = new Font("Segoe UI", 9.5F, FontStyle.Bold),
+                Margin = new Padding(5, 0, 5, 0)
             };
         }
 

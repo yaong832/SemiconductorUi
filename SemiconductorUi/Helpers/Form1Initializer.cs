@@ -339,6 +339,32 @@ namespace SemiconductorUi.Helpers
         /// <summary>
         /// FOUP 트랙 패널들을 초기화합니다.
         /// </summary>
+        /// <summary>
+        /// FOUP 카드 왼쪽의 슬롯 5칸을 세로로 배치합니다. 1층이 맨 아래입니다.
+        /// 칸 안에 슬롯 번호와 웨이퍼 유무 글자를 넣으므로 줄 높이의 70%를 씁니다.
+        /// </summary>
+        private static void LayoutFoupTrackPanels(TableLayoutPanel tableLayout, Panel[] trackPanels)
+        {
+            if (tableLayout.Width <= 0 || tableLayout.Height <= 0 || trackPanels == null) return;
+
+            float rowHeight = tableLayout.Height / 5f;
+            float slotHeight = Math.Max(12f, rowHeight * 0.7f);
+            float horizontalMargin = tableLayout.Width * 0.05f;
+            float slotWidth = tableLayout.Width - horizontalMargin * 2;
+            float verticalMargin = (rowHeight - slotHeight) / 2f;
+
+            for (int i = 0; i < 5 && i < trackPanels.Length; i++)
+            {
+                int rowIndex = 4 - i; // 1층(i=0)이 맨 아래 줄
+                var trackPanel = trackPanels[i];
+                if (trackPanel == null) continue;
+
+                trackPanel.Dock = DockStyle.None;
+                trackPanel.Location = new Point((int)horizontalMargin, (int)(rowIndex * rowHeight + verticalMargin));
+                trackPanel.Size = new Size((int)slotWidth, (int)slotHeight);
+            }
+        }
+
         public void InitializeFoupTrackPanels()
         {
             // FOUP A 트랙 패널 생성 (1~5층)
@@ -363,33 +389,7 @@ namespace SemiconductorUi.Helpers
                 
                 // 1층이 맨 아래에 오도록 역순으로 추가 (5층부터 1층까지)
                 // 배열 인덱스와 층 번호 매핑: foupATrackPanels[0]=1층, foupATrackPanels[1]=2층, ..., foupATrackPanels[4]=5층
-                tableLayout.Layout += (s, e) =>
-                {
-                    if (tableLayout.Width > 0 && tableLayout.Height > 0)
-                    {
-                        float rowHeight = tableLayout.Height / 5f;
-                        float waferHeight = rowHeight * 0.4f; // 웨이퍼 높이를 40%로 증가 (더 두껍게)
-                        float horizontalMargin = tableLayout.Width * 0.05f;
-                        float waferWidth = tableLayout.Width - horizontalMargin * 2;
-                        float gapBetweenWafers = 2f; // 웨이퍼 사이 간격 (2px)
-                        float baseVerticalMargin = (rowHeight - waferHeight) / 2f - 6f; // 더 아래로 이동
-                        
-                        for (int i = 0; i < 5; i++)
-                        {
-                            int rowIndex = 4 - i; // 역순 배치 (1층=4, 2층=3, ..., 5층=0)
-                            var trackPanel = form.foupATrackPanels[i];
-                            if (trackPanel != null)
-                            {
-                                trackPanel.Dock = DockStyle.None;
-                                // 각 층 사이에 간격 추가 (위에서 아래로 갈수록 간격 누적)
-                                float accumulatedGap = i * gapBetweenWafers; // i는 0~4, 위에서 아래로 갈수록 증가
-                                float yPosition = rowIndex * rowHeight + baseVerticalMargin + accumulatedGap;
-                                trackPanel.Location = new Point((int)horizontalMargin, (int)yPosition);
-                                trackPanel.Size = new Size((int)waferWidth, (int)waferHeight);
-                            }
-                        }
-                    }
-                };
+                tableLayout.Layout += (s, e) => LayoutFoupTrackPanels(tableLayout, form.foupATrackPanels);
                 
                 for (int i = 0; i < 5; i++)
                 {
@@ -439,32 +439,7 @@ namespace SemiconductorUi.Helpers
                 
                 // 1층이 맨 아래에 오도록 역순으로 추가 (5층부터 1층까지)
                 // 배열 인덱스와 층 번호 매핑: foupBTrackPanels[0]=1층, foupBTrackPanels[1]=2층, ..., foupBTrackPanels[4]=5층
-                tableLayout.Layout += (s, e) =>
-                {
-                    if (tableLayout.Width > 0 && tableLayout.Height > 0)
-                    {
-                        float rowHeight = tableLayout.Height / 5f;
-                        float waferHeight = rowHeight * 0.4f; // 웨이퍼 높이를 40%로 증가 (더 두껍게)
-                        float horizontalMargin = tableLayout.Width * 0.05f;
-                        float waferWidth = tableLayout.Width - horizontalMargin * 2;
-                        float gapBetweenWafers = 2f; // 웨이퍼 사이 간격 (2px)
-                        float verticalMargin = (rowHeight - waferHeight) / 2f - 2f; // 약간 아래로 이동
-                        
-                        for (int i = 0; i < 5; i++)
-                        {
-                            int rowIndex = 4 - i; // 역순 배치
-                            var trackPanel = form.foupBTrackPanels[i];
-                            if (trackPanel != null)
-                            {
-                                trackPanel.Dock = DockStyle.None;
-                                // 각 층 사이에 간격 추가하고 약간 아래로 이동
-                                float yPosition = rowIndex * rowHeight + verticalMargin + (4 - rowIndex) * gapBetweenWafers;
-                                trackPanel.Location = new Point((int)horizontalMargin, (int)yPosition);
-                                trackPanel.Size = new Size((int)waferWidth, (int)waferHeight);
-                            }
-                        }
-                    }
-                };
+                tableLayout.Layout += (s, e) => LayoutFoupTrackPanels(tableLayout, form.foupBTrackPanels);
                 
                 for (int i = 0; i < 5; i++)
                 {
@@ -509,13 +484,13 @@ namespace SemiconductorUi.Helpers
         public void InitializePmStatusPanels()
         {
             // PMA 패널
-            form.pmStatusPanelA = form.CreatePmStatusPanel("PMA", form.panelSummaryPMA);
+            form.pmStatusPanelA = form.CreatePmStatusPanel("Chamber A", form.panelSummaryPMA);
             
             // PMB 패널
-            form.pmStatusPanelB = form.CreatePmStatusPanel("PMB", form.panelSummaryPMB);
+            form.pmStatusPanelB = form.CreatePmStatusPanel("Chamber B", form.panelSummaryPMB);
             
             // PMC 패널
-            form.pmStatusPanelC = form.CreatePmStatusPanel("PMC", form.panelSummaryPMC);
+            form.pmStatusPanelC = form.CreatePmStatusPanel("Chamber C", form.panelSummaryPMC);
         }
 
         /// <summary>
