@@ -64,7 +64,15 @@ namespace SemiconductorUi.Helpers
         {
             if (button == null) return;
             HookPressState(button);
-            button.Paint += (s, e) => PaintLampButton(button, e.Graphics, state, primary);
+            button.Paint += (s, e) => PaintLampButton(button, e.Graphics, state, primary, true);
+        }
+
+        /// <summary>램프 없이 같은 모양의 버튼으로 그립니다 (창 아래쪽 저장/닫기 같은 버튼). 글자는 가운데입니다.</summary>
+        public static void AttachPlain(Button button, bool primary = false)
+        {
+            if (button == null) return;
+            HookPressState(button);
+            button.Paint += (s, e) => PaintLampButton(button, e.Graphics, null, primary, false);
         }
 
         /// <summary>긴급 정지: 빨간 바탕에 진한 테두리, 가운데 글자.</summary>
@@ -75,8 +83,8 @@ namespace SemiconductorUi.Helpers
             button.Paint += (s, e) => PaintEmergency(button, e.Graphics);
         }
 
-        /// <summary>그룹 상자를 연회색 판(plate)으로 그립니다.</summary>
-        public static void AttachPlate(GroupBox group)
+        /// <summary>그룹 상자(또는 패널)를 연회색 판(plate)으로 그리고, 왼쪽 위에 Text를 제목으로 씁니다.</summary>
+        public static void AttachPlate(Control group)
         {
             if (group == null) return;
             group.BackColor = PlateBack;
@@ -189,7 +197,7 @@ namespace SemiconductorUi.Helpers
             edge = new Rectangle(0, EdgeDepth, button.Width - 1, button.Height - 1 - EdgeDepth);
         }
 
-        private static void PaintLampButton(Button button, Graphics g, Func<LampState> stateProvider, bool primary)
+        private static void PaintLampButton(Button button, Graphics g, Func<LampState> stateProvider, bool primary, bool showLamp)
         {
             g.SmoothingMode = SmoothingMode.AntiAlias;
             g.Clear(button.Parent?.BackColor ?? UiTheme.Surface);
@@ -234,6 +242,14 @@ namespace SemiconductorUi.Helpers
                 {
                     g.DrawPath(pen, path);
                 }
+            }
+
+            if (!showLamp)
+            {
+                TextRenderer.DrawText(g, button.Text, button.Font, face, textColor,
+                    TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis | TextFormatFlags.SingleLine | TextFormatFlags.NoPadding);
+                DrawFocus(button, g, face);
+                return;
             }
 
             // 왼쪽 세로 램프
@@ -283,7 +299,7 @@ namespace SemiconductorUi.Helpers
             DrawFocus(button, g, face);
         }
 
-        private static void PaintPlate(GroupBox group, Graphics g)
+        private static void PaintPlate(Control group, Graphics g)
         {
             g.SmoothingMode = SmoothingMode.AntiAlias;
             g.Clear(group.Parent?.BackColor ?? UiTheme.Surface);

@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
+using SemiconductorUi.Helpers;
 using SemiconductorUi.Models;
 using SemiconductorUi.Repositories;
 
@@ -96,6 +98,52 @@ namespace SemiconductorUi.Forms
 			catch
 			{
 				// 무시: 부분 선택 상태 등에서 안정적으로 넘어가기 위함
+			}
+		}
+
+		// 목록 한 줄: 위에는 레시피 이름(" / " 앞부분)을 굵게, 아래에는 나머지 설명을 흐리게 그립니다.
+		private void listRecipes_DrawItem(object sender, DrawItemEventArgs e)
+		{
+			if (e.Index < 0) return;
+			var g = e.Graphics;
+			bool selected = (e.State & DrawItemState.Selected) == DrawItemState.Selected;
+			using (var back = new SolidBrush(selected ? Color.FromArgb(232, 239, 250) : UiTheme.Surface))
+			{
+				g.FillRectangle(back, e.Bounds);
+			}
+			if (selected)
+			{
+				using (var accent = new SolidBrush(UiTheme.Primary))
+				{
+					g.FillRectangle(accent, e.Bounds.X, e.Bounds.Y + 6, 4, e.Bounds.Height - 12);
+				}
+			}
+			using (var line = new Pen(Color.FromArgb(236, 240, 245)))
+			{
+				g.DrawLine(line, e.Bounds.Left + 12, e.Bounds.Bottom - 1, e.Bounds.Right - 12, e.Bounds.Bottom - 1);
+			}
+
+			string text = listRecipes.Items[e.Index]?.ToString() ?? string.Empty;
+			int cut = text.IndexOf(" / ", StringComparison.Ordinal);
+			string name = cut >= 0 ? text.Substring(0, cut) : text;
+			string detail = cut >= 0 ? text.Substring(cut + 3).Replace(" / ", " · ") : string.Empty;
+
+			var flags = TextFormatFlags.Left | TextFormatFlags.SingleLine | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPadding;
+			int x = e.Bounds.X + 16;
+			int width = e.Bounds.Width - 28;
+			using (var nameFont = new Font("Segoe UI", 10F, FontStyle.Bold))
+			using (var detailFont = new Font("Segoe UI", 8.5F))
+			{
+				if (detail.Length == 0)
+				{
+					TextRenderer.DrawText(g, name, nameFont, new Rectangle(x, e.Bounds.Y, width, e.Bounds.Height),
+						selected ? UiTheme.Primary : UiTheme.TextPrimary, flags | TextFormatFlags.VerticalCenter);
+					return;
+				}
+				TextRenderer.DrawText(g, name, nameFont, new Rectangle(x, e.Bounds.Y + 7, width, 20),
+					selected ? UiTheme.Primary : UiTheme.TextPrimary, flags);
+				TextRenderer.DrawText(g, detail, detailFont, new Rectangle(x, e.Bounds.Y + 27, width, 18),
+					UiTheme.TextSecondary, flags);
 			}
 		}
 
