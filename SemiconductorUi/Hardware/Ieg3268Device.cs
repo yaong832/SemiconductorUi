@@ -19,6 +19,9 @@ namespace SemiconductorUi.Hardware
     /// 비상정지 확인은 락 안에서 합니다. 락 밖에서 확인하면, 확인을 통과하고 락을 기다리던
     /// 명령이 비상정지의 서보 OFF 다음에 보내져 서보가 다시 켜질 수 있기 때문입니다.
     /// (DLL의 이동/원점복귀 명령은 제어워드 15를 써서 서보를 켭니다.)
+    ///
+    /// 회전과 실린더 인터락(TmMotionInterlock)도 같은 락 안에서 확인합니다.
+    /// 화면이나 공정 코드가 확인을 빠뜨려도 실린더가 전진한 채로 회전하지 않게 하기 위함입니다.
     /// </summary>
     public sealed class Ieg3268Device : IEthercatDevice
     {
@@ -38,6 +41,7 @@ namespace SemiconductorUi.Hardware
         private readonly IEG3268 _dll;
         private readonly ICifxChannel _channel;
         private readonly object _sync = new object();
+        private readonly TmMotionInterlock _interlock;
         private bool _isConnected;
         private bool _readTimerRegistered;
 
@@ -54,9 +58,15 @@ namespace SemiconductorUi.Hardware
         }
 
         public Ieg3268Device(IEG3268 dll, ICifxChannel channel)
+            : this(dll, channel, new TmMotionInterlock())
+        {
+        }
+
+        private Ieg3268Device(IEG3268 dll, ICifxChannel channel, TmMotionInterlock interlock)
         {
             _dll = dll ?? throw new ArgumentNullException(nameof(dll));
             _channel = channel ?? throw new ArgumentNullException(nameof(channel));
+            _interlock = interlock ?? throw new ArgumentNullException(nameof(interlock));
         }
 
         /// <summary>
@@ -64,6 +74,15 @@ namespace SemiconductorUi.Hardware
         /// </summary>
         internal Ieg3268Device(IEG3268 dll, ICifxChannel channel, bool isConnected)
             : this(dll, channel)
+        {
+            _isConnected = isConnected;
+        }
+
+        /// <summary>
+        /// 테스트용. 인터락을 직접 넘깁니다.
+        /// </summary>
+        internal Ieg3268Device(IEG3268 dll, ICifxChannel channel, bool isConnected, TmMotionInterlock interlock)
+            : this(dll, channel, interlock)
         {
             _isConnected = isConnected;
         }
@@ -132,6 +151,8 @@ namespace SemiconductorUi.Hardware
                     ThrowIfEmergencyStopped();
                 }
 
+                _interlock.CheckCylinderOutputAllowed(numbering, value, IsRotationAtTarget);
+                _interlock.NoteCylinderOutput(numbering, value);
                 _dll.Digital_Output(numbering, value);
             }
         }
@@ -241,6 +262,7 @@ namespace SemiconductorUi.Hardware
             lock (_sync)
             {
                 _dll.Axis2_OFF();
+                _interlock.NoteRotationStopped();
             }
         }
 
@@ -283,7 +305,12 @@ namespace SemiconductorUi.Hardware
             lock (_sync)
             {
                 ThrowIfEmergencyStopped();
+                CheckRotationAllowed("회전 이동");
+
+                _interlock.NoteRotationCommand();
                 _dll.Axis2_LR_Move_Send();
+                // DLL 호출 안에 0.3초 대기가 있으므로 완료 대기 시간은 호출이 끝난 뒤부터 셉니다.
+                _interlock.NoteRotationCommand();
             }
         }
 
@@ -292,8 +319,32 @@ namespace SemiconductorUi.Hardware
             lock (_sync)
             {
                 ThrowIfEmergencyStopped();
+                CheckRotationAllowed("회전 원점복귀");
+
+                _interlock.NoteRotationCommand();
                 _dll.Axis2_LR_Homming();
+                _interlock.NoteRotationCommand();
             }
+        }
+
+        /// <summary>락 안에서 부릅니다.</summary>
+        private void CheckRotationAllowed(string action)
+        {
+            bool extendOutputOn = false;
+            bool[] outputs = _dll.Digital_Out_Value;
+            if (outputs != null && TmMotionInterlock.CylinderExtendOutput < outputs.Length)
+            {
+                extendOutputOn = outputs[TmMotionInterlock.CylinderExtendOutput];
+            }
+
+            _interlock.CheckRotationAllowed(action, extendOutputOn,
+                () => _dll.Digital_Input(TmMotionInterlock.CylinderRetractedInput));
+        }
+
+        /// <summary>회전 축이 목표(이동 위치 또는 원점)에 도착했는지. 락 안에서 부릅니다.</summary>
+        private bool IsRotationAtTarget()
+        {
+            return _dll.Axis2_Status("PP_D") || _dll.Axis2_Status("HOME_D");
         }
 
         #endregion
@@ -336,6 +387,7 @@ namespace SemiconductorUi.Hardware
                 writeData[Axis1ControlWordIndex] = ControlWordQuickStop;
                 writeData[Axis2ControlWordIndex] = ControlWordQuickStop;
                 _channel.Write(writeData);
+                _interlock.NoteRotationStopped();
             }
         }
 
@@ -359,6 +411,11 @@ namespace SemiconductorUi.Hardware
 
                 writeData[index] = ControlWordDisableVoltage;
                 _channel.Write(writeData);
+
+                if (axis == 2)
+                {
+                    _interlock.NoteRotationStopped();
+                }
             }
         }
 
@@ -412,6 +469,7 @@ namespace SemiconductorUi.Hardware
                 byte[] writeData = _dll.WriteData;
                 writeData[Axis1ControlWordIndex] = ControlWordDisableVoltage;
                 writeData[Axis2ControlWordIndex] = ControlWordDisableVoltage;
+                _interlock.NoteRotationStopped();
 
                 // 연결이 없으면 버퍼만 0으로 두고 보내지 않습니다. 다시 연결해도 서보 ON 값이 남아 있지 않게 합니다.
                 if (_isConnected)
