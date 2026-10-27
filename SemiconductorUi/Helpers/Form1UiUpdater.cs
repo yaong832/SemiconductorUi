@@ -380,6 +380,10 @@ namespace SemiconductorUi.Helpers
             {
                 form.foupVisualizationControlA.Mounted = form.IsFoupAMounted;
             }
+            if (form.foupVisualizationControlB != null)
+            {
+                form.foupVisualizationControlB.Mounted = form.IsFoupBMounted;
+            }
             form.foupVisualizationControlA?.UpdateState(foupAStatus, form.currentFoupACount, foupADoorClosed);
             form.foupVisualizationControlB?.UpdateState(foupBStatus, form.currentFoupBCount, foupBDoorClosed);
         }
