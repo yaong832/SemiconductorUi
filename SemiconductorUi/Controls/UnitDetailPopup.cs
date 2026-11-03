@@ -43,9 +43,18 @@ namespace SemiconductorUi.Controls
         private Font titleFont, textFont, boldFont, smallFont, numFont;
         private Rectangle closeRect;
         private bool closeHover;
+        private bool pressedOnClose;
+        private bool dragging;
+        private Point dragGrip;
 
         /// <summary>X를 눌러 닫을 때</summary>
         public event EventHandler CloseRequested;
+
+        /// <summary>
+        /// 머리줄을 잡고 끄는 중일 때. 값은 부모 기준으로 창 왼쪽 위가 가고 싶은 자리이며,
+        /// 실제 자리(제어 패널을 가리지 않도록 제한)는 받는 쪽이 정합니다.
+        /// </summary>
+        public event EventHandler<Point> DragMoving;
 
         /// <summary>지금 보여 주는 대상 (예: "PMA", "FOUP A")</summary>
         public string UnitKey { get; set; }
@@ -315,11 +324,54 @@ namespace SemiconductorUi.Controls
             }
         }
 
+        // 머리줄 중 닫기 단추를 뺀 곳을 잡고 끌 수 있습니다.
+        private bool IsDragArea(Point p) => p.Y >= 0 && p.Y < S(HeaderHeight) && !closeRect.Contains(p);
+
+        protected override void OnMouseDown(MouseEventArgs e)
+        {
+            base.OnMouseDown(e);
+            if (e.Button != MouseButtons.Left)
+            {
+                return;
+            }
+
+            pressedOnClose = closeRect.Contains(e.Location);
+            if (IsDragArea(e.Location))
+            {
+                dragging = true;
+                dragGrip = e.Location;
+                Capture = true;
+            }
+        }
+
+        protected override void OnMouseUp(MouseEventArgs e)
+        {
+            base.OnMouseUp(e);
+            if (dragging)
+            {
+                dragging = false;
+                Capture = false;
+            }
+        }
+
+        protected override void OnMouseCaptureChanged(EventArgs e)
+        {
+            base.OnMouseCaptureChanged(e);
+            dragging = false;
+        }
+
         protected override void OnMouseMove(MouseEventArgs e)
         {
             base.OnMouseMove(e);
+            if (dragging && Parent != null)
+            {
+                var cursor = Parent.PointToClient(Control.MousePosition);
+                DragMoving?.Invoke(this, new Point(cursor.X - dragGrip.X, cursor.Y - dragGrip.Y));
+                return;
+            }
+
             bool over = closeRect.Contains(e.Location);
-            Cursor = over ? Cursors.Hand : Cursors.Default;
+            Cursor = over ? Cursors.Hand : IsDragArea(e.Location) ? Cursors.SizeAll : Cursors.Default;
             if (over != closeHover)
             {
                 closeHover = over;
@@ -340,7 +392,8 @@ namespace SemiconductorUi.Controls
         protected override void OnMouseClick(MouseEventArgs e)
         {
             base.OnMouseClick(e);
-            if (e.Button == MouseButtons.Left && closeRect.Contains(e.Location))
+            // 끌다가 닫기 단추 위에서 놓은 경우는 닫지 않습니다 (눌렀을 때도 단추 위였어야 함).
+            if (e.Button == MouseButtons.Left && pressedOnClose && closeRect.Contains(e.Location))
             {
                 CloseRequested?.Invoke(this, EventArgs.Empty);
             }
