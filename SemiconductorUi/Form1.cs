@@ -2236,15 +2236,52 @@ namespace SemiconductorUi
             var lampRect = new RectangleF(8, (rect.Height - lampSize) / 2f, lampSize, lampSize);
             LampButtonPainter.DrawLamp(g, lampRect, mounted && hasWafer ? LampTone.Blue : LampTone.Off);
 
-            using (var font = new Font("Segoe UI", Math.Min(13f, rect.Height * 0.48f), FontStyle.Bold, GraphicsUnit.Pixel))
+            var textRect = new Rectangle((int)lampRect.Right + 6, 0, rect.Width - (int)lampRect.Right - 14, rect.Height);
+            string slotLabel = "슬롯 " + layer;
+            string state = !mounted ? "미장착" : hasWafer ? "웨이퍼" : "비어 있음";
+            const TextFormatFlags measureFlags = TextFormatFlags.NoPadding | TextFormatFlags.SingleLine;
+            const int minGap = 8;
+
+            // 칸이 좁으면 "슬롯 n"과 상태 글자가 겹치므로, 둘 사이가 떨어질 때까지 글자를 줄입니다.
+            // 가장 작게 줄여도 겹치면 "슬롯"을 빼고 번호만 씁니다.
+            float fontSize = Math.Min(13f, rect.Height * 0.48f);
+            const float minFontSize = 9f;
+            Font font = null;
+            try
             {
-                var textRect = new Rectangle((int)lampRect.Right + 6, 0, rect.Width - (int)lampRect.Right - 14, rect.Height);
-                TextRenderer.DrawText(g, "슬롯 " + layer, font, textRect, mounted ? UiTheme.TextSecondary : Color.FromArgb(160, 168, 180),
+                while (true)
+                {
+                    font?.Dispose();
+                    font = new Font("Segoe UI", fontSize, FontStyle.Bold, GraphicsUnit.Pixel);
+                    int need = TextRenderer.MeasureText(g, slotLabel, font, Size.Empty, measureFlags).Width
+                        + minGap
+                        + TextRenderer.MeasureText(g, state, font, Size.Empty, measureFlags).Width;
+                    if (need <= textRect.Width)
+                    {
+                        break;
+                    }
+                    if (fontSize > minFontSize)
+                    {
+                        fontSize = Math.Max(minFontSize, fontSize - 0.5f);
+                        continue;
+                    }
+                    if (slotLabel != layer.ToString())
+                    {
+                        slotLabel = layer.ToString();
+                        continue;
+                    }
+                    break;
+                }
+
+                TextRenderer.DrawText(g, slotLabel, font, textRect, mounted ? UiTheme.TextSecondary : Color.FromArgb(160, 168, 180),
                     TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding | TextFormatFlags.SingleLine);
-                string state = !mounted ? "미장착" : hasWafer ? "웨이퍼" : "비어 있음";
                 Color stateColor = !mounted ? Color.FromArgb(160, 168, 180) : hasWafer ? UiTheme.Primary : UiTheme.TextSecondary;
                 TextRenderer.DrawText(g, state, font, textRect, stateColor,
                     TextFormatFlags.Right | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding | TextFormatFlags.SingleLine);
+            }
+            finally
+            {
+                font?.Dispose();
             }
         }
 

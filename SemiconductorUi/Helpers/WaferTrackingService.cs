@@ -144,13 +144,12 @@ namespace SemiconductorUi.Helpers
                 return false;
             }
 
-            // 웨이퍼가 픽업 시작 시점부터 드롭오프 완료 전까지 블레이드에 있음
+            // 화면 표시용: 웨이퍼는 픽업(PerformPickup)으로 FOUP/챔버에서 빠진 뒤부터 드롭오프(PerformDropoff)로 놓이기 전까지 블레이드에 있음.
+            // 문 열림 대기, 픽업 전진 중, 하드웨어 안착 하강 중에는 웨이퍼가 아직 FOUP/챔버에 있으므로 블레이드에 그리지 않음.
             switch (_form.TmPhase)
             {
-                // 픽업 단계 (웨이퍼가 FOUP/Chamber에서 사라지는 시점)
-                case TransferController.TmPhase.WaitDoorPickupOpen:
-                case TransferController.TmPhase.PickupExtend_ServoDown:  // 서보 하강 후 웨이퍼 접촉 (하드웨어 모드)
-                case TransferController.TmPhase.PickupExtend_VacuumOn:   // 진공 ON 후 웨이퍼 확보 (하드웨어 모드)
+                // 픽업 직후 (하드웨어 모드: 진공 ON으로 웨이퍼 확보)
+                case TransferController.TmPhase.PickupExtend_VacuumOn:
                 
                 // 픽업 후 복귀 및 이동
                 case TransferController.TmPhase.PickupRetract:

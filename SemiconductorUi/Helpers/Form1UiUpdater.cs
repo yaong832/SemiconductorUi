@@ -1272,9 +1272,11 @@ namespace SemiconductorUi.Helpers
                 return;
             }
 
+            // 반입 전진 중(DropoffExtend)에는 웨이퍼가 아직 블레이드 위에 있으므로 챔버에 그리지 않습니다.
+            // 웨이퍼는 전진이 끝나 챔버에 놓일 때(PerformDropoff) 챔버로 옮겨 그립니다.
             bool hasWafer =
                 chamber?.CurrentWafer != null
-                || form.IsWaferEnRouteToChamber(chamber)
+                || (form.IsWaferEnRouteToChamber(chamber) && form.TmPhase != TransferController.TmPhase.DropoffExtend)
                 || form.IsWaferAwaitingPickup(chamber);
             if (!hasWafer)
             {
