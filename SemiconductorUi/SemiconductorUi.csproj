@@ -175,6 +175,7 @@
     <Compile Include="Models\DataContracts.cs" />
     <Compile Include="Models\TeachingPositionsData.cs" />
     <Compile Include="Repositories\TeachingPositionsRepository.cs" />
+    <Compile Include="Repositories\ServoSpeedRepository.cs" />
     <Compile Include="Forms\TeachingPositionForm.cs">
       <SubType>Form</SubType>
     </Compile>

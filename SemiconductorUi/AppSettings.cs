@@ -235,35 +235,44 @@ namespace SemiconductorUi
 
         #region 서보모터 파라미터 설정
 
+        // 서보 속도: 티칭 창 속도 탭에서 이번 실행 중 저장한 값 → 설정 파일 → 아래 기본값 순서로 씁니다.
+        // 설정 파일에 값이 없을 때 쓰는 서보 속도 기본값 (티칭 창 속도 탭의 기본값 복원도 이 값을 씁니다)
+        public const long DefaultServoVelocity = 1000000L;
+        public const long DefaultServoMaxVelocity = 1000000L;
+        public const long DefaultServoDeceleration = 100000000L;
+        public const long DefaultServoAcceleration = 1000000L;
+        public const long DefaultServoHomingVelocity = 300000L;
+        public const long DefaultServoHomingMaxVelocity = 500000L;
+
         /// <summary>
         /// 서보모터 기본 속도
         /// </summary>
-        public static long ServoDefaultVelocity => GetSetting("ServoDefaultVelocity", 1000000L);
+        public static long ServoDefaultVelocity => Repositories.ServoSpeedRepository.SavedThisSession?.Velocity ?? GetSetting("ServoDefaultVelocity", DefaultServoVelocity);
 
         /// <summary>
         /// 서보모터 최대 속도
         /// </summary>
-        public static long ServoDefaultMaxVelocity => GetSetting("ServoDefaultMaxVelocity", 1000000L);
+        public static long ServoDefaultMaxVelocity => Repositories.ServoSpeedRepository.SavedThisSession?.MaxVelocity ?? GetSetting("ServoDefaultMaxVelocity", DefaultServoMaxVelocity);
 
         /// <summary>
         /// 서보모터 감속도
         /// </summary>
-        public static long ServoDefaultDeceleration => GetSetting("ServoDefaultDeceleration", 100000000L);
+        public static long ServoDefaultDeceleration => Repositories.ServoSpeedRepository.SavedThisSession?.Deceleration ?? GetSetting("ServoDefaultDeceleration", DefaultServoDeceleration);
 
         /// <summary>
         /// 서보모터 가속도
         /// </summary>
-        public static long ServoDefaultAcceleration => GetSetting("ServoDefaultAcceleration", 1000000L);
+        public static long ServoDefaultAcceleration => Repositories.ServoSpeedRepository.SavedThisSession?.Acceleration ?? GetSetting("ServoDefaultAcceleration", DefaultServoAcceleration);
 
         /// <summary>
         /// 서보모터 원점복귀 속도
         /// </summary>
-        public static long ServoHomingVelocity => GetSetting("ServoHomingVelocity", 300000L);
+        public static long ServoHomingVelocity => Repositories.ServoSpeedRepository.SavedThisSession?.HomingVelocity ?? GetSetting("ServoHomingVelocity", DefaultServoHomingVelocity);
 
         /// <summary>
         /// 서보모터 원점복귀 최대 속도
         /// </summary>
-        public static long ServoHomingMaxVelocity => GetSetting("ServoHomingMaxVelocity", 500000L);
+        public static long ServoHomingMaxVelocity => Repositories.ServoSpeedRepository.SavedThisSession?.HomingMaxVelocity ?? GetSetting("ServoHomingMaxVelocity", DefaultServoHomingMaxVelocity);
 
         /// <summary>
         /// 서보 XY 동시 이동 타임아웃 (밀리초)
