@@ -1424,7 +1424,9 @@ namespace SemiconductorUi.Forms
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"실린더 상태 확인 오류: {ex.Message}\n원점복귀를 진행합니다.", "경고", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                // 후진을 확인하지 못하면 회전할 수 있는지 알 수 없으므로 원점복귀를 하지 않습니다.
+                MessageBox.Show($"실린더 후진 센서를 읽지 못했습니다: {ex.Message}\n원점복귀를 하지 않았습니다.", "인터락", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
             }
 
             labelStatus.Text = "원점복귀 시작 - 1단계: 상하(Axis1)";
