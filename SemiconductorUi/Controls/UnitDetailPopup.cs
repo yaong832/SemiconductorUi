@@ -26,9 +26,8 @@ namespace SemiconductorUi.Controls
     }
 
     /// <summary>
-    /// 장비 그림에서 챔버나 FOUP를 눌렀을 때 그 옆에 뜨는 작은 상세 창.
-    /// 메인 화면 위에 놓인 일반 컨트롤이라 화면을 잠그지 않습니다(긴급 정지, 일시 정지 등은 그대로 누를 수 있음).
-    /// 내용은 화면 갱신 때마다 SetContent로 바뀌고, 오른쪽 위 X로 닫습니다.
+    /// 챔버나 FOUP 상세 창(Forms.UnitDetailForm)의 내용을 그리는 컨트롤.
+    /// 내용은 화면 갱신 때마다 SetContent로 바뀌며, 창 닫기와 이동은 바깥 창의 제목 줄이 맡습니다.
     /// </summary>
     internal sealed class UnitDetailPopup : Control
     {
@@ -41,23 +40,6 @@ namespace SemiconductorUi.Controls
         private UnitDetailContent content = new UnitDetailContent();
         private float scale = 1f;
         private Font titleFont, textFont, boldFont, smallFont, numFont;
-        private Rectangle closeRect;
-        private bool closeHover;
-        private bool pressedOnClose;
-        private bool dragging;
-        private Point dragGrip;
-
-        /// <summary>X를 눌러 닫을 때</summary>
-        public event EventHandler CloseRequested;
-
-        /// <summary>
-        /// 머리줄을 잡고 끄는 중일 때. 값은 부모 기준으로 창 왼쪽 위가 가고 싶은 자리이며,
-        /// 실제 자리(제어 패널을 가리지 않도록 제한)는 받는 쪽이 정합니다.
-        /// </summary>
-        public event EventHandler<Point> DragMoving;
-
-        /// <summary>끌기를 마쳤을 때 (마우스를 놓았거나 붙잡기가 풀림)</summary>
-        public event EventHandler DragEnded;
 
         /// <summary>지금 보여 주는 대상 (예: "PMA", "FOUP A")</summary>
         public string UnitKey { get; set; }
@@ -169,20 +151,6 @@ namespace SemiconductorUi.Controls
                 using (var db = new SolidBrush(UiTheme.Success)) g.FillEllipse(db, x, (header.Height - dot) / 2f, dot, dot);
                 TextRenderer.DrawText(g, "실시간", smallFont, new Rectangle(x + (int)dot + S(4), 0, S(60), header.Height), UiTheme.Success,
                     TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding);
-            }
-
-            int cs = S(24);
-            closeRect = new Rectangle(Width - S(Pad) - cs + S(4), (header.Height - cs) / 2, cs, cs);
-            using (var path = ShellDraw.RoundedRect(closeRect, S(5)))
-            {
-                using (var cb = new SolidBrush(closeHover ? UiTheme.ButtonHover : UiTheme.Surface)) g.FillPath(cb, path);
-                using (var cp = new Pen(UiTheme.Border)) g.DrawPath(cp, path);
-            }
-            using (var xp = new Pen(UiTheme.TextPrimary, Math.Max(1.5f, 1.6f * scale)))
-            {
-                int m = S(8);
-                g.DrawLine(xp, closeRect.Left + m, closeRect.Top + m, closeRect.Right - m, closeRect.Bottom - m);
-                g.DrawLine(xp, closeRect.Right - m, closeRect.Top + m, closeRect.Left + m, closeRect.Bottom - m);
             }
 
             // 본문: 왼쪽 정보, 오른쪽 환경 표 또는 슬롯
@@ -324,92 +292,6 @@ namespace SemiconductorUi.Controls
                     back = Color.FromArgb(227, 236, 251); fore = UiTheme.Primary; break;
                 default:
                     back = UiTheme.ButtonFill; fore = UiTheme.TextSecondary; break;
-            }
-        }
-
-        // 머리줄 중 닫기 단추를 뺀 곳을 잡고 끌 수 있습니다.
-        private bool IsDragArea(Point p) => p.Y >= 0 && p.Y < S(HeaderHeight) && !closeRect.Contains(p);
-
-        protected override void OnMouseDown(MouseEventArgs e)
-        {
-            base.OnMouseDown(e);
-            if (e.Button != MouseButtons.Left)
-            {
-                return;
-            }
-
-            pressedOnClose = closeRect.Contains(e.Location);
-            if (IsDragArea(e.Location))
-            {
-                dragging = true;
-                dragGrip = e.Location;
-                Capture = true;
-            }
-        }
-
-        protected override void OnMouseUp(MouseEventArgs e)
-        {
-            base.OnMouseUp(e);
-            if (dragging)
-            {
-                Capture = false;
-                EndDrag();
-            }
-        }
-
-        protected override void OnMouseCaptureChanged(EventArgs e)
-        {
-            base.OnMouseCaptureChanged(e);
-            EndDrag();
-        }
-
-        private void EndDrag()
-        {
-            if (!dragging)
-            {
-                return;
-            }
-
-            dragging = false;
-            DragEnded?.Invoke(this, EventArgs.Empty);
-        }
-
-        protected override void OnMouseMove(MouseEventArgs e)
-        {
-            base.OnMouseMove(e);
-            if (dragging && Parent != null)
-            {
-                var cursor = Parent.PointToClient(Control.MousePosition);
-                DragMoving?.Invoke(this, new Point(cursor.X - dragGrip.X, cursor.Y - dragGrip.Y));
-                return;
-            }
-
-            bool over = closeRect.Contains(e.Location);
-            Cursor = over ? Cursors.Hand : IsDragArea(e.Location) ? Cursors.SizeAll : Cursors.Default;
-            if (over != closeHover)
-            {
-                closeHover = over;
-                Invalidate(closeRect);
-            }
-        }
-
-        protected override void OnMouseLeave(EventArgs e)
-        {
-            base.OnMouseLeave(e);
-            if (closeHover)
-            {
-                closeHover = false;
-                Invalidate(closeRect);
-            }
-        }
-
-        protected override void OnMouseClick(MouseEventArgs e)
-        {
-            base.OnMouseClick(e);
-            // 끌다가 닫기 단추 위에서 놓은 경우는 닫지 않습니다 (눌렀을 때도 단추 위였어야 함).
-            if (e.Button == MouseButtons.Left && pressedOnClose && closeRect.Contains(e.Location))
-            {
-                CloseRequested?.Invoke(this, EventArgs.Empty);
             }
         }
 
