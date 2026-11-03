@@ -232,7 +232,7 @@ namespace SemiconductorUi.Helpers
         /// <summary>
         /// 장비 위 시그널 타워(빨강·노랑·초록 3단)를 작게 그린다. 켜진 단만 밝다.
         /// </summary>
-        private static void DrawSignalTower(Graphics g, Rectangle area, Color red, Color yellow, Color green)
+        internal static void DrawSignalTower(Graphics g, Rectangle area, Color red, Color yellow, Color green)
         {
             const int poleHeight = 4;
             float segment = (area.Height - poleHeight - 2) / 3f;
