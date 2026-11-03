@@ -40,6 +40,31 @@ namespace SemiconductorUi.EventHandlers
                 return;
             }
 
+            // 환경 알람으로 멈춘 공정: 알람 리셋을 먼저 해야 이어 갈 수 있습니다.
+            if (form.ProcessHeldByAlarm && form.SimulationRunning)
+            {
+                if (form.CurrentProcessState == MainFormViewModel.ProcessState.Error)
+                {
+                    MessageBox.Show(
+                        "환경 알람으로 공정을 멈춘 상태입니다.\n\n알람 원인을 확인하고 알람 리셋을 누른 뒤 시작하세요.",
+                        "알람 리셋 필요", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
+                form.ClearAlarmHold();
+                form.HasAlarm = false;
+                if (form.SimulationPaused)
+                {
+                    form.ResumeSimulation();
+                }
+                else
+                {
+                    form.SetProcessState(MainFormViewModel.ProcessState.Running, "알람 리셋 후 공정을 이어 갑니다.");
+                    form.UpdateSimulationUi();
+                }
+                return;
+            }
+
             if (form.SimulationRunning && !form.SimulationPaused)
             {
                 MessageBox.Show("이미 공정이 진행 중입니다.", "안내", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -103,6 +128,13 @@ namespace SemiconductorUi.EventHandlers
             if (!form.SimulationRunning || form.SimulationPaused)
             {
                 MessageBox.Show("진행 중인 공정이 없습니다.", "안내", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            // 알람으로 이미 멈춘 공정은 일시정지로 상태를 덮지 않습니다 (일시정지 → 시작으로 알람이 풀리지 않도록).
+            if (form.ProcessHeldByAlarm)
+            {
+                MessageBox.Show("환경 알람으로 이미 공정을 멈춘 상태입니다.\n알람 리셋 후 시작을 누르면 이어 갑니다.", "안내", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
 
@@ -212,7 +244,14 @@ namespace SemiconductorUi.EventHandlers
             
             // 알람 발생 전 상태가 저장되어 있으면 해당 상태로 복귀
             var stateBeforeAlarm = form._stateBeforeAlarm;
-            if (stateBeforeAlarm.HasValue)
+            if (form.ProcessHeldByAlarm && form.SimulationRunning)
+            {
+                // 환경 알람으로 멈춘 공정: 바로 이어 가지 않고, 시작을 누를 때까지 기다립니다.
+                targetState = MainFormViewModel.ProcessState.Paused;
+                resetMessage = "알람을 리셋했습니다. 장비 상태를 확인하고 시작을 누르면 공정을 이어 갑니다.";
+                form._stateBeforeAlarm = null;
+            }
+            else if (stateBeforeAlarm.HasValue)
             {
                 var savedState = stateBeforeAlarm.Value;
                 

@@ -1143,9 +1143,12 @@ namespace SemiconductorUi.Helpers
                 return;
             }
 
-            form.buttonStart.Enabled = !emergencyStopped && !form.IsHardwareInitInProgress
-                && (!form.SimulationRunning || form.SimulationPaused || form.CurrentProcessState == MainFormViewModel.ProcessState.Error);
-            form.buttonPause.Enabled = form.SimulationRunning && !form.SimulationPaused && !form.IsHardwareInitInProgress;
+            // 환경 알람으로 멈춘 공정: 알람 리셋 전에는 시작 불가, 리셋 후에는 시작으로 이어 감. 일시정지는 쓰지 않음.
+            bool heldByAlarm = form.ProcessHeldByAlarm && form.SimulationRunning;
+            bool heldAwaitingReset = heldByAlarm && form.CurrentProcessState == MainFormViewModel.ProcessState.Error;
+            form.buttonStart.Enabled = !emergencyStopped && !form.IsHardwareInitInProgress && !heldAwaitingReset
+                && (!form.SimulationRunning || form.SimulationPaused || heldByAlarm || form.CurrentProcessState == MainFormViewModel.ProcessState.Error);
+            form.buttonPause.Enabled = form.SimulationRunning && !form.SimulationPaused && !form.IsHardwareInitInProgress && !heldByAlarm;
             
             // 알람 리셋 버튼: 헤더에 알람이 표시되거나 비상정지 중이면 활성화 (비상정지 해제도 여기서 함)
             bool hasHeaderAlarm = form.HasHeaderAlarm();
