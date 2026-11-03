@@ -26,7 +26,8 @@ namespace SemiconductorUi.Controls
     }
 
     /// <summary>
-    /// 메인 화면 맨 위 한 줄: 장비 이름, 큰 상태 표시, 오른쪽에 연결·서보·알람·시계.
+    /// 메인 화면 맨 위 한 줄(SEMI E95의 타이틀 패널): 장비 이름과 지금 보는 화면 이름, 큰 상태 표시,
+    /// 그 옆에 로그인 사용자와 로그인 버튼, 오른쪽에 연결·서보·알람·시계·3색 램프.
     /// 상태 표시는 그릴 때마다 StateProvider에서 읽으므로 화면 표시만 하고 장비에 명령을 보내지 않습니다.
     /// </summary>
     public sealed class ShellTopBar : Panel
@@ -45,6 +46,7 @@ namespace SemiconductorUi.Controls
         private bool large;
 
         private readonly FlowLayoutPanel rightArea;
+        private readonly FlowLayoutPanel leftArea;
 
         public ShellTopBar()
         {
@@ -68,6 +70,22 @@ namespace SemiconductorUi.Controls
                 Margin = Padding.Empty
             };
             Controls.Add(rightArea);
+
+            // 큰 상태 표시 바로 오른쪽 줄(로그인 사용자와 버튼). 위치는 OnLayout에서 정합니다.
+            leftArea = new FlowLayoutPanel
+            {
+                Name = "flowShellTopLeft",
+                AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink,
+                WrapContents = false,
+                FlowDirection = FlowDirection.LeftToRight,
+                BackColor = UiTheme.Surface,
+                Padding = Padding.Empty,
+                Margin = Padding.Empty
+            };
+            Controls.Add(leftArea);
+            leftArea.SizeChanged += (s, e) => PerformLayout();
+            rightArea.SizeChanged += (s, e) => PerformLayout();
             // 오른쪽 줄 너비가 바뀌면 장비 이름을 줄일지 다시 정합니다.
             rightArea.LocationChanged += (s, e) => Invalidate();
         }
@@ -76,6 +94,15 @@ namespace SemiconductorUi.Controls
         public FlowLayoutPanel RightArea => rightArea;
 
         public Func<ShellStatePill> StateProvider { get; set; }
+
+        /// <summary>장비 이름 아래 작은 글자: 지금 보는 화면 이름(예: "운전 · 모니터링").</summary>
+        public Func<string> SubtitleProvider { get; set; }
+
+        /// <summary>
+        /// 큰 상태 표시에 나올 수 있는 글자들. 가장 긴 글자에 맞춘 자리를 잡아 두어,
+        /// 상태가 바뀌어도 옆의 로그인 줄이 움직이지 않게 합니다.
+        /// </summary>
+        public string[] PillSlotTexts { get; set; } = new string[0];
 
         /// <summary>
         /// 넓은 화면용 큰 글자. 오른쪽 줄 컨트롤 크기는 바꾼 쪽에서 정하고, 여기서는 세로 가운데만 다시 맞춥니다.
@@ -93,6 +120,7 @@ namespace SemiconductorUi.Controls
                     if (control.Width == 1) control.Height = large ? 32 : 28;
                 }
                 RecenterRightArea();
+                PerformLayout();
                 Invalidate();
             }
         }
@@ -100,11 +128,22 @@ namespace SemiconductorUi.Controls
         /// <summary>오른쪽 줄 컨트롤의 높이가 바뀐 뒤 세로 가운데를 다시 맞춥니다.</summary>
         public void RecenterRightArea()
         {
-            foreach (Control control in rightArea.Controls)
+            foreach (var area in new[] { rightArea, leftArea })
             {
-                int top = Math.Max(0, (BarHeight - 1 - control.Height) / 2);
-                control.Margin = new Padding(control.Margin.Left, top, 0, 0);
+                foreach (Control control in area.Controls)
+                {
+                    int top = Math.Max(0, (BarHeight - 1 - control.Height) / 2);
+                    control.Margin = new Padding(control.Margin.Left, top, 0, 0);
+                }
             }
+        }
+
+        /// <summary>큰 상태 표시 옆 줄(로그인 사용자와 버튼)에 넣습니다.</summary>
+        public void AddLeft(Control control, int leftGap)
+        {
+            int top = Math.Max(0, (BarHeight - 1 - control.Height) / 2);
+            control.Margin = new Padding(leftGap, top, 0, 0);
+            leftArea.Controls.Add(control);
         }
 
         /// <summary>
@@ -128,6 +167,47 @@ namespace SemiconductorUi.Controls
             AddRight(divider, 12);
         }
 
+        private int FullBrandWidth => large ? BrandWidth + 24 : BrandWidth;
+
+        /// <summary>상태 표시 자리 폭: 나올 수 있는 글자 중 가장 긴 것 기준.</summary>
+        private int MeasurePillSlot(string current)
+        {
+            var pillFont = large ? LargePillFont : PillFont;
+            int widest = 0;
+            foreach (var text in PillSlotTexts ?? new string[0])
+            {
+                widest = Math.Max(widest, TextRenderer.MeasureText(text, pillFont, Size.Empty, TextFormatFlags.NoPadding).Width);
+            }
+            if (!string.IsNullOrEmpty(current))
+            {
+                widest = Math.Max(widest, TextRenderer.MeasureText(current, pillFont, Size.Empty, TextFormatFlags.NoPadding).Width);
+            }
+            return widest + 46;
+        }
+
+        /// <summary>
+        /// 장비 이름을 다 쓸지(창이 좁으면 로고만) 정합니다. 왼쪽(이름 + 상태 + 로그인 줄)이 오른쪽 줄과 겹치면 로고만 둡니다.
+        /// </summary>
+        private int ChooseBrandWidth(int pillSlot)
+        {
+            int leftNeed = pillSlot + 18 + (leftArea.Controls.Count > 0 ? 14 + leftArea.Width : 0);
+            return FullBrandWidth + leftNeed + 12 > rightArea.Left ? CompactBrandWidth : FullBrandWidth;
+        }
+
+        protected override void OnLayout(LayoutEventArgs levent)
+        {
+            base.OnLayout(levent);
+            if (leftArea == null) return;
+            int slot = MeasurePillSlot(StateProvider?.Invoke().Text);
+            int brandWidth = ChooseBrandWidth(slot);
+            int x = brandWidth + 18 + slot + 14;
+            if (leftArea.Location != new Point(x, 0))
+            {
+                leftArea.Location = new Point(x, 0);
+            }
+            Invalidate();
+        }
+
         protected override void OnPaint(PaintEventArgs e)
         {
             base.OnPaint(e);
@@ -148,12 +228,9 @@ namespace SemiconductorUi.Controls
                 pillTextSize = TextRenderer.MeasureText(g, state.Value.Text, pillFont, Size.Empty, TextFormatFlags.NoPadding);
                 pillWidth = pillTextSize.Width + 46;
             }
-            int fullBrandWidth = large ? BrandWidth + 24 : BrandWidth;
-            int brandWidth = fullBrandWidth;
-            if (fullBrandWidth + 18 + pillWidth + 12 > rightArea.Left)
-            {
-                brandWidth = CompactBrandWidth;
-            }
+            int fullBrandWidth = FullBrandWidth;
+            int pillSlot = MeasurePillSlot(state.HasValue ? state.Value.Text : null);
+            int brandWidth = ChooseBrandWidth(pillSlot);
 
             // 장비 이름
             var logo = new Rectangle(20, (BarHeight - 30) / 2, 30, 30);
@@ -174,13 +251,21 @@ namespace SemiconductorUi.Controls
             if (brandWidth == fullBrandWidth)
             {
                 TextRenderer.DrawText(g, "웨이퍼 이송 장비", titleFont, new Point(logo.Right + 10, large ? 9 : 12), UiTheme.TextPrimary, TextFormatFlags.NoPadding);
-                TextRenderer.DrawText(g, "SemiconductorUi", subFont, new Point(logo.Right + 11, large ? 34 : 33), UiTheme.TextSecondary, TextFormatFlags.NoPadding);
+                string subtitle = SubtitleProvider?.Invoke();
+                bool hasView = !string.IsNullOrWhiteSpace(subtitle);
+                TextRenderer.DrawText(g, hasView ? subtitle : "SemiconductorUi", subFont, new Point(logo.Right + 11, large ? 34 : 33),
+                    hasView ? UiTheme.Primary : UiTheme.TextSecondary, TextFormatFlags.NoPadding);
             }
 
             using (var pen = new Pen(UiTheme.Border))
             {
                 g.DrawLine(pen, brandWidth, 16, brandWidth, BarHeight - 17);
                 g.DrawLine(pen, 0, Height - 1, Width, Height - 1);
+                if (leftArea.Controls.Count > 0)
+                {
+                    int dividerX = leftArea.Left - 7;
+                    g.DrawLine(pen, dividerX, 16, dividerX, BarHeight - 17);
+                }
             }
 
             // 큰 상태 표시
@@ -336,7 +421,7 @@ namespace SemiconductorUi.Controls
     }
 
     /// <summary>
-    /// 왼쪽 메뉴 아래쪽의 로그인 사용자 표시(동그란 첫 글자 + 이름 + 권한).
+    /// 로그인 사용자 표시(동그란 첫 글자 + 이름 + 권한). 상단 바에서는 가로로(첫 글자 왼쪽, 이름과 권한 오른쪽) 그립니다.
     /// </summary>
     public sealed class ShellUserCard : Control
     {
@@ -356,6 +441,9 @@ namespace SemiconductorUi.Controls
         public Func<string> RoleProvider { get; set; }
         public Func<bool> LoggedInProvider { get; set; }
 
+        /// <summary>true면 첫 글자 동그라미를 왼쪽에, 이름과 권한을 오른쪽에 두 줄로 그립니다.</summary>
+        public bool Horizontal { get; set; }
+
         protected override void OnPaint(PaintEventArgs e)
         {
             var g = e.Graphics;
@@ -366,7 +454,9 @@ namespace SemiconductorUi.Controls
             string user = UserProvider?.Invoke() ?? "Guest";
             string role = loggedIn ? (RoleProvider?.Invoke() ?? "") : "로그인 필요";
 
-            var avatar = new Rectangle((Width - 28) / 2, 2, 28, 28);
+            var avatar = Horizontal
+                ? new Rectangle(1, (Height - 30) / 2, 30, 30)
+                : new Rectangle((Width - 28) / 2, 2, 28, 28);
             using (var brush = new SolidBrush(loggedIn ? Color.FromArgb(232, 239, 250) : UiTheme.SurfaceAlt))
             {
                 g.FillEllipse(brush, avatar);
@@ -379,12 +469,90 @@ namespace SemiconductorUi.Controls
             TextRenderer.DrawText(g, initial, InitialFont, avatar, loggedIn ? UiTheme.Primary : UiTheme.TextSecondary,
                 TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding);
 
+            if (Horizontal)
+            {
+                int textX = avatar.Right + 8;
+                int mid = Height / 2;
+                TextRenderer.DrawText(g, user, NameFont, new Rectangle(textX, mid - 17, Width - textX, 17), UiTheme.TextPrimary,
+                    TextFormatFlags.Left | TextFormatFlags.Bottom | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPadding | TextFormatFlags.SingleLine);
+                TextRenderer.DrawText(g, role, RoleFont, new Rectangle(textX, mid + 1, Width - textX, 15), UiTheme.TextSecondary,
+                    TextFormatFlags.Left | TextFormatFlags.Top | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPadding | TextFormatFlags.SingleLine);
+                return;
+            }
+
             var nameRect = new Rectangle(0, 33, Width, 16);
             TextRenderer.DrawText(g, user, NameFont, nameRect, UiTheme.TextPrimary,
                 TextFormatFlags.HorizontalCenter | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPadding | TextFormatFlags.SingleLine);
             var roleRect = new Rectangle(0, 50, Width, 14);
             TextRenderer.DrawText(g, role, RoleFont, roleRect, UiTheme.TextSecondary,
                 TextFormatFlags.HorizontalCenter | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPadding | TextFormatFlags.SingleLine);
+        }
+    }
+
+    /// <summary>
+    /// 상단 바 오른쪽 끝의 작은 3색 램프. 장비 램프 표시(빨강·노랑·초록 패널)의 색을 그릴 때마다 읽어 옵니다.
+    /// </summary>
+    public sealed class ShellTowerLamp : Control
+    {
+        public ShellTowerLamp()
+        {
+            SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer
+                | ControlStyles.UserPaint | ControlStyles.ResizeRedraw, true);
+            BackColor = UiTheme.Surface;
+            Size = new Size(22, 44);
+        }
+
+        public Func<Color> RedProvider { get; set; }
+        public Func<Color> YellowProvider { get; set; }
+        public Func<Color> GreenProvider { get; set; }
+
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            var g = e.Graphics;
+            g.Clear(BackColor);
+            g.SmoothingMode = SmoothingMode.AntiAlias;
+            EquipmentCanvasStyler.DrawSignalTower(g, new Rectangle(4, 1, Width - 8, Height - 2),
+                RedProvider?.Invoke() ?? EquipmentCanvasStyler.LampOff,
+                YellowProvider?.Invoke() ?? EquipmentCanvasStyler.LampOff,
+                GreenProvider?.Invoke() ?? EquipmentCanvasStyler.LampOff);
+        }
+    }
+
+    /// <summary>
+    /// 하단 메뉴 줄 가운데의 현재 상태 한 줄. 글자는 그릴 때마다 TextProvider에서 읽어 옵니다.
+    /// </summary>
+    public sealed class ShellStatusLine : Control
+    {
+        private static readonly Font CaptionFont = new Font("Segoe UI", 8F);
+        private static readonly Font LineFont = new Font("Segoe UI", 10F, FontStyle.Bold);
+
+        public ShellStatusLine()
+        {
+            SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer
+                | ControlStyles.UserPaint | ControlStyles.ResizeRedraw, true);
+            BackColor = UiTheme.Surface;
+        }
+
+        public Func<string> TextProvider { get; set; }
+
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            var g = e.Graphics;
+            g.Clear(BackColor);
+            g.SmoothingMode = SmoothingMode.AntiAlias;
+            var box = new Rectangle(0, 0, Width - 1, Height - 1);
+            using (var path = ShellDraw.RoundedRect(box, 8))
+            using (var brush = new SolidBrush(UiTheme.SurfaceAlt))
+            using (var pen = new Pen(UiTheme.Border))
+            {
+                g.FillPath(brush, path);
+                g.DrawPath(pen, path);
+            }
+            int mid = Height / 2;
+            TextRenderer.DrawText(g, "현재 상태", CaptionFont, new Rectangle(14, mid - 18, Width - 28, 15), UiTheme.TextSecondary,
+                TextFormatFlags.Left | TextFormatFlags.Bottom | TextFormatFlags.NoPadding | TextFormatFlags.SingleLine);
+            TextRenderer.DrawText(g, TextProvider?.Invoke() ?? "", LineFont, new Rectangle(14, mid - 1, Width - 28, 20), UiTheme.TextPrimary,
+                TextFormatFlags.Left | TextFormatFlags.Top | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPadding | TextFormatFlags.SingleLine);
         }
     }
 

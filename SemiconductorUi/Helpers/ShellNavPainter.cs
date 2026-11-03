@@ -7,7 +7,7 @@ using System.Windows.Forms;
 
 namespace SemiconductorUi.Helpers
 {
-    /// <summary>왼쪽 메뉴 항목 위에 그리는 작은 그림.</summary>
+    /// <summary>메뉴 항목에 그리는 작은 그림.</summary>
     public enum ShellNavIcon
     {
         Operate,
@@ -20,19 +20,22 @@ namespace SemiconductorUi.Helpers
     }
 
     /// <summary>
-    /// 기존 메뉴/탭 버튼을 그대로 쓰면서 모양만 왼쪽 세로 메뉴와 작은 탭으로 그립니다.
+    /// 기존 메뉴/탭 버튼을 그대로 쓰면서 모양만 하단 메뉴 줄 버튼과 작은 탭으로 그립니다.
     /// 버튼의 클릭 핸들러, Enabled, 이름은 건드리지 않습니다.
     /// </summary>
     public static class ShellNavPainter
     {
         private static readonly Font NavFont = new Font("Segoe UI", 9F);
         private static readonly Font NavFontBold = new Font("Segoe UI", 9F, FontStyle.Bold);
+        private static readonly Font BarFont = new Font("Segoe UI", 10.5F);
+        private static readonly Font BarFontBold = new Font("Segoe UI", 10.5F, FontStyle.Bold);
         private static readonly Font TabFont = new Font("Segoe UI", 9.5F);
         private static readonly Font TabFontBold = new Font("Segoe UI", 9.5F, FontStyle.Bold);
 
         private static readonly Color SelectedSoft = Color.FromArgb(232, 239, 250);
 
         private static readonly Dictionary<Button, ShellNavIcon> navItems = new Dictionary<Button, ShellNavIcon>();
+        private static readonly HashSet<Button> barItems = new HashSet<Button>();
         private static readonly HashSet<Button> subTabs = new HashSet<Button>();
         private static readonly HashSet<Button> selected = new HashSet<Button>();
         private static readonly HashSet<Button> hovered = new HashSet<Button>();
@@ -42,12 +45,32 @@ namespace SemiconductorUi.Helpers
             return button != null && (navItems.ContainsKey(button) || subTabs.Contains(button));
         }
 
+        /// <summary>선택 표시가 바뀌면 알립니다(상단 바의 화면 이름을 다시 그릴 때 씁니다).</summary>
+        public static event Action SelectionChanged;
+
+        public static bool IsSelected(Button button)
+        {
+            return button != null && selected.Contains(button);
+        }
+
         /// <summary>선택 표시만 바꿉니다(UiTheme.ApplyToggleButton에서 부릅니다).</summary>
         public static void SetSelected(Button button, bool isSelected)
         {
             if (button == null) return;
             bool changed = isSelected ? selected.Add(button) : selected.Remove(button);
-            if (changed) button.Invalidate();
+            if (changed)
+            {
+                button.Invalidate();
+                SelectionChanged?.Invoke();
+            }
+        }
+
+        /// <summary>하단 메뉴 줄 버튼: 테두리 있는 가로 버튼, 그림 왼쪽 + 글자 오른쪽.</summary>
+        public static void StyleNavBarItem(Button button, string text, ShellNavIcon icon, Size size)
+        {
+            if (button == null) return;
+            barItems.Add(button);
+            StyleNavItem(button, text, icon, size);
         }
 
         public static void StyleNavItem(Button button, string text, ShellNavIcon icon, Size size)
@@ -112,6 +135,29 @@ namespace SemiconductorUi.Helpers
             using (var brush = new SolidBrush(back))
             {
                 g.FillPath(brush, path);
+            }
+
+            if (barItems.Contains(button))
+            {
+                Color border = isSelected ? UiTheme.Primary : UiTheme.Border;
+                using (var path = RoundedRect(new Rectangle(0, 0, bounds.Width - 1, bounds.Height - 1), 8))
+                using (var pen = new Pen(border))
+                {
+                    g.DrawPath(pen, path);
+                }
+                Color barFore = !button.Enabled ? UiTheme.ButtonDisabledText
+                    : (isSelected ? UiTheme.Primary : UiTheme.TextPrimary);
+                var font = isSelected ? BarFontBold : BarFont;
+                var textSize = TextRenderer.MeasureText(g, button.Text, font, Size.Empty, TextFormatFlags.NoPadding | TextFormatFlags.SingleLine);
+                const int iconSize = 22;
+                const int gap = 8;
+                int groupWidth = iconSize + gap + textSize.Width;
+                int left = Math.Max(6, (bounds.Width - groupWidth) / 2);
+                DrawIcon(g, navItems[button], new RectangleF(left, (bounds.Height - iconSize) / 2f, iconSize, iconSize), barFore);
+                TextRenderer.DrawText(g, button.Text, font,
+                    new Rectangle(left + iconSize + gap, 0, bounds.Width - left - iconSize - gap, bounds.Height), barFore,
+                    TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding | TextFormatFlags.SingleLine | TextFormatFlags.EndEllipsis);
+                return;
             }
 
             var iconBox = new RectangleF((bounds.Width - 22) / 2f, 9, 22, 22);
