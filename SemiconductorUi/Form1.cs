@@ -1020,6 +1020,9 @@ namespace SemiconductorUi
             // 시뮬레이션 모드 시험 알람 (챔버 표시 영역 오른쪽 클릭)
             AttachSimulationTestAlarmMenus();
 
+            // 장비 그림의 챔버/FOUP를 누르면 작은 상세 창 (화면을 잠그지 않음)
+            RegisterEquipmentDetailHandlers();
+
             // 초기 레시피 목록 로드
             try
             {
@@ -1755,6 +1758,10 @@ namespace SemiconductorUi
             buttonEthercatConnect.Enabled = IsLoggedIn;
             buttonEthercatDisconnect.Enabled = IsLoggedIn;
             buttonServoOn.Enabled = IsLoggedIn;
+            if (!IsLoggedIn)
+            {
+                CloseUnitDetail();
+            }
             SetControlPanelEnabled(IsLoggedIn);
             UpdateProcessControlButtons();
             UpdateNavigationButtons();
@@ -1830,22 +1837,6 @@ namespace SemiconductorUi
             }
             panel.Dock = DockStyle.Fill;
             panel.Padding = new Padding(12, 10, 12, 10);
-        }
-
-        private void RegisterEquipmentDetailHandlers()
-        {
-            // TM은 캔버스에 직접 그리므로 RegisterPanelForDetail 제거
-            RegisterPanelForDetail(panelChamberA, "PMA");
-            RegisterPanelForDetail(panelChamberB, "PMB");
-            RegisterPanelForDetail(panelChamberC, "PMC");
-            RegisterPanelForDetail(panelFoupA, "FOUP A");
-            RegisterPanelForDetail(panelFoupB, "FOUP B");
-            RegisterPanelForDetail(panelMainLamp, "Main Lamp");
-            RegisterPanelForDetail(panelSummaryPMA, "PMA");
-            RegisterPanelForDetail(panelSummaryPMB, "PMB");
-            RegisterPanelForDetail(panelSummaryPMC, "PMC");
-            RegisterPanelForDetail(panelFoupStatusA, "FOUP A");
-            RegisterPanelForDetail(panelFoupStatusB, "FOUP B");
         }
 
         // panelEquipmentCanvas_Resize는 FormEventHandlers로 이동됨
@@ -2322,6 +2313,13 @@ namespace SemiconductorUi
 
         internal void HandleEquipmentUnitClick(string unitKey)
         {
+            HandleEquipmentUnitClick(unitKey, null);
+        }
+
+        // 챔버와 FOUP는 화면을 잠그지 않는 작은 상세 창으로 보여 줍니다 (Form1.UnitDetail.cs).
+        // 예전의 모달 상세 창(PmDetailForm, EquipmentDetailForm)은 닫기 전까지 긴급 정지 버튼까지 막아서 쓰지 않습니다.
+        internal void HandleEquipmentUnitClick(string unitKey, Control anchor)
+        {
             if (!IsLoggedIn)
             {
                 MessageBox.Show("상세 정보를 보려면 먼저 로그인하세요.", "권한 필요",
@@ -2329,9 +2327,9 @@ namespace SemiconductorUi
                 return;
             }
 
-            if (unitKey == "PMA" || unitKey == "PMB" || unitKey == "PMC")
+            if (unitKey == "PMA" || unitKey == "PMB" || unitKey == "PMC" || unitKey == "FOUP A" || unitKey == "FOUP B")
             {
-                ShowPmDetail(unitKey);
+                ShowUnitDetail(unitKey, anchor);
                 return;
             }
 

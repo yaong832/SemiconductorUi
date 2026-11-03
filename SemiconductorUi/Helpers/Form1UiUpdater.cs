@@ -743,6 +743,9 @@ namespace SemiconductorUi.Helpers
             {
                 form.panelEquipmentCanvas.Invalidate();
             }
+
+            // 챔버/FOUP 상세 창이 떠 있으면 값을 다시 채웁니다.
+            form.RefreshUnitDetail();
         }
 
         /// <summary>

@@ -70,6 +70,10 @@
       <DependentUpon>Form1.cs</DependentUpon>
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="Form1.UnitDetail.cs">
+      <DependentUpon>Form1.cs</DependentUpon>
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="Form1.Shell.cs">
       <DependentUpon>Form1.cs</DependentUpon>
       <SubType>Form</SubType>
@@ -213,6 +217,9 @@
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="Controls\FoupVisualizationControl.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Controls\UnitDetailPopup.cs">
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="Controls\ShellTopBar.cs">
