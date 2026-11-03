@@ -33,8 +33,12 @@ namespace SemiconductorUi.Forms
         private NumericUpDown[] numFbLand = new NumericUpDown[5];
         private NumericUpDown[] numFbRaise = new NumericUpDown[5];
 
+        private NumericUpDown numVelocity, numMaxVelocity, numAcceleration, numDeceleration;
+        private NumericUpDown numHomingVelocity, numHomingMaxVelocity;
+
         private Label labelCurrentPos;
         private TeachingPositionsData _working;
+        private ServoSpeedSettings _savedSpeeds;
 
         public TeachingPositionForm(
             TeachingPositionsData initial,
@@ -60,6 +64,8 @@ namespace SemiconductorUi.Forms
 
             BuildUi();
             LoadToUi(_working);
+            _savedSpeeds = ServoSpeedSettings.FromAppSettings();
+            LoadSpeedsToUi(_savedSpeeds);
             RefreshCurrentPositionLabel();
         }
 
@@ -133,12 +139,13 @@ namespace SemiconductorUi.Forms
             btnCancel.Click += (s, e) => { DialogResult = DialogResult.Cancel; Close(); };
             btnReset.Click += (s, e) =>
             {
-                if (MessageBox.Show(this, "코드에 내장된 기본 티칭값으로 되돌리겠습니까?\n(아직 저장되지 않습니다)", "기본값 복원",
+                if (MessageBox.Show(this, "코드에 내장된 기본 티칭값과 기본 속도로 되돌리겠습니까?\n(아직 저장되지 않습니다)", "기본값 복원",
                         MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes)
                 {
                     return;
                 }
                 LoadToUi(TeachingPositionsData.CreateDefault());
+                LoadSpeedsToUi(ServoSpeedSettings.CreateDefault());
             };
             btnReadPos.Click += (s, e) => ReadCurrentIntoFocused();
             btnRefresh.Click += (s, e) => RefreshCurrentPositionLabel();
@@ -161,6 +168,7 @@ namespace SemiconductorUi.Forms
             tabs.TabPages.Add(BuildChamberTab("Chamber C", "C", out numCcX, out numCcLand, out numCcRaise));
             tabs.TabPages.Add(BuildFoupTab("FOUP A", true));
             tabs.TabPages.Add(BuildFoupTab("FOUP B", false));
+            tabs.TabPages.Add(BuildSpeedTab());
             Controls.Add(tabs);
             tabs.BringToFront();
             top.SendToBack();
@@ -196,6 +204,57 @@ namespace SemiconductorUi.Forms
                 Text = "하강 위치 = 안착(Land) Y − 하강 오프셋.\n" +
                       "Home X/Y는 대기(TM) Region 좌표용입니다. 서보 '원점복귀' 버튼은 드라이브 HOME 센서 시퀀스이며 Home 좌표와는 별개입니다.\n" +
                       "현재위치 읽기: 포커스가 있는 숫자칸에 현재 서보 좌표를 넣습니다 (X칸←Axis2, Y칸←Axis1)."
+            };
+            var host = new Panel { Dock = DockStyle.Fill, AutoScroll = true };
+            host.Controls.Add(hint);
+            host.Controls.Add(panel);
+            hint.Dock = DockStyle.Top;
+            panel.Dock = DockStyle.Top;
+            page.Controls.Add(host);
+            return page;
+        }
+
+        private TabPage BuildSpeedTab()
+        {
+            var page = NewPage("속도");
+            var panel = new TableLayoutPanel
+            {
+                Dock = DockStyle.Top,
+                AutoSize = true,
+                ColumnCount = 2,
+                Padding = new Padding(16)
+            };
+            panel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 220));
+            panel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+
+            panel.Controls.Add(GridHeader("이송 (서보 ON 때 보냄)"), 0, panel.RowCount++);
+            panel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            numVelocity = MakeSpeedNum(MaxSpeedValue);
+            numMaxVelocity = MakeSpeedNum(MaxSpeedValue);
+            numAcceleration = MakeSpeedNum(MaxSpeedValue);
+            numDeceleration = MakeSpeedNum(MaxDecelerationValue);
+            AddRow(panel, "속도", numVelocity);
+            AddRow(panel, "최대 속도", numMaxVelocity);
+            AddRow(panel, "가속", numAcceleration);
+            AddRow(panel, "감속", numDeceleration);
+
+            var homingHeader = GridHeader("원점복귀 (메인 화면 원점복귀 때 보냄)");
+            homingHeader.Margin = new Padding(3, 14, 3, 3);
+            panel.Controls.Add(homingHeader, 0, panel.RowCount++);
+            panel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            numHomingVelocity = MakeSpeedNum(MaxSpeedValue);
+            numHomingMaxVelocity = MakeSpeedNum(MaxSpeedValue);
+            AddRow(panel, "원점복귀 속도", numHomingVelocity);
+            AddRow(panel, "원점복귀 최대 속도", numHomingMaxVelocity);
+
+            var hint = new Label
+            {
+                ForeColor = UiTheme.TextSecondary,
+                AutoSize = true,
+                MaximumSize = new Size(800, 0),
+                Margin = new Padding(16, 8, 16, 8),
+                Text = "저장하면 설정 파일(SemiconductorUi.exe.config)에 기록되고, 다음 서보 ON(원점복귀 값은 다음 원점복귀)부터 적용됩니다.\n" +
+                      "지금 저장된 값보다 큰 값으로 바꾸면 저장할 때 한 번 더 확인합니다."
             };
             var host = new Panel { Dock = DockStyle.Fill, AutoScroll = true };
             host.Controls.Add(hint);
@@ -354,6 +413,20 @@ namespace SemiconductorUi.Forms
             };
         }
 
+        // 속도 칸 상한: 기본값(속도 1,000,000 / 감속 100,000,000)의 5배
+        private const long MaxSpeedValue = 5000000;
+        private const long MaxDecelerationValue = 500000000;
+
+        private static NumericUpDown MakeSpeedNum(long maximum)
+        {
+            var num = MakeLongNum();
+            num.Minimum = 1000;
+            num.Maximum = maximum;
+            num.Increment = 10000;
+            num.ThousandsSeparator = true;
+            return num;
+        }
+
         private static Button MakeButton(string text, Color back)
         {
             return new Button
@@ -393,6 +466,37 @@ namespace SemiconductorUi.Forms
                 SetNum(numFbLand[i], SafeIndex(_working.FoupB_LandY, i));
                 SetNum(numFbRaise[i], SafeIndex(_working.FoupB_RaiseY, i));
             }
+        }
+
+        private void LoadSpeedsToUi(ServoSpeedSettings speeds)
+        {
+            SetSpeedNum(numVelocity, speeds.Velocity);
+            SetSpeedNum(numMaxVelocity, speeds.MaxVelocity);
+            SetSpeedNum(numAcceleration, speeds.Acceleration);
+            SetSpeedNum(numDeceleration, speeds.Deceleration);
+            SetSpeedNum(numHomingVelocity, speeds.HomingVelocity);
+            SetSpeedNum(numHomingMaxVelocity, speeds.HomingMaxVelocity);
+        }
+
+        /// <summary>설정 파일 값이 칸 범위 밖이어도 잘리지 않게 범위를 넓혀서 그대로 보여 줍니다.</summary>
+        private static void SetSpeedNum(NumericUpDown num, long value)
+        {
+            if (value > (long)num.Maximum) num.Maximum = value;
+            if (value < (long)num.Minimum) num.Minimum = value;
+            num.Value = value;
+        }
+
+        private ServoSpeedSettings ReadSpeedsFromUi()
+        {
+            return new ServoSpeedSettings
+            {
+                Velocity = (long)numVelocity.Value,
+                MaxVelocity = (long)numMaxVelocity.Value,
+                Acceleration = (long)numAcceleration.Value,
+                Deceleration = (long)numDeceleration.Value,
+                HomingVelocity = (long)numHomingVelocity.Value,
+                HomingMaxVelocity = (long)numHomingMaxVelocity.Value
+            };
         }
 
         private TeachingPositionsData ReadFromUi()
@@ -439,11 +543,32 @@ namespace SemiconductorUi.Forms
                     return;
                 }
 
+                var speeds = ReadSpeedsFromUi();
+                bool speedsChanged = !speeds.SameAs(_savedSpeeds);
+                if (speedsChanged && speeds.AnyGreaterThan(_savedSpeeds)
+                    && MessageBox.Show(this,
+                        "속도 탭에서 지금 저장된 값보다 큰 값이 있습니다.\n다음 서보 ON부터 장비가 더 빠르거나 급하게 움직일 수 있습니다.\n\n그래도 저장하겠습니까?",
+                        "속도 확인", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) != DialogResult.Yes)
+                {
+                    return;
+                }
+
                 TeachingPositionsRepository.Save(data);
                 var set = new TmHardwareController.TmPositionSet();
                 set.ApplyFrom(data);
                 _onApplied?.Invoke(set);
-                MessageBox.Show(this, "티칭 위치를 저장하고 적용했습니다.", "저장 완료", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                if (speedsChanged)
+                {
+                    ServoSpeedRepository.Save(speeds);
+                    _savedSpeeds = ServoSpeedSettings.FromAppSettings();
+                }
+
+                MessageBox.Show(this,
+                    speedsChanged
+                        ? "티칭 위치를 저장하고 적용했습니다.\n속도는 설정 파일에 저장했고, 다음 서보 ON부터 적용됩니다."
+                        : "티칭 위치를 저장하고 적용했습니다.",
+                    "저장 완료", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 DialogResult = DialogResult.OK;
                 Close();
             }
