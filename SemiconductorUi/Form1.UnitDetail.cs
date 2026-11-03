@@ -4,24 +4,21 @@ using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
 using SemiconductorUi.Controls;
+using SemiconductorUi.Forms;
 using SemiconductorUi.Helpers;
 
 namespace SemiconductorUi
 {
     /// <summary>
-    /// 장비 그림에서 챔버나 FOUP를 누르면 그 옆에 작은 상세 창을 띄웁니다.
-    /// 창은 메인 화면 위에 놓인 일반 컨트롤이라 화면을 잠그지 않으므로, 떠 있는 동안에도
+    /// 장비 그림에서 챔버나 FOUP를 누르면 상세 정보를 별도 창(UnitDetailForm) 하나에 띄웁니다.
+    /// 레시피 창과 달리 메인 화면을 잠그지 않으므로(모달 아님), 떠 있는 동안에도
     /// 긴급 정지, 일시 정지 같은 버튼을 그대로 누를 수 있습니다. 값은 화면 갱신 때마다 다시 채웁니다.
+    /// 창은 Windows 제목 줄로 옮기며, 오른쪽 제어 패널(긴급 정지 포함) 위에는 놓이지 않게 합니다.
     /// 화면 표시만 하며 장비에는 아무 명령도 보내지 않습니다.
     /// </summary>
     public partial class Form1
     {
-        private UnitDetailPopup unitDetailPopup;
-        private Control unitDetailAnchor;
-        // 사용자가 머리줄을 끌어 옮긴 자리. 창을 닫을 때까지 이 자리를 유지합니다(다른 장비를 눌러도 그대로).
-        private Point? unitDetailUserLocation;
-        // 이번 끌기 동안 창이 지나간 영역 전체 (끌기를 마치면 한 번 더 깨끗이 다시 그림)
-        private Rectangle unitDetailDragTrail = Rectangle.Empty;
+        private UnitDetailForm unitDetailForm;
 
         // 장비 그림의 챔버와 FOUP에 클릭을 연결합니다 (Tag는 다른 용도로 쓰므로 건드리지 않음).
         private void RegisterEquipmentDetailHandlers()
@@ -78,80 +75,62 @@ namespace SemiconductorUi
                 return;
             }
 
-            if (unitDetailPopup == null || unitDetailPopup.IsDisposed)
+            if (unitDetailForm == null || unitDetailForm.IsDisposed)
             {
-                unitDetailPopup = new UnitDetailPopup { Name = "unitDetailPopup", Visible = false };
-                unitDetailPopup.CloseRequested += (s, e) => CloseUnitDetail();
-                unitDetailPopup.DragMoving += (s, location) =>
+                unitDetailForm = new UnitDetailForm { Name = "unitDetailForm" };
+                unitDetailForm.CloseRequested += (s, e) => CloseUnitDetail();
+                // 사용자가 창을 옮기다 놓았을 때(ResizeEnd), 또는 마우스를 쓰지 않고 자리가 바뀌었을 때
+                // 제어 패널 위에 걸쳐 있으면 왼쪽으로 비켜 놓습니다.
+                unitDetailForm.ResizeEnd += (s, e) => KeepUnitDetailOffControlPanel();
+                unitDetailForm.LocationChanged += (s, e) =>
                 {
-                    var before = unitDetailPopup.Bounds;
-                    unitDetailUserLocation = location;
-                    PlaceUnitDetail();
-                    if (unitDetailPopup.Bounds != before)
+                    if (Control.MouseButtons == MouseButtons.None)
                     {
-                        unitDetailDragTrail = unitDetailDragTrail.IsEmpty ? before : Rectangle.Union(unitDetailDragTrail, before);
-                        RepaintBehindUnitDetail(before);
+                        KeepUnitDetailOffControlPanel();
                     }
                 };
-                unitDetailPopup.DragEnded += (s, e) =>
-                {
-                    if (!unitDetailDragTrail.IsEmpty)
-                    {
-                        var trail = unitDetailDragTrail;
-                        unitDetailDragTrail = Rectangle.Empty;
-                        RepaintBehindUnitDetail(trail);
-                    }
-                };
-                Controls.Add(unitDetailPopup);
-                // 공정이 멈춰 화면 갱신이 없을 때도 창 크기가 바뀌면 자리를 다시 잡습니다.
-                Resize += (s, e) => PlaceUnitDetail();
             }
 
-            unitDetailPopup.UnitKey = unitKey;
-            unitDetailAnchor = anchor;
+            bool wasVisible = unitDetailForm.Visible;
+            unitDetailForm.UnitKey = unitKey;
             RefreshUnitDetail();
-            unitDetailPopup.Visible = true;
-            unitDetailPopup.BringToFront();
+
+            if (!wasVisible)
+            {
+                // 처음 띄울 때만 기본 자리(TM 정면·옆면 보기 자리)에 둡니다.
+                // 떠 있는 동안 다른 장비를 누르면 내용만 바뀌고 자리는 그대로입니다.
+                unitDetailForm.Location = GetDefaultUnitDetailLocation(anchor, unitDetailForm.Size);
+                unitDetailForm.Show(this);
+            }
         }
 
         internal void CloseUnitDetail()
         {
-            if (unitDetailPopup != null)
+            if (unitDetailForm != null && !unitDetailForm.IsDisposed)
             {
-                unitDetailPopup.Visible = false;
-                unitDetailPopup.UnitKey = null;
+                unitDetailForm.Hide();
+                unitDetailForm.UnitKey = null;
             }
-            unitDetailAnchor = null;
-            unitDetailUserLocation = null;
         }
 
-        /// <summary>떠 있는 상세 창의 값과 위치를 지금 상태로 다시 맞춥니다 (화면 갱신마다 호출).</summary>
+        /// <summary>떠 있는 상세 창의 값을 지금 상태로 다시 맞춥니다 (화면 갱신마다 호출).</summary>
         internal void RefreshUnitDetail()
         {
-            if (unitDetailPopup == null || unitDetailPopup.IsDisposed || string.IsNullOrEmpty(unitDetailPopup.UnitKey))
+            var detailForm = unitDetailForm;
+            if (detailForm == null || detailForm.IsDisposed || string.IsNullOrEmpty(detailForm.UnitKey))
             {
                 return;
             }
 
-            string key = unitDetailPopup.UnitKey;
-            unitDetailPopup.DetailScale = EquipmentCanvasStyler.DrawScale;
-            unitDetailPopup.SetContent(key.StartsWith("FOUP") ? BuildFoupDetail(key) : BuildChamberDetail(key));
-            PlaceUnitDetail();
+            string key = detailForm.UnitKey;
+            detailForm.DetailScale = EquipmentCanvasStyler.DrawScale;
+            detailForm.SetContent(key.StartsWith("FOUP") ? BuildFoupDetail(key) : BuildChamberDetail(key));
         }
 
-        // 창은 위에서 본 장비 그림(챔버, TM, FOUP) 오른쪽, TM 정면·옆면 보기 자리에 둡니다.
-        // 그래야 공정 중 TM 움직임과 세 챔버가 가려지지 않습니다. 높이는 누른 곳에 맞춥니다.
-        // 사용자가 끌어 옮겼으면 그 자리에 둡니다. 어느 경우든 오른쪽 제어 패널(긴급 정지 포함)을
-        // 가리지 않고, 장비 그림 칸 위쪽과 아래 메뉴 줄 사이를 벗어나지 않습니다.
-        private void PlaceUnitDetail()
+        // 기본 자리(화면 좌표): 위에서 본 장비 그림 오른쪽, TM 정면·옆면 보기 자리. 높이는 누른 곳에 맞춥니다.
+        // 오른쪽 제어 패널(긴급 정지 포함)을 가리지 않고, 장비 그림 칸 위쪽과 아래 메뉴 줄 사이에 둡니다.
+        private Point GetDefaultUnitDetailLocation(Control anchor, Size windowSize)
         {
-            var popup = unitDetailPopup;
-            var anchor = unitDetailAnchor;
-            if (popup == null || anchor == null || !anchor.IsHandleCreated || !IsHandleCreated)
-            {
-                return;
-            }
-
             Rectangle ToClient(Control c) => RectangleToClient(c.RectangleToScreen(c.ClientRectangle));
             bool Usable(Control c) => c != null && c.Visible && c.IsHandleCreated;
 
@@ -169,8 +148,7 @@ namespace SemiconductorUi
             int maxBottom = ClientSize.Height - margin;
             if (Usable(panelEquipmentCanvas))
             {
-                var canvas = ToClient(panelEquipmentCanvas);
-                minTop = canvas.Top + margin;
+                minTop = ToClient(panelEquipmentCanvas).Top + margin;
             }
             if (Usable(shellBottomBar))
             {
@@ -178,74 +156,53 @@ namespace SemiconductorUi
             }
 
             int x;
-            int y;
-            if (unitDetailUserLocation.HasValue)
-            {
-                x = unitDetailUserLocation.Value.X;
-            }
-            else if (Usable(tmSideViewControl))
+            if (Usable(tmSideViewControl))
             {
                 x = ToClient(tmSideViewControl).Left;
             }
             else
             {
                 x = a.Right + gap;
-                if (x + popup.Width > maxRight)
+                if (x + windowSize.Width > maxRight)
                 {
-                    x = a.Left - gap - popup.Width;
+                    x = a.Left - gap - windowSize.Width;
                 }
             }
-            if (!unitDetailUserLocation.HasValue)
-            {
-                y = a.Top + a.Height / 2 - popup.Height / 2;
-            }
-            else
-            {
-                y = unitDetailUserLocation.Value.Y;
-            }
 
-            x = Math.Max(margin, Math.Min(x, maxRight - popup.Width));
-            y = Math.Max(minTop, Math.Min(y, maxBottom - popup.Height));
-
-            var location = new Point(x, y);
-            if (popup.Location != location)
-            {
-                popup.Location = location;
-            }
+            int y = a.Top + a.Height / 2 - windowSize.Height / 2;
+            x = Math.Max(margin, Math.Min(x, maxRight - windowSize.Width));
+            y = Math.Max(minTop, Math.Min(y, maxBottom - windowSize.Height));
+            return PointToScreen(new Point(x, y));
         }
 
-        // 끄는 동안 창이 떠난 자리의 뒤 화면을 바로 다시 그립니다. 그냥 두면 마우스 움직임이
-        // 계속 들어오는 동안 뒤 화면이 늦게 그려져 창의 잔상이 남습니다.
-        private void RepaintBehindUnitDetail(Rectangle oldBounds)
+        // 상세 창이 제어 패널(긴급 정지 포함) 위에 걸쳐 있으면 제어 패널 왼쪽으로 옮깁니다.
+        // 창이 메인 화면 밖(다른 모니터 등)에 있거나 제어 패널과 겹치지 않으면 그대로 둡니다.
+        private bool keepingUnitDetailOffPanel;
+        private void KeepUnitDetailOffControlPanel()
         {
-            Invalidate(oldBounds, false);
-            Update();
-            UpdateControlsIn(this, oldBounds);
-            unitDetailPopup?.Update();
-        }
-
-        // rect(폼 기준)와 겹치는 자식 컨트롤을 찾아 밀린 그리기를 지금 처리합니다.
-        private void UpdateControlsIn(Control parent, Rectangle rectInForm)
-        {
-            foreach (Control child in parent.Controls)
+            var detailForm = unitDetailForm;
+            if (keepingUnitDetailOffPanel || detailForm == null || detailForm.IsDisposed || !detailForm.Visible
+                || panelControlPanel == null || !panelControlPanel.Visible || !panelControlPanel.IsHandleCreated
+                || WindowState == FormWindowState.Minimized)
             {
-                if (child == unitDetailPopup || !child.Visible || !child.IsHandleCreated)
-                {
-                    continue;
-                }
+                return;
+            }
 
-                var childInForm = RectangleToClient(child.RectangleToScreen(child.ClientRectangle));
-                if (!childInForm.IntersectsWith(rectInForm))
-                {
-                    continue;
-                }
+            var panel = panelControlPanel.RectangleToScreen(panelControlPanel.ClientRectangle);
+            var bounds = detailForm.Bounds;
+            if (!bounds.IntersectsWith(panel))
+            {
+                return;
+            }
 
-                // 겹친 부분만 그 컨트롤 기준 좌표로 무효화하고 바로 그립니다.
-                var overlap = Rectangle.Intersect(childInForm, rectInForm);
-                overlap.Offset(-childInForm.X, -childInForm.Y);
-                child.Invalidate(overlap, false);
-                child.Update();
-                UpdateControlsIn(child, rectInForm);
+            keepingUnitDetailOffPanel = true;
+            try
+            {
+                detailForm.Location = new Point(panel.Left - 8 - bounds.Width, bounds.Top);
+            }
+            finally
+            {
+                keepingUnitDetailOffPanel = false;
             }
         }
 

@@ -99,6 +99,9 @@
     <Compile Include="Forms\VerificationForm.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="Forms\UnitDetailForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="Forms\TrendForm.cs">
       <SubType>Form</SubType>
     </Compile>
