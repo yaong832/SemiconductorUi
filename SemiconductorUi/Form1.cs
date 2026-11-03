@@ -1750,6 +1750,11 @@ namespace SemiconductorUi
             labelLoginStatus.Text = $"사용자: {CurrentUser} / 권한: {CurrentRole}";
             buttonLogin.Enabled = !IsLoggedIn;
             buttonLogout.Enabled = IsLoggedIn;
+            // 장비를 움직이기 시작하는 버튼(EtherCAT 연결/해제, 서보 ON)은 로그인해야 누를 수 있다.
+            // 서보 OFF는 정지 동작이라 로그인하지 않아도 언제든 누를 수 있게 둔다.
+            buttonEthercatConnect.Enabled = IsLoggedIn;
+            buttonEthercatDisconnect.Enabled = IsLoggedIn;
+            buttonServoOn.Enabled = IsLoggedIn;
             SetControlPanelEnabled(IsLoggedIn);
             UpdateProcessControlButtons();
             UpdateNavigationButtons();
