@@ -219,6 +219,35 @@ namespace SemiconductorUi.Controls
             Invalidate();
         }
 
+        /// <summary>
+        /// 이 패널이 지금 보여 주는 환경 값을 같은 글자로 돌려줍니다 (이름, PV, SV, 단위).
+        /// 상세 창이 오른쪽 칸과 똑같은 값을 보여 주도록 할 때 씁니다. 값이 없으면 "-"입니다.
+        /// </summary>
+        public string[][] GetEnvironmentRows()
+        {
+            return new[]
+            {
+                EnvRow("NF3", _nf3PV, _nf3SV, "sccm"),
+                EnvRow("O2", _o2PV, _o2SV, "sccm"),
+                EnvRow("CF4", _cf4PV, _cf4SV, "sccm"),
+                EnvRow("압력", _pressPV, _pressSV, "Torr"),
+                EnvRow("RF", _rfPV, _rfSV, "W"),
+                EnvRow("온도", _tempPV, _tempSV, "°C")
+            };
+        }
+
+        private string[] EnvRow(string name, double pv, double sv, string unit)
+        {
+            bool hasPv = _isProcessing && pv > 0;
+            return new[]
+            {
+                name,
+                hasPv ? FormatValue(pv, unit) : "-",
+                sv > 0 ? FormatValue(sv, unit) : "-",
+                unit
+            };
+        }
+
         #endregion
 
         #region Painting
