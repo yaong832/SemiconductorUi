@@ -1297,10 +1297,11 @@ namespace SemiconductorUi.Forms
             labelStatus.Text = "서보 ON 중...";
             labelStatus.ForeColor = UiTheme.Warning;
             var device = ethercatDevice;
-            long velocity = 300000;
-            long maxVelocity = 500000;
-            long deceleration = 100000000;
-            long acceleration = 1000000;
+            // 메인 화면 서보 ON과 같은 설정 파일 값을 씁니다 (SemiconductorUi.exe.config의 ServoDefault*).
+            long velocity = AppSettings.ServoDefaultVelocity;
+            long maxVelocity = AppSettings.ServoDefaultMaxVelocity;
+            long deceleration = AppSettings.ServoDefaultDeceleration;
+            long acceleration = AppSettings.ServoDefaultAcceleration;
 
             HardwareOperation.Run(device, () =>
             {
