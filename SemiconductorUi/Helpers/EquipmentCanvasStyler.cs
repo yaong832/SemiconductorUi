@@ -554,7 +554,7 @@ namespace SemiconductorUi.Helpers
             return path;
         }
 
-        private static void EnableDoubleBuffer(Control control)
+        internal static void EnableDoubleBuffer(Control control)
         {
             var property = typeof(Control).GetProperty("DoubleBuffered",
                 System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);

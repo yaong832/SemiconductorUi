@@ -406,6 +406,8 @@ namespace SemiconductorUi.Helpers
                     // 해당 층의 웨이퍼만 표시하도록 Paint 이벤트 연결
                     // layer는 1~5층을 의미하며, 1층부터 순서대로 쌓임
                     int layerIndex = layer; // 클로저를 위한 로컬 변수
+                    // 갱신 때 지우고 다시 그리는 과정이 보이지 않도록 이중 버퍼로 그립니다.
+                    EquipmentCanvasStyler.EnableDoubleBuffer(trackPanel);
                     trackPanel.Paint += (s, e) => form.DrawSingleWaferTrack(trackPanel, e.Graphics, layerIndex, form.FoupAQueue);
                     trackPanel.Resize += (s, e) => trackPanel.Invalidate();
                     
@@ -456,6 +458,8 @@ namespace SemiconductorUi.Helpers
                     // 해당 층의 웨이퍼만 표시하도록 Paint 이벤트 연결
                     // layer는 1~5층을 의미하며, 1층부터 순서대로 쌓임
                     int layerIndex = layer; // 클로저를 위한 로컬 변수
+                    // 갱신 때 지우고 다시 그리는 과정이 보이지 않도록 이중 버퍼로 그립니다.
+                    EquipmentCanvasStyler.EnableDoubleBuffer(trackPanel);
                     trackPanel.Paint += (s, e) => form.DrawSingleWaferTrack(trackPanel, e.Graphics, layerIndex, null, form.FoupBCompleted);
                     trackPanel.Resize += (s, e) => trackPanel.Invalidate();
                     

@@ -300,6 +300,37 @@ namespace SemiconductorUi.Helpers
             }
         }
 
+        // FOUP 슬롯 칸마다 마지막으로 그린 상태 (bit0 = 장착, bit1 = 웨이퍼 있음)
+        private readonly System.Collections.Generic.Dictionary<Panel, int> _foupSlotDrawnState = new System.Collections.Generic.Dictionary<Panel, int>();
+
+        private void InvalidateFoupSlotsIfChanged(Panel[] trackPanels, System.Collections.Generic.Queue<Models.Wafer> foupAQueue, System.Collections.Generic.List<Models.Wafer> foupBList)
+        {
+            if (trackPanels == null)
+            {
+                return;
+            }
+
+            for (int i = 0; i < trackPanels.Length; i++)
+            {
+                var panel = trackPanels[i];
+                if (panel == null)
+                {
+                    continue;
+                }
+
+                // trackPanels[0] = 1층, 그리기(DrawSingleWaferTrack)와 같은 함수로 상태를 구합니다.
+                form.GetFoupSlotState(i + 1, foupAQueue, foupBList, out bool mounted, out bool hasWafer);
+                int state = (mounted ? 1 : 0) | (hasWafer ? 2 : 0);
+                if (_foupSlotDrawnState.TryGetValue(panel, out int drawn) && drawn == state)
+                {
+                    continue;
+                }
+
+                _foupSlotDrawnState[panel] = state;
+                panel.Invalidate();
+            }
+        }
+
         /// <summary>
         /// 헤더 카드 상태 업데이트
         /// </summary>
@@ -357,21 +388,10 @@ namespace SemiconductorUi.Helpers
             form.currentFoupAStatusText = foupAStatus;
             form.currentFoupBStatusText = foupBStatus;
 
-            // 개별 트랙 패널 업데이트
-            if (form.foupATrackPanels != null)
-            {
-                foreach (var panel in form.foupATrackPanels)
-                {
-                    panel?.Invalidate();
-                }
-            }
-            if (form.foupBTrackPanels != null)
-            {
-                foreach (var panel in form.foupBTrackPanels)
-                {
-                    panel?.Invalidate();
-                }
-            }
+            // 개별 트랙 패널 업데이트: 칸의 표시가 바뀐 경우에만 다시 그립니다.
+            // (매 갱신마다 다시 그리면 FOUP 슬롯이 주기적으로 깜빡입니다.)
+            InvalidateFoupSlotsIfChanged(form.foupATrackPanels, form.FoupAQueue, null);
+            InvalidateFoupSlotsIfChanged(form.foupBTrackPanels, null, form.FoupBCompleted);
 
             var foupADoorClosed = !form.IsRegionDoorOpen(EquipmentRegion.FoupA);
             var foupBDoorClosed = !form.IsRegionDoorOpen(EquipmentRegion.FoupB);
@@ -1288,14 +1308,33 @@ namespace SemiconductorUi.Helpers
                 return;
             }
 
-            waferPanel.Visible = true;
             var color = chamber?.CurrentWafer != null
                 ? form.GetWaferColorForState(chamber)
                 : Color.FromArgb(240, 230, 80); // 삽입/회수 중(문 열림) 웨이퍼
+
+            // 색이 바뀌었거나 새로 나타날 때만 다시 그립니다. 예전에는 갱신마다 모양(Region)을
+            // 새로 만들고 맨 앞으로 옮기고 다시 그려서, 챔버 안 웨이퍼가 주기적으로 깜빡였습니다.
+            // 모양은 크기가 바뀔 때(Resize) 다시 맞춥니다.
+            bool colorChanged = !(waferPanel.Tag is Color drawn) || drawn.ToArgb() != color.ToArgb();
+            bool becameVisible = !waferPanel.Visible;
             waferPanel.Tag = color;
-            waferPanel.BringToFront();
-            form.UpdateWaferPanelRegion(waferPanel);
-            waferPanel.Invalidate();
+            waferPanel.Visible = true;
+
+            var parent = waferPanel.Parent;
+            if (parent != null && parent.Controls.GetChildIndex(waferPanel) != 0)
+            {
+                waferPanel.BringToFront();
+            }
+
+            if (waferPanel.Region == null)
+            {
+                form.UpdateWaferPanelRegion(waferPanel);
+            }
+
+            if (colorChanged && !becameVisible)
+            {
+                waferPanel.Invalidate();
+            }
         }
 
         /// <summary>
@@ -1694,7 +1733,9 @@ namespace SemiconductorUi.Helpers
             using (var path = new System.Drawing.Drawing2D.GraphicsPath())
             {
                 path.AddEllipse(rect);
+                var oldRegion = panel.Region;
                 panel.Region = new Region(path);
+                oldRegion?.Dispose();
             }
         }
 
