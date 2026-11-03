@@ -1378,7 +1378,15 @@ namespace SemiconductorUi.Helpers
         private readonly System.Collections.Generic.Dictionary<EquipmentRegion, int> _hardwareLampBlinkCounters = 
             new System.Collections.Generic.Dictionary<EquipmentRegion, int>();
         
-        private const int CHAMBER_LAMP_BLINK_INTERVAL = 10; // 10틱마다 깜빡임 (시뮬레이션 타이머 기준)
+        private const int CHAMBER_LAMP_BLINK_INTERVAL = 10; // 10틱마다 깜빡임 (하드웨어 모드 타이머 기준)
+
+        // 시뮬레이션 모드 점멸: 틱(1초) 수를 세면 10초마다 바뀌어 점멸로 보이지 않으므로 시간으로 계산한다.
+        // 주기는 실제 램프와 같다 (하드웨어 모드 10틱 x 틱 간격, 기본 1.5초 켜짐 / 1.5초 꺼짐).
+        private readonly System.Collections.Generic.Dictionary<Panel, long> _simLampBlinkStartMs =
+            new System.Collections.Generic.Dictionary<Panel, long>();
+        private readonly System.Diagnostics.Stopwatch _simLampClock = System.Diagnostics.Stopwatch.StartNew();
+        private Timer _simLampBlinkTimer;
+        private const int SIM_LAMP_BLINK_REFRESH_MS = 100;
 
         /// <summary>
         /// 챔버 램프 UI 업데이트
@@ -1394,6 +1402,7 @@ namespace SemiconductorUi.Helpers
             {
                 // 공정 중: 녹색 켜짐
                 lampPanel.BackColor = Color.ForestGreen;
+                _simLampBlinkStartMs.Remove(lampPanel);
                 // 깜빡임 상태 초기화
                 if (_chamberLampBlinkStates.ContainsKey(lampPanel))
                 {
@@ -1403,6 +1412,16 @@ namespace SemiconductorUi.Helpers
                 {
                     _chamberLampBlinkCounters[lampPanel] = 0;
                 }
+            }
+            else if (isCompleted && !form.EthercatConnected)
+            {
+                // 시뮬레이션 모드 공정 완료 (웨이퍼 있음): 시간 기준 깜빡임
+                if (!_simLampBlinkStartMs.ContainsKey(lampPanel))
+                {
+                    _simLampBlinkStartMs[lampPanel] = _simLampClock.ElapsedMilliseconds;
+                }
+                ApplySimLampBlink(lampPanel);
+                EnsureSimLampBlinkTimer();
             }
             else if (isCompleted)
             {
@@ -1430,6 +1449,7 @@ namespace SemiconductorUi.Helpers
             {
                 // 웨이퍼 없음: 꺼짐 (밝은 회색)
                 lampPanel.BackColor = Color.FromArgb(230, 230, 235);
+                _simLampBlinkStartMs.Remove(lampPanel);
                 // 깜빡임 상태 초기화
                 if (_chamberLampBlinkStates.ContainsKey(lampPanel))
                 {
@@ -1439,6 +1459,54 @@ namespace SemiconductorUi.Helpers
                 {
                     _chamberLampBlinkCounters[lampPanel] = 0;
                 }
+            }
+        }
+
+        // 시뮬레이션 점멸 색: 하드웨어 램프처럼 꺼짐으로 시작해 한 주기마다 켜짐/꺼짐을 바꾼다.
+        private void ApplySimLampBlink(Panel lampPanel)
+        {
+            long phaseMs = (long)CHAMBER_LAMP_BLINK_INTERVAL * Math.Max(1, AppSettings.HardwareModeTickMilliseconds);
+            long elapsed = _simLampClock.ElapsedMilliseconds - _simLampBlinkStartMs[lampPanel];
+            bool isBlinkOn = (elapsed / phaseMs) % 2 == 1;
+            var color = isBlinkOn ? Color.ForestGreen : Color.FromArgb(230, 230, 235);
+            if (lampPanel.BackColor != color)
+            {
+                lampPanel.BackColor = color;
+            }
+        }
+
+        // 시뮬레이션 틱(1초) 사이에도 점멸이 바뀌도록 짧은 타이머로 램프 색만 다시 계산한다. 장비 출력은 건드리지 않는다.
+        private void EnsureSimLampBlinkTimer()
+        {
+            if (_simLampBlinkTimer == null)
+            {
+                _simLampBlinkTimer = new Timer { Interval = SIM_LAMP_BLINK_REFRESH_MS };
+                _simLampBlinkTimer.Tick += SimLampBlinkTimer_Tick;
+                form.FormClosed += (s, e) => _simLampBlinkTimer?.Dispose();
+            }
+            if (!_simLampBlinkTimer.Enabled)
+            {
+                _simLampBlinkTimer.Start();
+            }
+        }
+
+        private void SimLampBlinkTimer_Tick(object sender, EventArgs e)
+        {
+            if (form.IsDisposed || form.EthercatConnected)
+            {
+                // 장비에 연결되면 화면 램프는 실제 램프와 같은 틱 카운터로 돌아간다.
+                _simLampBlinkStartMs.Clear();
+                _simLampBlinkTimer.Stop();
+                return;
+            }
+
+            UpdateChamberLampUI(form.panelLampChamberA, form.IsChamberProcessing(form.ChamberAState), form.IsChamberCompleted(form.ChamberAState));
+            UpdateChamberLampUI(form.panelLampChamberB, form.IsChamberProcessing(form.ChamberBState), form.IsChamberCompleted(form.ChamberBState));
+            UpdateChamberLampUI(form.panelLampChamberC, form.IsChamberProcessing(form.ChamberCState), form.IsChamberCompleted(form.ChamberCState));
+
+            if (_simLampBlinkStartMs.Count == 0)
+            {
+                _simLampBlinkTimer.Stop();
             }
         }
 
