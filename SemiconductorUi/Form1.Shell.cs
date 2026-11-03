@@ -220,20 +220,10 @@ namespace SemiconductorUi
             };
 
             var itemSize = new Size(ShellNavWidth - 20, 58);
+
+            // 위: 로그인한 사용자와 로그인/로그아웃/사용자 관리
             var top = NewShellNavStack("flowShellNavTop");
             top.Dock = DockStyle.Top;
-            AddShellNavItem(top, buttonNavOperate, "운전", ShellNavIcon.Operate, itemSize);
-            AddShellNavItem(top, buttonNavRecipe, "레시피", ShellNavIcon.Recipe, itemSize);
-            AddShellNavItem(top, buttonNavMaintenance, "유지보수", ShellNavIcon.Maintenance, itemSize);
-            AddShellNavItem(top, buttonNavConfig, "설정", ShellNavIcon.Config, itemSize);
-            AddShellNavItem(top, buttonNavTrend, "추이", ShellNavIcon.Trend, itemSize);
-            AddShellNavItem(top, buttonNavReport, "보고서", ShellNavIcon.Report, itemSize);
-
-            var bottom = NewShellNavStack("flowShellNavBottom");
-            bottom.Dock = DockStyle.Bottom;
-            AddShellNavItem(bottom, buttonNavSystem, "시스템", ShellNavIcon.System, itemSize);
-            bottom.Controls.Add(new Panel { Size = new Size(itemSize.Width, 1), BackColor = UiTheme.Border, Margin = new Padding(0, 4, 0, 10) });
-
             shellUserCard = new ShellUserCard
             {
                 Name = "shellUserCard",
@@ -243,7 +233,7 @@ namespace SemiconductorUi
                 RoleProvider = () => CurrentRole,
                 LoggedInProvider = () => IsLoggedIn
             };
-            bottom.Controls.Add(shellUserCard);
+            top.Controls.Add(shellUserCard);
             foreach (var pair in new[]
             {
                 Tuple.Create(buttonLogin, "로그인"),
@@ -255,8 +245,20 @@ namespace SemiconductorUi
                 if (button == null) continue;
                 button.Font = new Font("Segoe UI", 8.5F, FontStyle.Bold);
                 button.Margin = new Padding(0, 0, 0, 4);
-                bottom.Controls.Add(button);
+                top.Controls.Add(button);
             }
+
+            // 아래: 화면 메뉴
+            var bottom = NewShellNavStack("flowShellNavBottom");
+            bottom.Dock = DockStyle.Bottom;
+            AddShellNavItem(bottom, buttonNavOperate, "운전", ShellNavIcon.Operate, itemSize);
+            AddShellNavItem(bottom, buttonNavRecipe, "레시피", ShellNavIcon.Recipe, itemSize);
+            AddShellNavItem(bottom, buttonNavMaintenance, "유지보수", ShellNavIcon.Maintenance, itemSize);
+            AddShellNavItem(bottom, buttonNavConfig, "설정", ShellNavIcon.Config, itemSize);
+            AddShellNavItem(bottom, buttonNavTrend, "추이", ShellNavIcon.Trend, itemSize);
+            AddShellNavItem(bottom, buttonNavReport, "보고서", ShellNavIcon.Report, itemSize);
+            bottom.Controls.Add(new Panel { Size = new Size(itemSize.Width, 1), BackColor = UiTheme.Border, Margin = new Padding(0, 6, 0, 10) });
+            AddShellNavItem(bottom, buttonNavSystem, "시스템", ShellNavIcon.System, itemSize);
 
             nav.Controls.Add(top);
             nav.Controls.Add(bottom);
