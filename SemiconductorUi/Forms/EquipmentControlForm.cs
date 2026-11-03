@@ -444,6 +444,11 @@ namespace SemiconductorUi.Forms
 
             var buttonTeaching = CreateControlButton("티칭 위치", new Size(90, 28), Color.FromArgb(55, 95, 140), () =>
             {
+                // 공정 중에 위치를 바꾸면 진행 중인 이송이 바뀐 위치로 움직입니다.
+                if (!EnsureManualIoAllowed("티칭 위치 편집"))
+                {
+                    return;
+                }
                 OnTeachingRequested?.Invoke();
             });
             buttonTeaching.Location = new Point(360, 22);
@@ -657,7 +662,7 @@ namespace SemiconductorUi.Forms
                 MessageBox.Show(
                     $"자동 공정 실행/일시정지 중에는 '{actionName}' 수동 제어를 할 수 없습니다.\n" +
                     "공정 정지 후 장비 점검용으로 사용해 주세요.\n" +
-                    "(공정 중 수동 램프·도어 제어는 자동 시퀀스와 충돌합니다.)",
+                    "(공정 중 수동 제어는 자동 시퀀스와 충돌합니다. 급히 멈춰야 하면 긴급 정지를 누르세요.)",
                     "수동 제어 제한",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Warning);
@@ -869,8 +874,8 @@ namespace SemiconductorUi.Forms
 
         private void ControlChamberDoor(int outputIndex1, int outputIndex2, bool open)
         {
-            // 열기만 차단 — 닫기는 공정 중에도 허용
-            if (open && !EnsureManualIoAllowed("챔버 도어 열기"))
+            // 닫기도 막습니다: 공정 중에는 TM이 챔버 안에 들어가 있을 수 있습니다.
+            if (!EnsureManualIoAllowed(open ? "챔버 도어 열기" : "챔버 도어 닫기"))
             {
                 return;
             }
@@ -1034,6 +1039,11 @@ namespace SemiconductorUi.Forms
 
         private void ControlAllDoorsClose()
         {
+            if (!EnsureManualIoAllowed("모든 문 닫기"))
+            {
+                return;
+            }
+
             if (!isConnected || ethercatDevice == null)
             {
                 MessageBox.Show("EtherCAT이 연결되지 않았습니다.", "오류", MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -1267,6 +1277,11 @@ namespace SemiconductorUi.Forms
 
         private void ControlServoOn()
         {
+            if (!EnsureManualIoAllowed("서보 ON"))
+            {
+                return;
+            }
+
             if (!isConnected || ethercatDevice == null)
             {
                 MessageBox.Show("EtherCAT이 연결되지 않았습니다.", "연결 필요", MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -1370,6 +1385,11 @@ namespace SemiconductorUi.Forms
 
         private void ControlServoOff()
         {
+            if (!EnsureManualIoAllowed("서보 OFF"))
+            {
+                return;
+            }
+
             if (!isConnected || ethercatDevice == null)
             {
                 MessageBox.Show("EtherCAT이 연결되지 않았습니다.", "연결 필요", MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -1401,6 +1421,11 @@ namespace SemiconductorUi.Forms
 
         private void ControlServoHome()
         {
+            if (!EnsureManualIoAllowed("원점복귀"))
+            {
+                return;
+            }
+
             if (!isConnected || ethercatDevice == null)
             {
                 MessageBox.Show("EtherCAT이 연결되지 않았습니다.", "연결 필요", MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -1606,6 +1631,11 @@ namespace SemiconductorUi.Forms
 
         private void ControlCylinderExtend()
         {
+            if (!EnsureManualIoAllowed("실린더 전진"))
+            {
+                return;
+            }
+
             if (!isConnected || ethercatDevice == null)
             {
                 MessageBox.Show("EtherCAT이 연결되지 않았습니다.", "연결 필요", MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -1631,6 +1661,11 @@ namespace SemiconductorUi.Forms
 
         private void ControlCylinderRetract()
         {
+            if (!EnsureManualIoAllowed("실린더 후진"))
+            {
+                return;
+            }
+
             if (!isConnected || ethercatDevice == null)
             {
                 MessageBox.Show("EtherCAT이 연결되지 않았습니다.", "연결 필요", MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -1686,6 +1721,11 @@ namespace SemiconductorUi.Forms
 
         private void ControlVacuumOff()
         {
+            if (!EnsureManualIoAllowed("진공 OFF"))
+            {
+                return;
+            }
+
             if (!isConnected || ethercatDevice == null)
             {
                 MessageBox.Show("EtherCAT이 연결되지 않았습니다.", "연결 필요", MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -1739,6 +1779,11 @@ namespace SemiconductorUi.Forms
 
         private void ControlExhaustOff()
         {
+            if (!EnsureManualIoAllowed("배기 OFF"))
+            {
+                return;
+            }
+
             if (!isConnected || ethercatDevice == null)
             {
                 MessageBox.Show("EtherCAT이 연결되지 않았습니다.", "연결 필요", MessageBoxButtons.OK, MessageBoxIcon.Warning);
