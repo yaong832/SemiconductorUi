@@ -18,6 +18,8 @@ namespace SemiconductorUi
     {
         private UnitDetailPopup unitDetailPopup;
         private Control unitDetailAnchor;
+        // 사용자가 머리줄을 끌어 옮긴 자리. 창을 닫을 때까지 이 자리를 유지합니다(다른 장비를 눌러도 그대로).
+        private Point? unitDetailUserLocation;
 
         // 장비 그림의 챔버와 FOUP에 클릭을 연결합니다 (Tag는 다른 용도로 쓰므로 건드리지 않음).
         private void RegisterEquipmentDetailHandlers()
@@ -78,6 +80,11 @@ namespace SemiconductorUi
             {
                 unitDetailPopup = new UnitDetailPopup { Name = "unitDetailPopup", Visible = false };
                 unitDetailPopup.CloseRequested += (s, e) => CloseUnitDetail();
+                unitDetailPopup.DragMoving += (s, location) =>
+                {
+                    unitDetailUserLocation = location;
+                    PlaceUnitDetail();
+                };
                 Controls.Add(unitDetailPopup);
                 // 공정이 멈춰 화면 갱신이 없을 때도 창 크기가 바뀌면 자리를 다시 잡습니다.
                 Resize += (s, e) => PlaceUnitDetail();
@@ -98,6 +105,7 @@ namespace SemiconductorUi
                 unitDetailPopup.UnitKey = null;
             }
             unitDetailAnchor = null;
+            unitDetailUserLocation = null;
         }
 
         /// <summary>떠 있는 상세 창의 값과 위치를 지금 상태로 다시 맞춥니다 (화면 갱신마다 호출).</summary>
@@ -115,8 +123,9 @@ namespace SemiconductorUi
         }
 
         // 창은 위에서 본 장비 그림(챔버, TM, FOUP) 오른쪽, TM 정면·옆면 보기 자리에 둡니다.
-        // 그래야 공정 중 TM 움직임과 세 챔버가 가려지지 않습니다. 높이는 누른 곳에 맞추고,
-        // 오른쪽 제어 패널(긴급 정지 포함)과 장비 그림 칸 밖으로는 나가지 않습니다.
+        // 그래야 공정 중 TM 움직임과 세 챔버가 가려지지 않습니다. 높이는 누른 곳에 맞춥니다.
+        // 사용자가 끌어 옮겼으면 그 자리에 둡니다. 어느 경우든 오른쪽 제어 패널(긴급 정지 포함)을
+        // 가리지 않고, 장비 그림 칸 위쪽과 아래 메뉴 줄 사이를 벗어나지 않습니다.
         private void PlaceUnitDetail()
         {
             var popup = unitDetailPopup;
@@ -152,7 +161,12 @@ namespace SemiconductorUi
             }
 
             int x;
-            if (Usable(tmSideViewControl))
+            int y;
+            if (unitDetailUserLocation.HasValue)
+            {
+                x = unitDetailUserLocation.Value.X;
+            }
+            else if (Usable(tmSideViewControl))
             {
                 x = ToClient(tmSideViewControl).Left;
             }
@@ -164,9 +178,16 @@ namespace SemiconductorUi
                     x = a.Left - gap - popup.Width;
                 }
             }
-            x = Math.Max(margin, Math.Min(x, maxRight - popup.Width));
+            if (!unitDetailUserLocation.HasValue)
+            {
+                y = a.Top + a.Height / 2 - popup.Height / 2;
+            }
+            else
+            {
+                y = unitDetailUserLocation.Value.Y;
+            }
 
-            int y = a.Top + a.Height / 2 - popup.Height / 2;
+            x = Math.Max(margin, Math.Min(x, maxRight - popup.Width));
             y = Math.Max(minTop, Math.Min(y, maxBottom - popup.Height));
 
             var location = new Point(x, y);
