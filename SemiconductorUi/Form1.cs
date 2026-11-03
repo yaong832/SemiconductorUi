@@ -896,6 +896,8 @@ namespace SemiconductorUi
             {
                 if (waferPanel == null) continue;
                 waferPanel.BackColor = Color.Transparent;
+                // 갱신 때 뒤 배경과 웨이퍼를 따로 그리는 과정이 보이지 않도록 이중 버퍼로 그립니다.
+                EquipmentCanvasStyler.EnableDoubleBuffer(waferPanel);
                 waferPanel.Paint += paintEventHandlers.WaferPanel_Paint;
                 UpdateWaferPanelRegion(waferPanel);
                 waferPanel.Resize += (s, eArgs) => UpdateWaferPanelRegion((Panel)s);
@@ -2172,6 +2174,32 @@ namespace SemiconductorUi
             uiInitializer?.InitializeFoupTrackPanels();
                 }
                 
+        /// <summary>
+        /// FOUP 슬롯 한 칸에 그릴 상태(장착 여부, 웨이퍼 유무)를 구합니다.
+        /// 그리기와 "바뀌었을 때만 다시 그리기" 판단이 같은 값을 쓰도록 한 곳에 둡니다.
+        /// </summary>
+        internal void GetFoupSlotState(int layer, Queue<Wafer> FoupAQueue, List<Wafer> foupBList, out bool mounted, out bool hasWafer)
+        {
+            // 해당 층에 웨이퍼가 있는지 확인
+            // 각 층은 고정된 웨이퍼 ID를 가짐: 1층=1번, 2층=2번, 3층=3번, 4층=4번, 5층=5번
+            // 웨이퍼가 나가면 해당 층만 비워지고, 다른 웨이퍼는 내려오지 않음
+            hasWafer = false;
+            if (FoupAQueue != null && foupManager?.HasWafersInFoupA() == true)
+            {
+                // FOUP A: Queue에서 layer번 ID를 가진 웨이퍼가 있는지 확인
+                // 예: 1층에는 1번 웨이퍼만, 2층에는 2번 웨이퍼만 표시
+                hasWafer = foupManager.HasWaferAtLayerFoupA(layer);
+            }
+            else if (foupBList != null && foupBList.Count > 0)
+            {
+                // FOUP B: List에서 layer번 ID를 가진 웨이퍼가 있는지 확인
+                // List도 동일하게 각 층은 고정된 웨이퍼 ID를 가짐
+                hasWafer = foupBList.Any(w => w.Id == layer);
+            }
+
+            mounted = FoupAQueue != null ? IsFoupAMounted : IsFoupBMounted;
+        }
+
         internal void DrawSingleWaferTrack(Panel trackPanel, Graphics g, int layer, Queue<Wafer> FoupAQueue = null, List<Wafer> foupBList = null)
         {
             if (trackPanel == null || g == null)
@@ -2187,25 +2215,9 @@ namespace SemiconductorUi
 
             g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
             
-            // 해당 층에 웨이퍼가 있는지 확인
-            // 각 층은 고정된 웨이퍼 ID를 가짐: 1층=1번, 2층=2번, 3층=3번, 4층=4번, 5층=5번
-            // 웨이퍼가 나가면 해당 층만 비워지고, 다른 웨이퍼는 내려오지 않음
-            bool hasWafer = false;
-            if (FoupAQueue != null && foupManager?.HasWafersInFoupA() == true)
-            {
-                // FOUP A: Queue에서 layer번 ID를 가진 웨이퍼가 있는지 확인
-                // 예: 1층에는 1번 웨이퍼만, 2층에는 2번 웨이퍼만 표시
-                hasWafer = foupManager.HasWaferAtLayerFoupA(layer);
-            }
-            else if (foupBList != null && foupBList.Count > 0)
-            {
-                // FOUP B: List에서 layer번 ID를 가진 웨이퍼가 있는지 확인
-                // List도 동일하게 각 층은 고정된 웨이퍼 ID를 가짐
-                hasWafer = foupBList.Any(w => w.Id == layer);
-            }
-            
+            GetFoupSlotState(layer, FoupAQueue, foupBList, out bool mounted, out bool hasWafer);
+
             // 슬롯 한 칸: 램프 + "슬롯 n" + 상태 글자 (밝은 표시창)
-            bool mounted = FoupAQueue != null ? IsFoupAMounted : IsFoupBMounted;
             g.Clear(trackPanel.Parent?.BackColor ?? AppSettings.BorderColor);
 
             var slotRect = new Rectangle(0, 0, rect.Width - 1, rect.Height - 1);
