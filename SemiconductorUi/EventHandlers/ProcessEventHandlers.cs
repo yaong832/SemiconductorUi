@@ -389,21 +389,48 @@ namespace SemiconductorUi.EventHandlers
 
                         if (servoOn && cylinderRetracted)
                         {
+                            // 상하 원점복귀가 끝난 것을 확인한 뒤에 좌우를 보냅니다. 실린더는 두 단계 모두 후진이어야 합니다.
                             form.AddLogMessage("공정 리셋: 원점복귀 시작", "INFO");
+                            string homingFailReason;
+                            bool emergencyStopped = false;
                             try
                             {
-                                ethercat.Axis1_UD_Homming();
-                                System.Threading.Thread.Sleep(100);
-                                ethercat.Axis2_LR_Homming();
-                                form.SafeBeginInvoke(() =>
-                                {
-                                    form.AddLogMessage("공정 리셋: 원점복귀 명령 전송 완료", "INFO");
-                                    form.TmHardwareInitialized = true;
-                                });
+                                homingFailReason = new ResetHomingSequence(ethercat).Run(msg => form.AddLogMessage(msg, "INFO"));
+                            }
+                            catch (EmergencyStopActiveException stopEx)
+                            {
+                                emergencyStopped = true;
+                                homingFailReason = stopEx.Message;
                             }
                             catch (Exception homingEx)
                             {
-                                form.AddLogMessage($"공정 리셋 원점복귀 오류: {homingEx.Message}", "ERROR");
+                                homingFailReason = $"원점복귀 오류: {homingEx.Message}";
+                            }
+
+                            if (emergencyStopped)
+                            {
+                                // 비상정지 안내는 비상정지 쪽에서 이미 띄웁니다.
+                                form.AddLogMessage($"공정 리셋 원점복귀 중단: {homingFailReason}", "WARN");
+                                form.SafeBeginInvoke(() => form.TmHardwareInitialized = false);
+                            }
+                            else if (homingFailReason == null)
+                            {
+                                form.SafeBeginInvoke(() =>
+                                {
+                                    form.TmHardwareInitialized = true;
+                                    form.TmHardwareController?.MarkHomedAfterSuccessfulHoming();
+                                });
+                            }
+                            else
+                            {
+                                form.AddLogMessage($"공정 리셋 원점복귀 실패: {homingFailReason}", "ERROR");
+                                form.SafeBeginInvoke(() =>
+                                {
+                                    form.TmHardwareInitialized = false;
+                                    MessageBox.Show(
+                                        $"공정 초기화 중 원점복귀를 끝내지 못했습니다.\n\n{homingFailReason}\n\n장비 상태를 확인한 뒤 원점복귀를 다시 해 주세요.",
+                                        "원점복귀 실패", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                                });
                             }
                         }
                         else if (!servoOn)
