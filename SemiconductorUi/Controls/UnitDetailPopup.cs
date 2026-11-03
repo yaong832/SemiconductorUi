@@ -56,6 +56,9 @@ namespace SemiconductorUi.Controls
         /// </summary>
         public event EventHandler<Point> DragMoving;
 
+        /// <summary>끌기를 마쳤을 때 (마우스를 놓았거나 붙잡기가 풀림)</summary>
+        public event EventHandler DragEnded;
+
         /// <summary>지금 보여 주는 대상 (예: "PMA", "FOUP A")</summary>
         public string UnitKey { get; set; }
 
@@ -349,15 +352,26 @@ namespace SemiconductorUi.Controls
             base.OnMouseUp(e);
             if (dragging)
             {
-                dragging = false;
                 Capture = false;
+                EndDrag();
             }
         }
 
         protected override void OnMouseCaptureChanged(EventArgs e)
         {
             base.OnMouseCaptureChanged(e);
+            EndDrag();
+        }
+
+        private void EndDrag()
+        {
+            if (!dragging)
+            {
+                return;
+            }
+
             dragging = false;
+            DragEnded?.Invoke(this, EventArgs.Empty);
         }
 
         protected override void OnMouseMove(MouseEventArgs e)

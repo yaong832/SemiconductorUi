@@ -20,6 +20,8 @@ namespace SemiconductorUi
         private Control unitDetailAnchor;
         // 사용자가 머리줄을 끌어 옮긴 자리. 창을 닫을 때까지 이 자리를 유지합니다(다른 장비를 눌러도 그대로).
         private Point? unitDetailUserLocation;
+        // 이번 끌기 동안 창이 지나간 영역 전체 (끌기를 마치면 한 번 더 깨끗이 다시 그림)
+        private Rectangle unitDetailDragTrail = Rectangle.Empty;
 
         // 장비 그림의 챔버와 FOUP에 클릭을 연결합니다 (Tag는 다른 용도로 쓰므로 건드리지 않음).
         private void RegisterEquipmentDetailHandlers()
@@ -82,8 +84,23 @@ namespace SemiconductorUi
                 unitDetailPopup.CloseRequested += (s, e) => CloseUnitDetail();
                 unitDetailPopup.DragMoving += (s, location) =>
                 {
+                    var before = unitDetailPopup.Bounds;
                     unitDetailUserLocation = location;
                     PlaceUnitDetail();
+                    if (unitDetailPopup.Bounds != before)
+                    {
+                        unitDetailDragTrail = unitDetailDragTrail.IsEmpty ? before : Rectangle.Union(unitDetailDragTrail, before);
+                        RepaintBehindUnitDetail(before);
+                    }
+                };
+                unitDetailPopup.DragEnded += (s, e) =>
+                {
+                    if (!unitDetailDragTrail.IsEmpty)
+                    {
+                        var trail = unitDetailDragTrail;
+                        unitDetailDragTrail = Rectangle.Empty;
+                        RepaintBehindUnitDetail(trail);
+                    }
                 };
                 Controls.Add(unitDetailPopup);
                 // 공정이 멈춰 화면 갱신이 없을 때도 창 크기가 바뀌면 자리를 다시 잡습니다.
@@ -194,6 +211,41 @@ namespace SemiconductorUi
             if (popup.Location != location)
             {
                 popup.Location = location;
+            }
+        }
+
+        // 끄는 동안 창이 떠난 자리의 뒤 화면을 바로 다시 그립니다. 그냥 두면 마우스 움직임이
+        // 계속 들어오는 동안 뒤 화면이 늦게 그려져 창의 잔상이 남습니다.
+        private void RepaintBehindUnitDetail(Rectangle oldBounds)
+        {
+            Invalidate(oldBounds, false);
+            Update();
+            UpdateControlsIn(this, oldBounds);
+            unitDetailPopup?.Update();
+        }
+
+        // rect(폼 기준)와 겹치는 자식 컨트롤을 찾아 밀린 그리기를 지금 처리합니다.
+        private void UpdateControlsIn(Control parent, Rectangle rectInForm)
+        {
+            foreach (Control child in parent.Controls)
+            {
+                if (child == unitDetailPopup || !child.Visible || !child.IsHandleCreated)
+                {
+                    continue;
+                }
+
+                var childInForm = RectangleToClient(child.RectangleToScreen(child.ClientRectangle));
+                if (!childInForm.IntersectsWith(rectInForm))
+                {
+                    continue;
+                }
+
+                // 겹친 부분만 그 컨트롤 기준 좌표로 무효화하고 바로 그립니다.
+                var overlap = Rectangle.Intersect(childInForm, rectInForm);
+                overlap.Offset(-childInForm.X, -childInForm.Y);
+                child.Invalidate(overlap, false);
+                child.Update();
+                UpdateControlsIn(child, rectInForm);
             }
         }
 
