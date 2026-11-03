@@ -106,6 +106,10 @@ namespace SemiconductorUi.Helpers
             PlaceCentered(form.panelChamberC, new PointF(cx + sideDistance, cy), chamberSize, k);
             PlaceCentered(form.panelFoupA, new PointF(cx - foupOffset, foupY + foupH / 2f), foupSize, k);
             PlaceCentered(form.panelFoupB, new PointF(cx + foupOffset, foupY + foupH / 2f), foupSize, k);
+            // 웨이퍼 표시는 항상 챔버 뷰포트 한가운데를 기준으로 키운다 (처음 본 위치를 그대로 키우면 어긋날 수 있음).
+            SetWaferDesignBounds(form.panelChamberA, form.panelWaferChamberA);
+            SetWaferDesignBounds(form.panelChamberB, form.panelWaferChamberB);
+            SetWaferDesignBounds(form.panelChamberC, form.panelWaferChamberC);
             foreach (var chamber in new Control[] { form.panelChamberA, form.panelChamberB, form.panelChamberC })
             {
                 ScaleChildren(chamber, k);
@@ -121,6 +125,14 @@ namespace SemiconductorUi.Helpers
             }
             FaceFoupToward(form.foupVisualizationControlA, form.panelFoupA, tmCenter);
             FaceFoupToward(form.foupVisualizationControlB, form.panelFoupB, tmCenter);
+            // FOUP 칸의 빈 부분에도 TM 그림을 그려서, FOUP 쪽으로 전진한 블레이드가 칸 모서리에서 잘리지 않게 한다.
+            foreach (var foup in new[] { form.foupVisualizationControlA, form.foupVisualizationControlB })
+            {
+                if (foup != null)
+                {
+                    foup.Backdrop = form.tmVisualizationControl;
+                }
+            }
 
             int sideViewLeft = canvasSize.Width - margin - sideViewWidth;
             const int lampWidth = 262;
@@ -177,6 +189,26 @@ namespace SemiconductorUi.Helpers
         private static Rectangle ScaleRect(Rectangle rect, float k)
         {
             return Rectangle.Round(new RectangleF(rect.X * k, rect.Y * k, rect.Width * k, rect.Height * k));
+        }
+
+        /// <summary>
+        /// 챔버 웨이퍼 표시의 확대 전 위치를 뷰포트(GetWellBounds) 한가운데로 정한다.
+        /// </summary>
+        private void SetWaferDesignBounds(Control chamber, Control wafer)
+        {
+            if (chamber == null || wafer == null || wafer.Parent != chamber)
+            {
+                return;
+            }
+
+            var well = EquipmentCanvasStyler.GetWellBounds(
+                new Rectangle(0, 0, EquipmentCanvasStyler.ChamberWidth, EquipmentCanvasStyler.ChamberHeight));
+            int size = EquipmentCanvasStyler.ChamberWaferSize;
+            designChildBounds[wafer] = new Rectangle(
+                well.X + (well.Width - size) / 2,
+                well.Y + (well.Height - size) / 2,
+                size,
+                size);
         }
 
         /// <summary>
