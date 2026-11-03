@@ -1017,6 +1017,9 @@ namespace SemiconductorUi
             // PM 상태 패널 초기화 (깜빡임 방지용 커스텀 컨트롤)
             uiInitializer.InitializePmStatusPanels();
 
+            // 시뮬레이션 모드 시험 알람 (챔버 표시 영역 오른쪽 클릭)
+            AttachSimulationTestAlarmMenus();
+
             // 초기 레시피 목록 로드
             try
             {
@@ -2568,6 +2571,7 @@ namespace SemiconductorUi
 
         internal void InitializeSimulationState()
         {
+            ClearAlarmHold();
             uiInitializer?.InitializeSimulationState();
         }
 
@@ -2583,6 +2587,8 @@ namespace SemiconductorUi
                 AddLogMessage("하드웨어 초기화가 진행 중입니다. 완료 후 다시 시도하세요.", "WARN");
                 return;
             }
+
+            ClearAlarmHold();
 
             // EtherCAT 연결 확인 (연결되어 있으면 실제 장비 제어)
             if (EthercatConnected)
@@ -2812,6 +2818,7 @@ namespace SemiconductorUi
         internal void AbortSimulation(string reason, bool setErrorState)
         {
             SimulationController?.Abort();
+            ClearAlarmHold();
             if (setErrorState)
             {
                 SetProcessState(ProcessState.Error, reason);
@@ -3128,7 +3135,9 @@ namespace SemiconductorUi
             // TM 처리 (하드웨어 모드에서는 실제 동작 완료 대기)
             ProcessTm();
 
-            if ((foupManager?.GetFoupBCount() ?? 0) - FoupBCompletedBaseline >= GetActiveTarget()
+            // 알람 홀드 중에는 공정을 완료로 넘기지 않습니다 (알람이 조용히 사라지지 않도록, 리셋 후 시작하면 완료 처리).
+            if (!ProcessHeldByAlarm
+                && (foupManager?.GetFoupBCount() ?? 0) - FoupBCompletedBaseline >= GetActiveTarget()
                 && ChamberAState.CurrentWafer == null
                 && ChamberBState.CurrentWafer == null
                 && ChamberCState.CurrentWafer == null
@@ -3159,6 +3168,13 @@ namespace SemiconductorUi
         {
             if (chamber?.CurrentWafer == null)
             {
+                return;
+            }
+
+            // 알람 홀드 중에는 공정 시간이 흐르지 않습니다 (재개할 때 멈춘 시간이 한꺼번에 빠지지 않도록 기준 시각도 지움).
+            if (ProcessHeldByAlarm)
+            {
+                chamber.LastProcessedTime = DateTime.MinValue;
                 return;
             }
 
@@ -6417,17 +6433,14 @@ namespace SemiconductorUi
             {
                 alarmManager?.SetChamberAlarm(unitKey, true);
                 HasAlarm = true;
+                // 공정을 붙잡습니다: 진행 중인 TM 이송만 마치고, 새 이송과 챔버 공정 시간을 멈춥니다.
+                HoldProcessForAlarm(unitKey);
                 if (CurrentProcessState != ProcessState.Error)
                 {
                     SetProcessState(ProcessState.Error, $"{EquipmentRegionHelper.FormatUnitLabel(unitKey)} 환경 알람 발생");
                 }
             }
-            else
-            {
-                // 알람이 발생하지 않으면 해당 PM의 알람 상태를 false로 설정
-                // (다른 PM에서 알람이 발생 중일 수 있으므로 HasAlarm은 별도로 확인)
-                alarmManager?.SetChamberAlarm(unitKey, false);
-            }
+            // 값이 정상으로 돌아와도 챔버 알람 표시는 알람 리셋 전까지 유지합니다 (리셋에서 해제).
 
             // 상단 패널 색상 즉시 업데이트 (알람 상태 변경 시)
             UpdateHeaderPmStatusColorImmediate();

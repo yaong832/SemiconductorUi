@@ -132,7 +132,8 @@ namespace SemiconductorUi.EventHandlers
                 // SimulationTimer는 로직 처리만 담당하고, UI는 HardwareUiUpdateTimer가 담당
                 
                 // 공정 완료 확인
-                if ((form.foupManager?.GetFoupBCount() ?? 0) - form.FoupBCompletedBaseline >= form.GetActiveTarget()
+                if (!form.ProcessHeldByAlarm
+                    && (form.foupManager?.GetFoupBCount() ?? 0) - form.FoupBCompletedBaseline >= form.GetActiveTarget()
                     && form.ChamberAState.CurrentWafer == null
                     && form.ChamberBState.CurrentWafer == null
                     && form.ChamberCState.CurrentWafer == null
@@ -165,8 +166,12 @@ namespace SemiconductorUi.EventHandlers
             else
             {
                 // ========== 시뮬레이션 모드 ==========
-                form.mainLampBlinkState = !form.mainLampBlinkState;
-                form.UpdateMainLampColors(form.mainLampBlinkState ? Color.LimeGreen : (Color?)null, false, false);
+                // 녹색 깜빡임은 진행 중일 때만. 알람(적색)이나 알람 리셋 후 대기(황색) 램프를 덮어쓰지 않습니다.
+                if (form.CurrentProcessState == MainFormViewModel.ProcessState.Running)
+                {
+                    form.mainLampBlinkState = !form.mainLampBlinkState;
+                    form.UpdateMainLampColors(form.mainLampBlinkState ? Color.LimeGreen : (Color?)null, false, false);
+                }
                 form.AdvanceSimulation();
                 
                 // 시뮬레이션 모드: Phase 기반으로 TM 시각화 업데이트

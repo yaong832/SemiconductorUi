@@ -908,6 +908,12 @@ namespace SemiconductorUi.Helpers
         /// </summary>
         public void StartNextTransfer()
         {
+            // 알람 홀드 중에는 새 이송을 시작하지 않습니다. 큐는 그대로 두고, 시작을 누른 뒤 이어서 꺼냅니다.
+            if (form.ProcessHeldByAlarm)
+            {
+                return;
+            }
+
             if (form.TransferService?.QueueCount == 0)
             {
                 form.TransferService?.ResetToIdle();
