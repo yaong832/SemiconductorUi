@@ -28,6 +28,8 @@ namespace SemiconductorUi.Helpers
         public const int CardRadius = 10;
         public const int HeaderHeight = 28;
         public const int WellSize = 56;
+        /// <summary>챔버 뷰포트 위에 겹쳐 그리는 웨이퍼 표시 패널 크기 (확대 전).</summary>
+        public const int ChamberWaferSize = 48;
 
         /// <summary>
         /// 장비 그림을 얼마나 키워 그릴지. 1이면 원래 크기입니다.

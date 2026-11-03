@@ -19,6 +19,7 @@ namespace SemiconductorUi.Controls
         private Color waferColor = Color.FromArgb(120, 170, 235);
         private float facingDegrees = -45f;
         private bool mounted = true;
+        private TmVisualizationControl backdrop;
 
         // 위에서 본 FOUP: 로드포트 판 위의 반투명 통. 문이 없는 앞쪽이 TM을 향한다.
         private const float PortHalf = 32f;
@@ -48,6 +49,28 @@ namespace SemiconductorUi.Controls
             Font = new Font("Segoe UI", 8.5F, FontStyle.Regular, GraphicsUnit.Point);
             ForeColor = EquipmentCanvasStyler.CardTitle;
             BackColor = EquipmentCanvasStyler.CanvasBack;
+        }
+
+        /// <summary>
+        /// 이 FOUP 칸 뒤에 있는 TM 그림. 지정하면 칸의 빈 부분에 TM 그림을 그려서,
+        /// FOUP 쪽으로 전진한 블레이드가 칸 모서리에서 잘려 보이지 않고 로드포트 판 아래로 들어가 보인다.
+        /// </summary>
+        [Browsable(false), DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        public TmVisualizationControl Backdrop
+        {
+            get => backdrop;
+            set
+            {
+                if (backdrop == value)
+                {
+                    return;
+                }
+
+                backdrop?.RemoveOverlay(this);
+                backdrop = value;
+                backdrop?.AddOverlay(this);
+                Invalidate();
+            }
         }
 
         [Category("FOUP"), DefaultValue("FOUP")]
@@ -243,6 +266,31 @@ namespace SemiconductorUi.Controls
             DoorClosed = doorClosed;
         }
 
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                Backdrop = null;
+            }
+            base.Dispose(disposing);
+        }
+
+        private void PaintBackdrop(Graphics g)
+        {
+            var tm = backdrop;
+            if (tm == null || tm.IsDisposed || !tm.Visible || !tm.IsHandleCreated || !IsHandleCreated)
+            {
+                return;
+            }
+
+            var origin = tm.PointToClient(PointToScreen(Point.Empty));
+            var state = g.Save();
+            g.TranslateTransform(-origin.X, -origin.Y);
+            tm.RenderScene(g);
+            g.Restore(state);
+            g.SmoothingMode = SmoothingMode.AntiAlias;
+        }
+
         protected override void OnPaint(PaintEventArgs e)
         {
             base.OnPaint(e);
@@ -250,6 +298,7 @@ namespace SemiconductorUi.Controls
             var g = e.Graphics;
             g.SmoothingMode = SmoothingMode.AntiAlias;
             g.Clear(Parent?.BackColor ?? BackColor);
+            PaintBackdrop(g);
 
             var size = LogicalSize;
             if (size.Width <= 40 || size.Height <= 40)

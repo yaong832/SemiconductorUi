@@ -17,12 +17,27 @@ namespace SemiconductorUi.Controls
         private float currentAngleRad = (float)(Math.PI / 2);
         private float targetAngleRad = (float)(Math.PI / 2);
         private readonly Timer animationTimer;
+        private readonly System.Diagnostics.Stopwatch animationClock = new System.Diagnostics.Stopwatch();
+        private double lastAnimationSeconds;
+        private float angularVelocity;   // rad/s, 부호 포함
+        private float extensionVelocity; // factor/s, 부호 포함
+
+        // 움직임 속도. 실제 장비처럼 천천히 출발해 일정 속도로 돌고, 도착 전에 감속한다.
+        private const float MaxAngularSpeed = (float)(150.0 * Math.PI / 180.0);   // 초당 150도
+        private const float AngularAcceleration = (float)(400.0 * Math.PI / 180.0); // 초당² 400도
+        private const float MaxExtensionSpeed = 1.6f;   // 후진(0.55)→전진(1.3) 약 0.6초
+        private const float ExtensionAcceleration = 6f;
+        // 6시 방향(화면 아래, +90도). 실제 로봇은 FOUP A와 FOUP B 사이 아래쪽으로 돌지 않는다.
+        private const float ForbiddenAngle = (float)(Math.PI / 2);
+        // 이 값보다 블레이드가 나와 있으면 돌지 않는다 (이동 중 0.7, 접힘 0.55~0.65, 전진 1.3).
+        private const float RotationSafeExtension = 0.75f;
         private bool isSimulationMode = true; // 기본값: 시뮬레이션 모드
         private readonly Dictionary<EquipmentRegion, PointF> anchors = new Dictionary<EquipmentRegion, PointF>();
         private PointF hubCenter;
         private bool hasLayout;
 
         private readonly List<RectangleF> moduleBounds = new List<RectangleF>();
+        private readonly List<Control> overlays = new List<Control>();
         private float rangeRadius = 60f;
 
         // 로봇 크기: 고정 베이스(원), 회전 몸체, 실린더 빔, 진공 패드가 달린 U자 포크
@@ -93,6 +108,8 @@ namespace SemiconductorUi.Controls
             targetAngleRad = GetBladeAngle(targetRegion, isSimulation);
             if (!animationTimer.Enabled)
             {
+                lastAnimationSeconds = 0;
+                animationClock.Restart();
                 animationTimer.Start();
             }
             Invalidate();
@@ -150,8 +167,50 @@ namespace SemiconductorUi.Controls
         protected override void OnPaint(PaintEventArgs e)
         {
             base.OnPaint(e);
+            RenderScene(e.Graphics);
+        }
 
-            var g = e.Graphics;
+        /// <summary>
+        /// TM 그림 위에 놓인 다른 표시(FOUP)가 자기 빈 부분에 TM 그림을 대신 그릴 수 있도록 등록한다.
+        /// TM 그림이 바뀌면 등록된 표시도 다시 그린다.
+        /// </summary>
+        internal void AddOverlay(Control overlay)
+        {
+            if (overlay != null && !overlays.Contains(overlay))
+            {
+                overlays.Add(overlay);
+            }
+        }
+
+        internal void RemoveOverlay(Control overlay)
+        {
+            overlays.Remove(overlay);
+        }
+
+        protected override void OnInvalidated(InvalidateEventArgs e)
+        {
+            base.OnInvalidated(e);
+            foreach (var overlay in overlays)
+            {
+                if (overlay.IsDisposed || !overlay.Visible || !overlay.IsHandleCreated || !IsHandleCreated)
+                {
+                    continue;
+                }
+
+                var origin = PointToClient(overlay.PointToScreen(Point.Empty));
+                var area = new Rectangle(origin, overlay.Size);
+                if (area.IntersectsWith(e.InvalidRect))
+                {
+                    overlay.Invalidate();
+                }
+            }
+        }
+
+        /// <summary>
+        /// TM 그림 전체를 g에 그린다. g의 좌표는 이 컨트롤의 화면 픽셀 좌표여야 한다.
+        /// </summary>
+        internal void RenderScene(Graphics g)
+        {
             g.SmoothingMode = SmoothingMode.AntiAlias;
             g.Clear(Parent?.BackColor ?? EquipmentCanvasStyler.CanvasBack);
 
@@ -560,36 +619,105 @@ namespace SemiconductorUi.Controls
 
         private void AnimationTimer_Tick(object sender, EventArgs e)
         {
-            var diff = targetExtensionFactor - currentExtensionFactor;
-            var angleDiff = NormalizeAngle(targetAngleRad - currentAngleRad);
-            bool stillAnimating = false;
+            // 틱 간격이 들쭉날쭉해도 속도가 같도록 실제 흐른 시간으로 움직인다.
+            double now = animationClock.Elapsed.TotalSeconds;
+            float dt = (float)Math.Min(0.05, Math.Max(0.0, now - lastAnimationSeconds));
+            lastAnimationSeconds = now;
 
-            if (Math.Abs(diff) >= 0.005f)
+            const float tolerance = 0.002f;
+            float extensionRemaining = targetExtensionFactor - currentExtensionFactor;
+            float angleRemaining = GetRotationPath(currentAngleRad, targetAngleRad);
+            bool needsRotation = Math.Abs(angleRemaining) > tolerance;
+
+            // 실제 장비 규칙과 같은 순서로 그린다.
+            // - 블레이드가 나와 있으면 돌기 전에 먼저 접는다 (접는 중이 아닐 때는 실제 상태를 그대로 그린다).
+            // - 돌아야 하는 동안에는 블레이드를 내밀지 않는다 (다 돌고 나서 편다).
+            bool holdRotation = needsRotation && angularVelocity == 0f
+                && currentExtensionFactor > RotationSafeExtension
+                && targetExtensionFactor <= RotationSafeExtension;
+            bool holdExtension = needsRotation && extensionRemaining > 0f;
+
+            bool extensionMoving = false;
+            if (holdExtension)
             {
-                currentExtensionFactor += diff * 0.4f;
-                stillAnimating = true;
+                extensionVelocity = 0f;
             }
             else
             {
-                currentExtensionFactor = targetExtensionFactor;
+                extensionMoving = Step(ref currentExtensionFactor, ref extensionVelocity, extensionRemaining,
+                    MaxExtensionSpeed, ExtensionAcceleration, dt, tolerance);
             }
 
-            if (Math.Abs(angleDiff) >= 0.005f)
+            bool rotating = false;
+            if (!holdRotation)
             {
-                currentAngleRad = NormalizeAngle(currentAngleRad + angleDiff * 0.2f);
-                stillAnimating = true;
-            }
-            else
-            {
-                currentAngleRad = targetAngleRad;
+                float angle = currentAngleRad;
+                rotating = Step(ref angle, ref angularVelocity, angleRemaining,
+                    MaxAngularSpeed, AngularAcceleration, dt, tolerance);
+                currentAngleRad = rotating ? NormalizeAngle(angle) : targetAngleRad;
             }
 
-            if (!stillAnimating)
+            if (!extensionMoving && !rotating && !holdRotation && !holdExtension)
             {
                 animationTimer.Stop();
+                animationClock.Stop();
             }
 
             Invalidate();
+        }
+
+        /// <summary>
+        /// 가속 → 일정 속도 → 감속으로 남은 거리만큼 한 틱 움직인다. 끝났으면 false.
+        /// </summary>
+        private static bool Step(ref float value, ref float velocity, float remaining, float maxSpeed, float acceleration, float dt, float tolerance)
+        {
+            if (Math.Abs(remaining) <= tolerance)
+            {
+                value += remaining;
+                velocity = 0f;
+                return false;
+            }
+
+            float direction = Math.Sign(remaining);
+            // 지금 멈추기 시작해야 도착점에서 멈출 수 있는 속도 이하로 유지
+            float brakeSpeed = (float)Math.Sqrt(2.0 * acceleration * Math.Abs(remaining));
+            float desired = direction * Math.Min(maxSpeed, brakeSpeed);
+            float maxChange = acceleration * dt;
+            velocity += Math.Max(-maxChange, Math.Min(maxChange, desired - velocity));
+
+            float move = velocity * dt;
+            if (Math.Sign(move) != (int)direction && move != 0f)
+            {
+                // 방향이 바뀌는 중(목표가 반대쪽으로 바뀜): 감속만 하고 기다린다
+                value += move;
+                return true;
+            }
+            if (Math.Abs(move) >= Math.Abs(remaining))
+            {
+                value += remaining;
+                velocity = 0f;
+                return false;
+            }
+            value += move;
+            return true;
+        }
+
+        /// <summary>
+        /// 현재 각도에서 목표 각도까지 돌 양(부호 포함). 짧은 쪽이 6시 방향(FOUP A와 B 사이 아래)을
+        /// 지나가면 실제 로봇처럼 반대쪽(위쪽)으로 돈다.
+        /// </summary>
+        private static float GetRotationPath(float from, float to)
+        {
+            float shortest = NormalizeAngle(to - from);
+            float toForbidden = NormalizeAngle(ForbiddenAngle - from);
+            bool crosses = shortest > 0f
+                ? toForbidden > 0.0001f && toForbidden < shortest
+                : toForbidden < -0.0001f && toForbidden > shortest;
+            if (!crosses)
+            {
+                return shortest;
+            }
+            return shortest > 0f ? shortest - (float)(2 * Math.PI) : shortest + (float)(2 * Math.PI);
         }
 
         private static float NormalizeAngle(float angle)
@@ -609,6 +737,7 @@ namespace SemiconductorUi.Controls
                     animationTimer.Tick -= AnimationTimer_Tick;
                     animationTimer.Dispose();
                 }
+                overlays.Clear();
             }
             base.Dispose(disposing);
         }
