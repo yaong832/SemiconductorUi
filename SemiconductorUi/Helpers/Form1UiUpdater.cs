@@ -1441,7 +1441,20 @@ namespace SemiconductorUi.Helpers
         private readonly System.Collections.Generic.Dictionary<EquipmentRegion, int> _hardwareLampBlinkCounters = 
             new System.Collections.Generic.Dictionary<EquipmentRegion, int>();
         
-        private const int CHAMBER_LAMP_BLINK_INTERVAL = 10; // 10틱마다 깜빡임 (하드웨어 모드 타이머 기준)
+        // 챔버 램프 깜빡임 반주기. 예전 값(10틱 × 150ms)과 같은 1.5초로 고정하고, 공정 루프 주기가 바뀌어도 그대로 둡니다.
+        private const int CHAMBER_LAMP_BLINK_HALF_PERIOD_MS = 1500;
+
+        private readonly System.Collections.Generic.Dictionary<Panel, long> _panelLampBlinkStartMs =
+            new System.Collections.Generic.Dictionary<Panel, long>();
+        private readonly System.Collections.Generic.Dictionary<EquipmentRegion, long> _hardwareLampBlinkStartMs =
+            new System.Collections.Generic.Dictionary<EquipmentRegion, long>();
+
+        /// <summary>깜빡임 시작 시각부터 반주기마다 꺼짐 → 켜짐을 번갈아 돌려줍니다 (처음 반주기는 꺼짐).</summary>
+        private bool IsBlinkOn(long startMs)
+        {
+            long elapsed = Math.Max(0, _simLampClock.ElapsedMilliseconds - startMs);
+            return (elapsed / CHAMBER_LAMP_BLINK_HALF_PERIOD_MS) % 2 == 1;
+        }
 
         // 시뮬레이션 모드 점멸: 틱(1초) 수를 세면 10초마다 바뀌어 점멸로 보이지 않으므로 시간으로 계산한다.
         // 주기는 실제 램프와 같다 (하드웨어 모드 10틱 x 틱 간격, 기본 1.5초 켜짐 / 1.5초 꺼짐).
@@ -1471,10 +1484,8 @@ namespace SemiconductorUi.Helpers
                 {
                     _chamberLampBlinkStates[lampPanel] = false;
                 }
-                if (_chamberLampBlinkCounters.ContainsKey(lampPanel))
-                {
-                    _chamberLampBlinkCounters[lampPanel] = 0;
-                }
+                _chamberLampBlinkCounters.Remove(lampPanel);
+                _panelLampBlinkStartMs.Remove(lampPanel);
             }
             else if (isCompleted && !form.EthercatConnected)
             {
@@ -1490,22 +1501,21 @@ namespace SemiconductorUi.Helpers
             {
                 // 공정 완료 (웨이퍼 있음): 깜빡임
                 // 각 챔버별로 독립적인 깜빡임 카운터 사용
+                // 시간 기준 깜빡임: 완료된 순간부터 꺼짐으로 시작해 1.5초마다 켜짐/꺼짐을 바꿉니다.
+                // (예전에는 화면 갱신 횟수를 셌기 때문에 공정 루프 주기가 바뀌면 깜빡임 속도도 바뀌었습니다.)
                 if (!_chamberLampBlinkCounters.ContainsKey(lampPanel))
                 {
                     _chamberLampBlinkCounters[lampPanel] = 0;
                     _chamberLampBlinkStates[lampPanel] = false;
+                    _panelLampBlinkStartMs[lampPanel] = _simLampClock.ElapsedMilliseconds;
                 }
-                
-                _chamberLampBlinkCounters[lampPanel]++;
-                if (_chamberLampBlinkCounters[lampPanel] >= CHAMBER_LAMP_BLINK_INTERVAL)
+                if (!_panelLampBlinkStartMs.ContainsKey(lampPanel))
                 {
-                    _chamberLampBlinkCounters[lampPanel] = 0;
-                    // 깜빡임 상태 토글
-                    _chamberLampBlinkStates[lampPanel] = !_chamberLampBlinkStates[lampPanel];
+                    _panelLampBlinkStartMs[lampPanel] = _simLampClock.ElapsedMilliseconds;
                 }
-                
-                // 깜빡임 상태에 따라 색상 변경
-                bool isBlinkOn = _chamberLampBlinkStates[lampPanel];
+
+                bool isBlinkOn = IsBlinkOn(_panelLampBlinkStartMs[lampPanel]);
+                _chamberLampBlinkStates[lampPanel] = isBlinkOn;
                 lampPanel.BackColor = isBlinkOn ? Color.ForestGreen : Color.FromArgb(230, 230, 235);
             }
             else
@@ -1518,17 +1528,15 @@ namespace SemiconductorUi.Helpers
                 {
                     _chamberLampBlinkStates[lampPanel] = false;
                 }
-                if (_chamberLampBlinkCounters.ContainsKey(lampPanel))
-                {
-                    _chamberLampBlinkCounters[lampPanel] = 0;
-                }
+                _chamberLampBlinkCounters.Remove(lampPanel);
+                _panelLampBlinkStartMs.Remove(lampPanel);
             }
         }
 
         // 시뮬레이션 점멸 색: 하드웨어 램프처럼 꺼짐으로 시작해 한 주기마다 켜짐/꺼짐을 바꾼다.
         private void ApplySimLampBlink(Panel lampPanel)
         {
-            long phaseMs = (long)CHAMBER_LAMP_BLINK_INTERVAL * Math.Max(1, AppSettings.HardwareModeTickMilliseconds);
+            long phaseMs = CHAMBER_LAMP_BLINK_HALF_PERIOD_MS;
             long elapsed = _simLampClock.ElapsedMilliseconds - _simLampBlinkStartMs[lampPanel];
             bool isBlinkOn = (elapsed / phaseMs) % 2 == 1;
             var color = isBlinkOn ? Color.ForestGreen : Color.FromArgb(230, 230, 235);
@@ -1590,31 +1598,28 @@ namespace SemiconductorUi.Helpers
                 {
                     _hardwareLampBlinkStates[region] = false;
                 }
-                if (_hardwareLampBlinkCounters.ContainsKey(region))
-                {
-                    _hardwareLampBlinkCounters[region] = 0;
-                }
+                _hardwareLampBlinkCounters.Remove(region);
+                _hardwareLampBlinkStartMs.Remove(region);
             }
             else if (isCompleted)
             {
                 // 공정 완료 (웨이퍼 있음): 깜빡임
                 // 각 챔버별로 독립적인 깜빡임 카운터 사용
+                // 시간 기준 깜빡임 (화면 램프와 같은 1.5초 반주기, 공정 루프 주기와 무관)
                 if (!_hardwareLampBlinkCounters.ContainsKey(region))
                 {
                     _hardwareLampBlinkCounters[region] = 0;
                     _hardwareLampBlinkStates[region] = false;
+                    _hardwareLampBlinkStartMs[region] = _simLampClock.ElapsedMilliseconds;
                 }
-                
-                _hardwareLampBlinkCounters[region]++;
-                if (_hardwareLampBlinkCounters[region] >= CHAMBER_LAMP_BLINK_INTERVAL)
+                if (!_hardwareLampBlinkStartMs.ContainsKey(region))
                 {
-                    _hardwareLampBlinkCounters[region] = 0;
-                    // 깜빡임 상태 토글
-                    _hardwareLampBlinkStates[region] = !_hardwareLampBlinkStates[region];
+                    _hardwareLampBlinkStartMs[region] = _simLampClock.ElapsedMilliseconds;
                 }
-                
+
                 // 깜빡임 상태에 따라 하드웨어 램프 제어
-                bool isBlinkOn = _hardwareLampBlinkStates[region];
+                bool isBlinkOn = IsBlinkOn(_hardwareLampBlinkStartMs[region]);
+                _hardwareLampBlinkStates[region] = isBlinkOn;
                 form.SetChamberLamp(region, isBlinkOn);
             }
             else
@@ -1626,10 +1631,8 @@ namespace SemiconductorUi.Helpers
                 {
                     _hardwareLampBlinkStates[region] = false;
                 }
-                if (_hardwareLampBlinkCounters.ContainsKey(region))
-                {
-                    _hardwareLampBlinkCounters[region] = 0;
-                }
+                _hardwareLampBlinkCounters.Remove(region);
+                _hardwareLampBlinkStartMs.Remove(region);
             }
         }
 

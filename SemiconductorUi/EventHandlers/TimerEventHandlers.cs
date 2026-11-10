@@ -79,6 +79,9 @@ namespace SemiconductorUi.EventHandlers
         /// </summary>
         /// <param name="sender">이벤트 발생 객체</param>
         /// <param name="e">이벤트 인자</param>
+        private const int HardwareScreenRefreshMs = 150;
+        private DateTime _lastHardwareScreenRefresh = DateTime.MinValue;
+
         public void SimulationTimer_Tick(object sender, EventArgs e)
         {
             // EtherCAT 연결 시 서보 상태 라벨 항상 업데이트
@@ -178,6 +181,18 @@ namespace SemiconductorUi.EventHandlers
                 form.UpdateTmVisualization();
             }
             
+            // 하드웨어 모드는 공정 루프가 50ms마다 돌지만, 화면 전체 갱신은 예전처럼 150ms 간격으로만 합니다.
+            // (공정 판단만 자주 하고, 화면 다시 그리기 부담은 늘리지 않기 위함)
+            if (form.IsTmHardwareModeAvailable())
+            {
+                var now = DateTime.Now;
+                if ((now - _lastHardwareScreenRefresh).TotalMilliseconds < HardwareScreenRefreshMs)
+                {
+                    return;
+                }
+                _lastHardwareScreenRefresh = now;
+            }
+
             form.CaptureTrendSampleTick();
             form.UpdateSimulationUi();
             

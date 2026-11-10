@@ -302,14 +302,16 @@ namespace SemiconductorUi.Helpers
                     form.EnsureDoorOpenForRegion(form.CurrentTransfer.Pickup);
                     form.doorOpenCommandSent = true;
                     form.doorOpenConsecutiveChecks = 0; // 틱 카운터로 재사용
+                    form.doorWaitStartTime = DateTime.Now;
                     form.StartTmHardwareAction();
                     form.AddLogMessage($"{EquipmentRegionHelper.FormatRegionLabel(form.CurrentTransfer.Pickup)} 도어 열기 명령 전송", "INFO");
                 }
                 
                 form.doorOpenConsecutiveChecks++;
                 
-                // 도어 열림 대기: 센서 없음 → DoorOpenWaitTicks (기본 14틱 ≈ 2.1초 @150ms)
-                if (form.doorOpenConsecutiveChecks < AppSettings.DoorOpenWaitTicks)
+                // 도어 열림 대기: 센서 없음 → 열기 명령 후 DoorOpenWaitMs가 지날 때까지 기다림.
+                // 틱 개수로 세면 공정 루프 주기와 단계 처리 방식에 따라 실제 대기 시간이 달라지므로 시간으로 잽니다.
+                if ((DateTime.Now - form.doorWaitStartTime).TotalMilliseconds < AppSettings.DoorOpenWaitMs)
                 {
                     // 아직 대기 중
                     return;
@@ -498,6 +500,7 @@ namespace SemiconductorUi.Helpers
                     form.EnsureDoorClosedForRegion(form.CurrentTransfer.Pickup);
                     form.doorCloseCommandSent = true;
                     form.doorCloseWaitTicks = 0;
+                    form.doorWaitStartTime = DateTime.Now;
                     form.AddLogMessage($"{EquipmentRegionHelper.FormatRegionLabel(form.CurrentTransfer.Pickup)} 도어 닫기 명령 전송", "INFO");
                 }
                 
@@ -509,7 +512,8 @@ namespace SemiconductorUi.Helpers
                 form.doorCloseWaitTicks++;
                 
                 // 도어 닫힘 대기 시간: 약 0.75초 (5틱 * 150ms)
-                if (form.doorCloseWaitTicks < AppSettings.DoorCloseWaitTicks)
+                // 도어 닫힘 대기: 닫기 명령 후 DoorCloseWaitMs가 지날 때까지 (시간 기준)
+                if ((DateTime.Now - form.doorWaitStartTime).TotalMilliseconds < AppSettings.DoorCloseWaitMs)
                 {
                     // 아직 대기 중
                     return;
@@ -574,14 +578,16 @@ namespace SemiconductorUi.Helpers
                     form.EnsureDoorOpenForRegion(form.CurrentTransfer.Dropoff);
                     form.doorOpenCommandSent = true;
                     form.doorOpenConsecutiveChecks = 0; // 틱 카운터로 재사용
+                    form.doorWaitStartTime = DateTime.Now;
                     form.StartTmHardwareAction();
                     form.AddLogMessage($"{EquipmentRegionHelper.FormatRegionLabel(form.CurrentTransfer.Dropoff)} 도어 열기 명령 전송", "INFO");
                 }
                 
                 form.doorOpenConsecutiveChecks++;
                 
-                // 도어 열림 대기: 센서 없음 → DoorOpenWaitTicks (기본 14틱 ≈ 2.1초 @150ms)
-                if (form.doorOpenConsecutiveChecks < AppSettings.DoorOpenWaitTicks)
+                // 도어 열림 대기: 센서 없음 → 열기 명령 후 DoorOpenWaitMs가 지날 때까지 기다림.
+                // 틱 개수로 세면 공정 루프 주기와 단계 처리 방식에 따라 실제 대기 시간이 달라지므로 시간으로 잽니다.
+                if ((DateTime.Now - form.doorWaitStartTime).TotalMilliseconds < AppSettings.DoorOpenWaitMs)
                 {
                     // 아직 대기 중
                     return;
@@ -771,6 +777,7 @@ namespace SemiconductorUi.Helpers
                     form.EnsureDoorClosedForRegion(form.CurrentTransfer.Dropoff);
                     form.doorCloseCommandSent = true;
                     form.doorCloseWaitTicks = 0;
+                    form.doorWaitStartTime = DateTime.Now;
                     form.AddLogMessage($"{EquipmentRegionHelper.FormatRegionLabel(form.CurrentTransfer.Dropoff)} 도어 닫기 명령 전송", "INFO");
                 }
                 
@@ -783,7 +790,8 @@ namespace SemiconductorUi.Helpers
                 
                 // 도어 닫힘 대기 시간: 약 0.75초 (5틱 * 150ms)
                 // 센서가 없으므로 시간 기반으로 처리
-                if (form.doorCloseWaitTicks < AppSettings.DoorCloseWaitTicks)
+                // 도어 닫힘 대기: 닫기 명령 후 DoorCloseWaitMs가 지날 때까지 (시간 기준)
+                if ((DateTime.Now - form.doorWaitStartTime).TotalMilliseconds < AppSettings.DoorCloseWaitMs)
                 {
                     // 아직 대기 중
                     return;
