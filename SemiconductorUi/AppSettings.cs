@@ -300,6 +300,22 @@ namespace SemiconductorUi
         /// </summary>
         public static int ServoAxis1MinWaitMs => GetSetting("ServoAxis1MinWaitMs", 300);
 
+        /// <summary>
+        /// 공정 루프 이동 완료 판정: 상하(Axis1) 목표 위치 허용 오차 (펄스).
+        /// PP_D가 늦게 켜져도 현재 위치가 목표 ± 이 값 안에 머물면 완료로 본다. 0 이하면 끔(PP_D만 사용)
+        /// </summary>
+        public static int ServoInPositionToleranceAxis1 => GetSetting("ServoInPositionToleranceAxis1", 1000);
+
+        /// <summary>
+        /// 공정 루프 이동 완료 판정: 회전(Axis2) 목표 위치 허용 오차 (펄스). 0 이하면 끔(PP_D만 사용)
+        /// </summary>
+        public static int ServoInPositionToleranceAxis2 => GetSetting("ServoInPositionToleranceAxis2", 1000);
+
+        /// <summary>
+        /// 위치가 허용 오차 안에 연속으로 머물러야 하는 시간 (밀리초). DLL 위치 갱신 주기(300 ms) 이상으로 둔다
+        /// </summary>
+        public static int ServoInPositionHoldMs => GetSetting("ServoInPositionHoldMs", 300);
+
         #endregion
 
         #region 하드웨어 타임아웃 설정
