@@ -818,6 +818,21 @@ namespace SemiconductorUi.Helpers
                 bool cylinderExtended = form.CheckTmCylinderExtended();
                 bool cylinderRetracted = form.CheckTmCylinderRetracted();
                 
+                // 실린더에 보낸 명령(출력 12 전진, 13 후진). 화면 표시에만 씁니다.
+                // 전진 센서는 실린더가 끝까지 나가야 켜지므로, 센서만 보면 전진 그림이 늦게 시작합니다.
+                // (후진은 출발하자마자 전진 센서가 꺼져서 바로 접히기 시작합니다.)
+                bool extendCommanded = false;
+                bool retractCommanded = false;
+                try
+                {
+                    extendCommanded = form.EtherCAT_M != null && form.EtherCAT_M.GetDigitalOutput(12);
+                    retractCommanded = form.EtherCAT_M != null && form.EtherCAT_M.GetDigitalOutput(13);
+                }
+                catch
+                {
+                    // 출력값을 못 읽으면 예전처럼 센서 값만으로 그립니다.
+                }
+
                 // 실린더 상태에 따라 extensionFactor 설정
                 if (cylinderExtended && !cylinderRetracted)
                 {
@@ -828,6 +843,12 @@ namespace SemiconductorUi.Helpers
                 {
                     // 후진 상태
                     form.TmBladeExtensionFactor = 0.55f;
+                }
+                else if (extendCommanded && !retractCommanded && !cylinderExtended)
+                {
+                    // 전진 명령을 보냈고 아직 끝까지 나가지 않음: 바로 펴기 시작하되,
+                    // 전진 센서가 켜질 때까지는 다 편 그림(1.3)보다 조금 덜 그립니다.
+                    form.TmBladeExtensionFactor = 1.2f;
                 }
                 else
                 {
