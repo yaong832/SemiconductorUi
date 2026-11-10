@@ -41,6 +41,7 @@ namespace SemiconductorUi
                 logger.Log("프로그램 종료", "INFO");
                 (logger as IDisposable)?.Dispose();
             }
+            mainForm.DisposeAlarmHistory();
         }
     }
 }

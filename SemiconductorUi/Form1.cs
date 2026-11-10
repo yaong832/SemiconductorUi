@@ -2905,6 +2905,7 @@ namespace SemiconductorUi
                 catch (Exception ex)
                 {
                     AddLogMessage($"비상정지 서보 OFF 전송 오류: {ex.Message} - 비상 차단 스위치로 전원을 끊으세요", "ALARM");
+                    RecordAlarm(AlarmCodes.EmergencyStopSendFailed, "TM", ex.Message);
                 }
             }
 
@@ -2917,6 +2918,7 @@ namespace SemiconductorUi
             AddLogMessage(servoOffSent
                 ? $"비상정지 ({source}): 서보 OFF 전송, 장비 명령 차단. 진공은 유지합니다."
                 : $"비상정지 ({source}): EtherCAT 미연결 상태, 장비 명령 차단", "ALARM");
+            RecordAlarm(AlarmCodes.EmergencyStop, "장비", servoOffSent ? source : $"{source} (EtherCAT 미연결)");
 
             string reason = "비상정지. 알람 리셋으로 해제한 뒤 서보 ON과 원점복귀를 다시 하세요.";
             if (SimulationRunning)
@@ -2994,6 +2996,7 @@ namespace SemiconductorUi
             }
 
             string detail = DescribeServoAxes(newFaults);
+            RecordServoFaultAlarms(newFaults);
             if (EtherCAT_M.IsEmergencyStopped)
             {
                 AddLogMessage($"서보 알람 발생: {detail} (이미 비상정지 중)", "ALARM");
@@ -3009,6 +3012,17 @@ namespace SemiconductorUi
                 "드라이브 표시창의 알람 코드를 확인하고 원인을 없앤 뒤,\n" +
                 "알람 리셋 → 서보 ON → 원점복귀 순서로 다시 시작하세요.",
                 "서보 알람", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
+
+        /// <summary>
+        /// 축마다 서보 알람을 이력에 남깁니다 (상세: 상태워드).
+        /// </summary>
+        private void RecordServoFaultAlarms(IList<int> axes)
+        {
+            foreach (int axis in axes)
+            {
+                RecordAlarm(AlarmCodes.ServoFault(axis), "TM", DescribeServoAxes(new[] { axis }));
+            }
         }
 
         /// <summary>
@@ -3083,6 +3097,7 @@ namespace SemiconductorUi
                 }
 
                 string stillDetail = DescribeServoAxes(stillFaulted);
+                RecordServoFaultAlarms(stillFaulted);
                 if (EtherCAT_M.IsEmergencyStopped)
                 {
                     AddLogMessage($"드라이브 알람이 아직 남아 있습니다: {stillDetail}", "ALARM");
@@ -3118,6 +3133,7 @@ namespace SemiconductorUi
             catch (Exception ex)
             {
                 AddLogMessage($"비상정지 확인 실패: {ex.Message} - 서보가 꺼졌는지 눈으로 확인하세요", "ALARM");
+                RecordAlarm(AlarmCodes.EmergencyStopVerifyFailed, "TM", ex.Message);
                 return;
             }
 
@@ -3129,6 +3145,7 @@ namespace SemiconductorUi
 
             string axes = axis1On && axis2On ? "Axis1(상하), Axis2(좌우)" : axis1On ? "Axis1(상하)" : "Axis2(좌우)";
             AddLogMessage($"비상정지 확인 실패: {axes} 서보가 아직 켜져 있습니다 - 비상 차단 스위치로 전원을 끊으세요", "ALARM");
+            RecordAlarm(AlarmCodes.EmergencyStopVerifyFailed, "TM", $"{axes} 서보 ON으로 읽힘");
             MessageBox.Show(
                 $"비상정지 후에도 {axes} 서보가 켜져 있는 것으로 읽힙니다.\n\n" +
                 "비상 차단 스위치로 장비 전원을 끊으세요.",
@@ -7625,6 +7642,7 @@ namespace SemiconductorUi
             if (!IsTmHardwareModeAvailable()) return;
 
             AddLogMessage($"[하드웨어 오류] {errorMessage} - 자동 일시정지", errorType);
+            RecordAlarm(AlarmCodes.TmHardwareError, "TM", errorMessage);
             
             // 자동 일시정지
             if (SimulationRunning && !SimulationPaused)
