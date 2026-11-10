@@ -350,8 +350,8 @@ namespace SemiconductorUi.EventHandlers
         public void ButtonNavSysInfo_Click(object sender, EventArgs e)
         {
             form.UpdateNavButtonStates("System");
+            // 시스템 정보 창은 NavigateToSection(SysInfo) 안에서 한 번 띄웁니다. 여기서 또 부르면 두 번 뜹니다.
             form.NavigateToSection(Form1.AppSection.SysInfo);
-            form.ShowSystemInfoSummary();
         }
 
         /// <summary>
