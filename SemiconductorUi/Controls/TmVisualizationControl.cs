@@ -76,7 +76,6 @@ namespace SemiconductorUi.Controls
         private static readonly Color ForkEdge = Color.FromArgb(142, 152, 167);
         private static readonly Color PadOff = Color.FromArgb(154, 164, 178);
         private static readonly Color PadOn = Color.FromArgb(59, 209, 126);
-        private static readonly Color HoseColor = Color.FromArgb(58, 67, 82);
         private static readonly Color WaferEdge = Color.FromArgb(181, 154, 69);
 
         public TmVisualizationControl()
@@ -489,12 +488,6 @@ namespace SemiconductorUi.Controls
             {
                 g.FillPath(fill, path);
                 g.DrawPath(pen, path);
-            }
-
-            // 진공 호스 (몸체 → 포크 뿌리)
-            using (var hose = new Pen(HoseColor, 2.2f) { StartCap = LineCap.Round, EndCap = LineCap.Round })
-            {
-                g.DrawBezier(hose, new PointF(10f, 14f), new PointF(26f, 20f), new PointF(forkRoot - 18f, 18f), new PointF(forkRoot + 2f, 9f));
             }
 
             g.Restore(state);
