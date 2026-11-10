@@ -11,12 +11,73 @@ namespace SemiconductorUi.Services
     /// 로깅 서비스 구현
     /// 기존 AddLogMessage와 호환되는 로깅 서비스
     /// </summary>
-    public class LoggerService : ILoggerService
+    public class LoggerService : ILoggerService, IDisposable
     {
         #region Fields
 
         private readonly List<string> _logEntries = new List<string>();
         private readonly object _lock = new object();
+
+        /// <summary>
+        /// 날짜별 파일 기록기. 설정에서 끄면 null입니다.
+        /// </summary>
+        private readonly DailyLogFileWriter _fileWriter;
+
+        #endregion
+
+        #region Constructors
+
+        /// <summary>
+        /// exe.config 설정(LogFileEnabled, LogFolder, LogRetentionDays)으로 날짜별 파일 기록을 켭니다.
+        /// </summary>
+        public LoggerService()
+            : this(CreateFileWriterFromSettings())
+        {
+        }
+
+        /// <summary>
+        /// 파일 기록기를 직접 넘깁니다. null이면 파일에 쓰지 않습니다 (시험용).
+        /// </summary>
+        public LoggerService(DailyLogFileWriter fileWriter)
+        {
+            _fileWriter = fileWriter;
+            if (_fileWriter == null)
+            {
+                return;
+            }
+
+            _fileWriter.FailureStateChanged += OnFileWriterFailureStateChanged;
+
+            int deleted = _fileWriter.DeleteExpiredFiles(DateTime.Today);
+            var retention = AppSettings.LogRetentionDays;
+            var retentionText = retention > 0 ? $"{retention}일 보관" : "자동 삭제 안 함";
+            var deletedText = deleted > 0 ? $", 보관 기간이 지난 파일 {deleted}개 삭제" : "";
+            Log($"로그 파일 기록 시작: {_fileWriter.Folder} ({retentionText}{deletedText})", "INFO");
+        }
+
+        private static DailyLogFileWriter CreateFileWriterFromSettings()
+        {
+            if (!AppSettings.LogFileEnabled)
+            {
+                return null;
+            }
+
+            try
+            {
+                var folder = AppSettings.LogFolder;
+                if (string.IsNullOrWhiteSpace(folder))
+                {
+                    folder = DailyLogFileWriter.DefaultFolder;
+                }
+
+                return new DailyLogFileWriter(folder, AppSettings.LogRetentionDays);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"로그 파일 기록기 생성 실패: {ex.Message}");
+                return null;
+            }
+        }
 
         #endregion
 
@@ -81,9 +142,10 @@ namespace SemiconductorUi.Services
                 return;
             }
 
+            var now = DateTime.Now;
             lock (_lock)
             {
-                var timestamp = DateTime.Now.ToString("HH:mm:ss");
+                var timestamp = now.ToString("HH:mm:ss");
                 var entry = $"[{timestamp}] [{level}] {message}";
                 _logEntries.Insert(0, entry);
 
@@ -92,6 +154,26 @@ namespace SemiconductorUi.Services
                 {
                     AutoSaveAndClearLogs();
                 }
+            }
+
+            // 날짜별 파일에 바로 씁니다 (화면 로그 자동 저장과 별개). 실패해도 예외를 던지지 않습니다.
+            _fileWriter?.Write(now, level, message);
+        }
+
+        /// <summary>
+        /// 파일 쓰기가 실패하거나 다시 정상이 되면 화면 로그에만 알립니다.
+        /// (파일 기록기 잠금 안에서 불리므로 파일에는 쓰지 않습니다.)
+        /// </summary>
+        private void OnFileWriterFailureStateChanged(bool failing, string reason)
+        {
+            var text = failing
+                ? $"로그 파일 쓰기 실패: {reason} - 화면 로그와 장비 동작은 계속됩니다. 10초 뒤 다시 시도합니다."
+                : "로그 파일 쓰기가 다시 정상입니다. 실패한 동안의 로그는 파일에 없습니다.";
+            var level = failing ? "WARN" : "INFO";
+
+            lock (_lock)
+            {
+                _logEntries.Insert(0, $"[{DateTime.Now:HH:mm:ss}] [{level}] {text}");
             }
         }
 
@@ -273,6 +355,21 @@ namespace SemiconductorUi.Services
         }
 
         #endregion
+
+        #region Cleanup
+
+        /// <summary>
+        /// 파일을 닫습니다. 프로그램 종료 때 부릅니다.
+        /// </summary>
+        public void Dispose()
+        {
+            if (_fileWriter != null)
+            {
+                _fileWriter.FailureStateChanged -= OnFileWriterFailureStateChanged;
+                _fileWriter.Dispose();
+            }
+        }
+
+        #endregion
     }
 }
-
