@@ -12,9 +12,12 @@ namespace SemiconductorUi.Forms
 		private ListView listLog;
 		private Button buttonExport;
 		private Button buttonClose;
+		private Button buttonChangeHistory;
 
 		public Func<List<string>> ProvideLogEntries;
 		public Func<string> OnExportCsv;
+		/// <summary>변경 이력을 누르면 부릅니다. 이 창을 닫은 뒤 메인 화면이 변경 이력 창(모달 아님)을 엽니다.</summary>
+		public Action OnOpenChangeHistory;
 
 		public ReportForm()
 		{
@@ -74,6 +77,22 @@ namespace SemiconductorUi.Forms
 			buttonExport.ForeColor = Color.White;
 			buttonExport.Click += buttonExport_Click;
 
+			buttonChangeHistory = new Button();
+			buttonChangeHistory.Text = "변경 이력";
+			buttonChangeHistory.Width = 110;
+			buttonChangeHistory.Height = 28;
+			buttonChangeHistory.Location = new Point(16, 536);
+			buttonChangeHistory.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
+			buttonChangeHistory.BackColor = Color.FromArgb(45, 98, 196);
+			buttonChangeHistory.FlatStyle = FlatStyle.Flat;
+			buttonChangeHistory.FlatAppearance.BorderSize = 0;
+			buttonChangeHistory.ForeColor = Color.White;
+			buttonChangeHistory.Click += (s, e) =>
+			{
+				OnOpenChangeHistory?.Invoke();
+				this.Close();
+			};
+
 			buttonClose = new Button();
 			buttonClose.Text = "Close";
 			buttonClose.Width = 80;
@@ -91,6 +110,7 @@ namespace SemiconductorUi.Forms
 			this.Controls.Add(top);
 			this.Controls.Add(listLog);
 			this.Controls.Add(buttonExport);
+			this.Controls.Add(buttonChangeHistory);
 			this.Controls.Add(buttonClose);
 		}
 

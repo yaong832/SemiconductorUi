@@ -58,6 +58,10 @@
     <Compile Include="Form1.Designer.cs">
       <DependentUpon>Form1.cs</DependentUpon>
     </Compile>
+    <Compile Include="Form1.ChangeHistory.cs">
+      <DependentUpon>Form1.cs</DependentUpon>
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="Form1.ControlPanel.cs">
       <DependentUpon>Form1.cs</DependentUpon>
       <SubType>Form</SubType>
@@ -112,6 +116,9 @@
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="Forms\EquipmentControlForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\ChangeHistoryForm.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="Forms\ReportForm.cs">
@@ -171,6 +178,7 @@
     <Compile Include="Helpers\FoupManager.cs" />
     <Compile Include="Helpers\AlarmManager.cs" />
     <Compile Include="Helpers\WaferTrackingService.cs" />
+    <Compile Include="Services\ChangeHistoryService.cs" />
     <Compile Include="Services\ServiceContainer.cs" />
     <Compile Include="Services\DailyLogFileWriter.cs" />
     <Compile Include="Services\LoggerService.cs" />

@@ -55,6 +55,7 @@
     <Compile Include="UserRepositoryTests.cs" />
     <Compile Include="RecipeRepositoryTests.cs" />
     <Compile Include="ConfigRepositoryTests.cs" />
+    <Compile Include="ChangeHistoryTests.cs" />
     <Compile Include="Ieg3268DeviceTests.cs" />
     <Compile Include="EmergencyStopTests.cs" />
     <Compile Include="ServoFaultMonitorTests.cs" />

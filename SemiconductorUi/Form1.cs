@@ -840,6 +840,9 @@ namespace SemiconductorUi
             
             // HardwareManager 초기화
             HardwareManager = new HardwareManager(EtherCAT_M, AddLogMessage);
+
+            // 변경 이력: 티칭·속도·레시피·임계값·사용자를 저장할 때 바뀐 값과 사용자를 남깁니다.
+            InitializeChangeHistory();
             
             // 이벤트 핸들러 인스턴스 초기화
             loginEventHandlers = new LoginEventHandlers(this);
@@ -5109,13 +5112,19 @@ namespace SemiconductorUi
                     // Report 폼 열기 (콜백 설정 포함)
                     try
                     {
+                        bool openChangeHistory = false;
                         using (var rf = new ReportForm())
                         {
                             // 로그 엔트리 제공 콜백 설정
                             rf.ProvideLogEntries = () => LoggerService?.GetLogEntries() ?? new List<string>();
                             // CSV 내보내기 콜백 설정
                             rf.OnExportCsv = () => ExportLogsToCsv();
+                            rf.OnOpenChangeHistory = () => openChangeHistory = true;
                             rf.ShowDialog(this);
+                        }
+                        if (openChangeHistory)
+                        {
+                            ShowChangeHistoryWindow();
                         }
                     }
                     catch (Exception ex)
