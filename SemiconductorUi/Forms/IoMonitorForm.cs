@@ -385,9 +385,7 @@ namespace SemiconductorUi.Forms
                 new KeyValuePair<int, string>(3, "알람"),
                 new KeyValuePair<int, string>(4, "전압"),
                 new KeyValuePair<int, string>(7, "경고"),
-                new KeyValuePair<int, string>(10, "목표 도달"),
-                new KeyValuePair<int, string>(12, "bit12"),
-                new KeyValuePair<int, string>(13, "bit13")
+                new KeyValuePair<int, string>(10, "목표 도달")
             };
 
             private ServoAxisSnapshot axis1;
@@ -431,13 +429,13 @@ namespace SemiconductorUi.Forms
                 int colAxis = 10;
                 int colWord = 120;
                 int colState = 200;
-                int colBits = 420;
-                int colPos = Width - 150;
+                int colBits = 400;
+                int colPos = Math.Max(colBits + 200, Width - 140);
 
                 Color head = UiTheme.TextSecondary;
                 DrawCell(g, "축", colAxis, y, 100, rowHeight, head);
                 DrawCell(g, "상태워드", colWord, y, 80, rowHeight, head);
-                DrawCell(g, "상태", colState, y, 220, rowHeight, head);
+                DrawCell(g, "상태", colState, y, 195, rowHeight, head);
                 DrawCell(g, "주요 비트", colBits, y, colPos - colBits - 10, rowHeight, head);
                 DrawCell(g, "엔코더 위치", colPos, y, 140, rowHeight, head);
 
@@ -457,7 +455,7 @@ namespace SemiconductorUi.Forms
 
                 bool fault = axis.Bit(3);
                 DrawCell(g, $"0x{axis.StatusWord:X4}", colWord, y, 80, rowHeight, UiTheme.TextPrimary);
-                DrawCell(g, axis.StateName, colState, y, 220, rowHeight, fault ? UiTheme.Danger : UiTheme.TextPrimary);
+                DrawCell(g, axis.StateName, colState, y, 195, rowHeight, fault ? UiTheme.Danger : UiTheme.TextPrimary);
 
                 int x = colBits;
                 foreach (var bit in Bits)
