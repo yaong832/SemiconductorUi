@@ -172,6 +172,7 @@
     <Compile Include="Helpers\AlarmManager.cs" />
     <Compile Include="Helpers\WaferTrackingService.cs" />
     <Compile Include="Services\ServiceContainer.cs" />
+    <Compile Include="Services\DailyLogFileWriter.cs" />
     <Compile Include="Services\LoggerService.cs" />
     <Compile Include="ViewModels\MainFormViewModel.cs" />
     <Compile Include="Forms\UserManagementForm.cs">

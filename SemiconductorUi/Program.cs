@@ -31,7 +31,16 @@ namespace SemiconductorUi
                 }
             };
 
-            Application.Run(new Form1());
+            var mainForm = new Form1();
+            Application.Run(mainForm);
+
+            // 날짜별 로그 파일을 닫습니다. 종료 직전 로그까지 이미 파일에 쓰여 있습니다.
+            var logger = mainForm.LoggerService;
+            if (logger != null)
+            {
+                logger.Log("프로그램 종료", "INFO");
+                (logger as IDisposable)?.Dispose();
+            }
         }
     }
 }
