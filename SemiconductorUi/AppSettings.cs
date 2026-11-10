@@ -169,7 +169,7 @@ namespace SemiconductorUi
         /// <summary>
         /// 하드웨어 모드 타이머 주기 (밀리초)
         /// </summary>
-        public static int HardwareModeTickMilliseconds => GetSetting("HardwareModeTickMilliseconds", 150);
+        public static int HardwareModeTickMilliseconds => GetSetting("HardwareModeTickMilliseconds", 50);
 
         /// <summary>
         /// 챔버 공정 시간 처리 속도 (초/틱)
@@ -230,6 +230,17 @@ namespace SemiconductorUi
         /// 도어 닫힘 대기 틱 수 (하드웨어 틱 150ms 기준, 기본 14 ≈ 2.1초).
         /// </summary>
         public static int DoorCloseWaitTicks => GetSetting("DoorCloseWaitTicks", 14);
+
+        /// <summary>
+        /// 하드웨어 모드 도어 열림 대기 시간 (밀리초). 열기 명령 후 이 시간이 지나야 실린더를 전진합니다.
+        /// 도어 위치 센서가 없으므로 실제 도어가 다 열리는 시간보다 짧게 잡지 마세요.
+        /// </summary>
+        public static int DoorOpenWaitMs => GetSetting("DoorOpenWaitMs", 2200);
+
+        /// <summary>
+        /// 하드웨어 모드 도어 닫힘 대기 시간 (밀리초). 닫기 명령 후 이 시간이 지나면 닫힌 것으로 보고 다음 단계로 갑니다.
+        /// </summary>
+        public static int DoorCloseWaitMs => GetSetting("DoorCloseWaitMs", 2100);
 
         #endregion
 

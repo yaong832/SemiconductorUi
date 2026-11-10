@@ -6530,6 +6530,7 @@ namespace SemiconductorUi
         internal bool doorOpenCommandSent = false;               // 도어 열기 명령 전송 여부
         internal bool doorCloseCommandSent = false;              // 도어 닫기 명령 전송 여부
         internal int doorCloseWaitTicks = 0;                     // 도어 닫기 대기 틱 수
+        internal DateTime doorWaitStartTime = DateTime.MinValue;   // 도어 열기/닫기 명령을 보낸 시각 (시간 기준 대기)
         // TM_HARDWARE_ACTION_TIMEOUT_MS, CYLINDER_ACTION_TIMEOUT_MS는 AppSettings에서 읽어옴
         // TmHardwareInitialized는 HardwareManager 속성으로 관리됨
         internal bool IsServoOn = false;                         // 서보 ON 상태 추적
