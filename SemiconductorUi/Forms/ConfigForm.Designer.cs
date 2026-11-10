@@ -29,6 +29,7 @@ namespace SemiconductorUi.Forms
         private Button btnCancel;
         private Button btnReset;
         private Button btnTeaching;
+        private Button btnBackup;
         private Panel panelButtons;
 
         // 레이아웃 크기 (창은 크기 고정)
@@ -134,21 +135,25 @@ namespace SemiconductorUi.Forms
             this.btnCancel = CreateButton("취소", 100, DialogResult.Cancel);
             this.btnReset = CreateButton("기본값 복원", 130, DialogResult.None);
             this.btnTeaching = CreateButton("TM 티칭 위치", 140, DialogResult.None);
+            this.btnBackup = CreateButton("백업 · 복원", 130, DialogResult.None);
 
             btnSave.Click += btnSave_Click;
             btnCancel.Click += btnCancel_Click;
             btnReset.Click += btnReset_Click;
             btnTeaching.Click += btnTeaching_Click;
+            btnBackup.Click += btnBackup_Click;
 
             LampButtonPainter.AttachPlain(btnSave, primary: true);
             LampButtonPainter.AttachPlain(btnCancel);
             LampButtonPainter.AttachPlain(btnReset);
             LampButtonPainter.AttachPlain(btnTeaching);
+            LampButtonPainter.AttachPlain(btnBackup);
 
             panelButtons.Controls.Add(btnSave);
             panelButtons.Controls.Add(btnCancel);
             panelButtons.Controls.Add(btnReset);
             panelButtons.Controls.Add(btnTeaching);
+            panelButtons.Controls.Add(btnBackup);
             panelButtons.Layout += (s, e) =>
             {
                 int right = PageLeft + PlateWidth * 2 + PlateGap;
@@ -156,6 +161,7 @@ namespace SemiconductorUi.Forms
                 btnCancel.Location = new Point(btnSave.Left - 10 - btnCancel.Width, 12);
                 btnReset.Location = new Point(btnCancel.Left - 10 - btnReset.Width, 12);
                 btnTeaching.Location = new Point(PageLeft, 12);
+                btnBackup.Location = new Point(btnTeaching.Right + 10, 12);
             };
         }
 
