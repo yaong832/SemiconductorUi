@@ -2770,6 +2770,7 @@ namespace SemiconductorUi
 
             // SimulationController를 통해 시뮬레이션 시작
             SimulationController?.Start(IsTmHardwareModeAvailable());
+            RecordWaferLotStarted(targetLoadCount);
             
             // 하드웨어 모드와 시뮬레이션 모드 구분하여 로그 메시지 표시
             if (IsTmHardwareModeAvailable())
@@ -2869,6 +2870,7 @@ namespace SemiconductorUi
 
         internal void AbortSimulation(string reason, bool setErrorState)
         {
+            RecordWaferLotAborted(reason);
             SimulationController?.Abort();
             ClearAlarmHold();
             if (setErrorState)
@@ -3206,6 +3208,7 @@ namespace SemiconductorUi
                 SimulationController?.Stop();
                 SimulationController?.StopTimer();
                 SetProcessState(ProcessState.Idle, "시뮬레이션이 완료되었습니다.");
+                RecordWaferLotFinished();
                 UpdateSimulationUi();
             }
 
@@ -3275,6 +3278,7 @@ namespace SemiconductorUi
                         chamber.ProcessingAccumulator = 0;
                         chamber.LastProcessedTime = DateTime.MinValue;
                         AddLogMessage($"{EquipmentRegionHelper.FormatUnitLabel(chamber.UnitKey)} 공정 완료 - TM 대기 중 (도어 닫힘 유지) (웨이퍼#{chamber.CurrentWafer?.Id})", "INFO");
+                        RecordWaferProcessEnd(chamber);
                         break;
                     }
                 }
@@ -3293,6 +3297,7 @@ namespace SemiconductorUi
                         chamber.StatusText = "Transfer Ready";
                         chamber.ProcessingAccumulator = 0;
                         AddLogMessage($"{EquipmentRegionHelper.FormatUnitLabel(chamber.UnitKey)} 공정 완료 - TM 대기 중 (도어 닫힘 유지) (웨이퍼#{chamber.CurrentWafer?.Id})", "INFO");
+                        RecordWaferProcessEnd(chamber);
                         break;
                     }
                 }
@@ -3768,6 +3773,7 @@ namespace SemiconductorUi
         internal void StartChamberProcessing(ChamberController.ChamberState chamber, Wafer wafer)
         {
             waferTrackingService?.StartChamberProcessing(chamber, wafer);
+            RecordWaferProcessStart(chamber, wafer);
             
             // UI 업데이트
             UpdateChamberWaferIndicators();
@@ -4080,6 +4086,7 @@ namespace SemiconductorUi
                 }
             }
 
+            RecordWaferPickup(CurrentTransfer);
             return true;
         }
 
@@ -4128,6 +4135,7 @@ namespace SemiconductorUi
             }
 
             AddLogMessage($"TM 완료: {EquipmentRegionHelper.FormatRegionLabel(CurrentTransfer.Pickup)} -> {EquipmentRegionHelper.FormatRegionLabel(CurrentTransfer.Dropoff)} (웨이퍼 #{CurrentTransfer.Wafer?.Id})", "INFO");
+            RecordWaferDropoff(CurrentTransfer);
             TmCarryingVisual = false;
             return true;
         }

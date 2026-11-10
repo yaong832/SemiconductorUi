@@ -377,6 +377,7 @@ namespace SemiconductorUi.EventHandlers
             form.UpdateTmAnimationIdleTarget();
             form.UpdateServoStatusLabel();
             form.AddLogMessage("사용자가 공정을 수동 리셋했습니다.", "INFO");
+            form.RecordWaferLotAborted("공정 리셋");
             
             // 하드웨어 초기화(대기 포함)는 백그라운드에서 수행
             if (form.EthercatConnected && form.EtherCAT_M != null)
