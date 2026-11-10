@@ -142,6 +142,7 @@
     <Compile Include="Controllers\ChamberController.cs" />
     <Compile Include="Controllers\TransferController.cs" />
     <Compile Include="Controllers\SimulationController.cs" />
+    <Compile Include="Hardware\EthercatCommWatchdog.cs" />
     <Compile Include="Services\HardwareManager.cs" />
     <Compile Include="Hardware\CifxChannel.cs" />
     <Compile Include="Hardware\EmergencyStopActiveException.cs" />

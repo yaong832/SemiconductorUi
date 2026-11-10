@@ -18,6 +18,7 @@ namespace SemiconductorUi.Services
         private bool _isTmHardwareInitialized;
         private Action<string, string> _logCallback;
         private bool _disposed = false;
+        private EthercatCommWatchdog _commWatchdog;
 
         #endregion
 
@@ -90,6 +91,7 @@ namespace SemiconductorUi.Services
 
                     Log("EtherCAT 연결 성공 - 실제 장비 제어 모드 활성화", "INFO");
                     LogCommunicationStatus();
+                    StartCommWatchdog();
                     return true;
                 }
                 else
@@ -114,6 +116,9 @@ namespace SemiconductorUi.Services
             {
                 return;
             }
+
+            // 통신 감시를 먼저 멈춥니다 (끊긴 채널을 건드리지 않게).
+            StopCommWatchdog();
 
             try
             {
@@ -305,6 +310,81 @@ namespace SemiconductorUi.Services
             catch (Exception ex)
             {
                 Log($"EtherCAT 통신 상태 확인 실패: {ex.Message}", "WARN");
+            }
+        }
+
+        /// <summary>
+        /// 1단계 통신 감시를 시작합니다: 정해진 주기로 통신 상태를 확인해 이상·복구를 로그에 남기기만 합니다.
+        /// 장비를 멈추거나 명령을 막지 않습니다. EthercatWatchdogIntervalMs가 0이면 시작하지 않습니다.
+        /// </summary>
+        private void StartCommWatchdog()
+        {
+            StopCommWatchdog();
+
+            int intervalMs = AppSettings.EthercatWatchdogIntervalMs;
+            if (intervalMs <= 0)
+            {
+                Log("EtherCAT 통신 감시 꺼짐 (EthercatWatchdogIntervalMs = 0)", "INFO");
+                return;
+            }
+
+            try
+            {
+                int failCount = Math.Max(1, AppSettings.EthercatWatchdogFailCount);
+                var summary = TimeSpan.FromMinutes(Math.Max(0, AppSettings.EthercatWatchdogSummaryMinutes));
+                _commWatchdog = new EthercatCommWatchdog(_ethercat, intervalMs, failCount, summary, OnCommWatchdogEvent);
+                _commWatchdog.Start();
+                Log($"EtherCAT 통신 감시 시작: {intervalMs}ms마다 확인, 연속 {failCount}회 이상이면 기록 (1단계: 기록만, 장비는 멈추지 않음)", "INFO");
+            }
+            catch (Exception ex)
+            {
+                _commWatchdog = null;
+                Log($"EtherCAT 통신 감시 시작 실패: {ex.Message}", "WARN");
+            }
+        }
+
+        private void StopCommWatchdog()
+        {
+            var watchdog = _commWatchdog;
+            _commWatchdog = null;
+            if (watchdog == null)
+            {
+                return;
+            }
+
+            try
+            {
+                watchdog.Stop();
+            }
+            catch (Exception ex)
+            {
+                Log($"EtherCAT 통신 감시 정지 오류: {ex.Message}", "WARN");
+            }
+        }
+
+        /// <summary>
+        /// 감시 스레드에서 불립니다. 로그 콜백(AddLogMessage)은 화면 스레드로 넘겨 줍니다.
+        /// </summary>
+        private void OnCommWatchdogEvent(EthercatWatchdogEvent evt, EthercatWatchdogState state)
+        {
+            switch (evt)
+            {
+                case EthercatWatchdogEvent.FirstCheck:
+                    Log(state.IsUnhealthy || state.FailuresInWindow > 0
+                        ? $"EtherCAT 통신 감시 첫 확인: 이상 ({state.LastDetail})"
+                        : $"EtherCAT 통신 감시 첫 확인: 정상 ({state.LastDetail})",
+                        state.FailuresInWindow > 0 ? "WARN" : "INFO");
+                    break;
+                case EthercatWatchdogEvent.BecameUnhealthy:
+                    Log($"EtherCAT 통신 이상 감지 ({state.LastDetail}) - 1단계라 장비는 멈추지 않습니다. 배선, 드라이브 전원, 드라이버 상태를 확인하세요.", "WARN");
+                    break;
+                case EthercatWatchdogEvent.Recovered:
+                    Log($"EtherCAT 통신 복구 ({state.LastDetail}), 이상 지속 {state.LastUnhealthyDuration.TotalSeconds:0.0}초", "INFO");
+                    break;
+                case EthercatWatchdogEvent.Summary:
+                    Log($"EtherCAT 통신 감시 요약: {state.SummaryChecks}회 확인, 이상 {state.SummaryFailures}회 ({(state.IsUnhealthy ? "지금 이상" : "지금 정상")})",
+                        state.SummaryFailures > 0 ? "WARN" : "INFO");
+                    break;
             }
         }
 
