@@ -332,6 +332,7 @@ namespace SemiconductorUi.Helpers
         private static readonly Color GlassDark = Color.FromArgb(26, 35, 50);
         private static readonly Color PlateFill = Color.FromArgb(42, 50, 64);
         private static readonly Color PlateText = Color.FromArgb(233, 237, 243);
+        private static readonly Color PlateSubText = Color.FromArgb(196, 206, 220);
         private static readonly Color ValveBody = Color.FromArgb(140, 151, 166);
         private static readonly Color ValveOpenGlow = Color.FromArgb(59, 209, 126);
 
@@ -379,23 +380,70 @@ namespace SemiconductorUi.Helpers
         }
 
         /// <summary>
-        /// 장비 이름판: 어두운 판에 흰 글자.
+        /// 장비 이름판: 어두운 판에 흰 글자. 윗줄은 PM 이름(PMA), 아랫줄은 챔버 이름(Chamber A).
+        /// 제목이 "Chamber X"가 아니면 예전처럼 한 줄로 그립니다.
         /// </summary>
         private static void DrawNameplate(Graphics g, Rectangle card, string title)
+        {
+            title = title ?? string.Empty;
+            string pmName = GetPmName(title);
+            if (pmName == null)
+            {
+                DrawSingleLineNameplate(g, card, title);
+                return;
+            }
+
+            using (var pmFont = new Font("Segoe UI", 8.5F, FontStyle.Bold))
+            using (var chamberFont = new Font("Segoe UI", 6.5F, FontStyle.Regular))
+            {
+                var flags = TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPadding | TextFormatFlags.SingleLine;
+                int maxWidth = card.Width - 52;
+                const int top = 3;
+                int plateHeight = HeaderHeight - 5;
+                int pmLine = (int)Math.Round(plateHeight * 0.56);
+                var pmSize = CanvasText.Measure(g, pmName, pmFont, new Size(maxWidth, pmLine), flags);
+                var chamberSize = CanvasText.Measure(g, title, chamberFont, new Size(maxWidth, plateHeight - pmLine), flags);
+                int textWidth = Math.Min(maxWidth, Math.Max(pmSize.Width, chamberSize.Width));
+                var plate = new Rectangle(card.Left + 8, card.Top + top, textWidth + 14, plateHeight);
+                using (var path = CreateRoundedRectangle(plate, 4))
+                using (var fill = new SolidBrush(PlateFill))
+                {
+                    g.FillPath(fill, path);
+                }
+
+                var pmRect = new Rectangle(plate.X + 7, plate.Y + 1, plate.Width - 14, pmLine);
+                var chamberRect = new Rectangle(plate.X + 7, pmRect.Bottom - 1, plate.Width - 14, plate.Bottom - pmRect.Bottom);
+                CanvasText.Draw(g, pmName, pmFont, pmRect, PlateText, flags);
+                CanvasText.Draw(g, title, chamberFont, chamberRect, PlateSubText, flags);
+            }
+        }
+
+        private static void DrawSingleLineNameplate(Graphics g, Rectangle card, string title)
         {
             using (var font = new Font("Segoe UI", 9F, FontStyle.Bold))
             {
                 var flags = TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPadding;
                 int maxWidth = card.Width - 52;
-                var textSize = CanvasText.Measure(g, title ?? string.Empty, font, new Size(maxWidth, HeaderHeight), flags);
+                var textSize = CanvasText.Measure(g, title, font, new Size(maxWidth, HeaderHeight), flags);
                 var plate = new Rectangle(card.Left + 8, card.Top + 5, Math.Min(maxWidth, textSize.Width) + 16, HeaderHeight - 9);
                 using (var path = CreateRoundedRectangle(plate, 4))
                 using (var fill = new SolidBrush(PlateFill))
                 {
                     g.FillPath(fill, path);
                 }
-                CanvasText.Draw(g, title ?? string.Empty, font, Rectangle.Inflate(plate, -8, 0), PlateText, flags);
+                CanvasText.Draw(g, title, font, Rectangle.Inflate(plate, -8, 0), PlateText, flags);
             }
+        }
+
+        /// <summary>"Chamber A" → "PMA". 화면 글자만 바꾸고 내부 키는 그대로 씁니다.</summary>
+        private static string GetPmName(string chamberTitle)
+        {
+            const string prefix = "Chamber ";
+            if (chamberTitle.Length == prefix.Length + 1 && chamberTitle.StartsWith(prefix, StringComparison.Ordinal))
+            {
+                return "PM" + chamberTitle.Substring(prefix.Length);
+            }
+            return null;
         }
 
         /// <summary>
