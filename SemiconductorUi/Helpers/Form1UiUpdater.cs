@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Text;
 using System.Windows.Forms;
@@ -864,7 +865,24 @@ namespace SemiconductorUi.Helpers
                 var waferColor = waferOnBlade ? form.GetWaferColorForRegion(targetRegion) : (Color?)null;
                 
                 // 4. UI 업데이트 (실제 하드웨어 상태만 반영)
-                form.tmVisualizationControl?.UpdateTmState(targetRegion, waferOnBlade, form.TmBladeExtensionFactor, waferColor, false);
+                // 회전 각도는 실제 회전축 엔코더 값(currentX)으로 그린다. targetRegion(가까운 모듈)은 블레이드 길이용.
+                var positions = form.TmHardwareController.Positions;
+                if (positions != null && form.tmVisualizationControl != null)
+                {
+                    var teachX = new List<KeyValuePair<EquipmentRegion, long>>
+                    {
+                        new KeyValuePair<EquipmentRegion, long>(EquipmentRegion.FoupA, positions.FoupA_X),
+                        new KeyValuePair<EquipmentRegion, long>(EquipmentRegion.ChamberA, positions.ChamberA_X),
+                        new KeyValuePair<EquipmentRegion, long>(EquipmentRegion.ChamberB, positions.ChamberB_X),
+                        new KeyValuePair<EquipmentRegion, long>(EquipmentRegion.ChamberC, positions.ChamberC_X),
+                        new KeyValuePair<EquipmentRegion, long>(EquipmentRegion.FoupB, positions.FoupB_X),
+                    };
+                    form.tmVisualizationControl.UpdateTmStateFromEncoder(targetRegion, currentX, teachX, waferOnBlade, form.TmBladeExtensionFactor, waferColor);
+                }
+                else
+                {
+                    form.tmVisualizationControl?.UpdateTmState(targetRegion, waferOnBlade, form.TmBladeExtensionFactor, waferColor, false);
+                }
                 UpdateTmSideViewFromHardware(targetRegion, currentY, carrying, waferOnBlade, waferColor);
             }
             catch (Exception ex)
