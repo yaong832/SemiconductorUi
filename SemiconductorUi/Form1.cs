@@ -5096,14 +5096,20 @@ namespace SemiconductorUi
                     try
                     {
                         bool openIoMonitor = false;
+                        bool openCounters = false;
                         using (var mf = new MaintenanceForm())
                         {
                             mf.OnOpenIoMonitor = () => openIoMonitor = true;
+                            mf.OnOpenMaintenanceCounters = () => openCounters = true;
                             mf.ShowDialog(this);
                         }
                         if (openIoMonitor)
                         {
                             ShowIoMonitorWindow();
+                        }
+                        if (openCounters)
+                        {
+                            ShowMaintenanceCounterWindow();
                         }
                     }
                     catch (Exception ex)

@@ -11,6 +11,7 @@ namespace SemiconductorUi.Forms
 		private Button buttonSensorCalib;
 		private Button buttonDoorCycle;
 		private Button buttonIoMonitor;
+		private Button buttonCounters;
 		private Button buttonClose;
 		private Label labelStatus;
 
@@ -20,6 +21,8 @@ namespace SemiconductorUi.Forms
 		public Action OnDoorCycleTest;
 		/// <summary>I/O 모니터를 누르면 부릅니다. 이 창을 닫은 뒤 메인 화면이 I/O 모니터를 엽니다.</summary>
 		public Action OnOpenIoMonitor;
+		/// <summary>유지보수 카운터를 누르면 부릅니다. 이 창을 닫은 뒤 메인 화면이 카운터 창을 엽니다.</summary>
+		public Action OnOpenMaintenanceCounters;
 
 		public MaintenanceForm()
 		{
@@ -34,11 +37,11 @@ namespace SemiconductorUi.Forms
 			this.MaximizeBox = false;
 			this.MinimizeBox = false;
 			this.BackColor = Color.FromArgb(250, 250, 255);
-			this.ClientSize = new Size(620, 300);
+			this.ClientSize = new Size(760, 300);
 
 			var actions = new FlowLayoutPanel();
 			actions.Location = new Point(12, 12);
-			actions.Size = new Size(580, 44);
+			actions.Size = new Size(736, 44);
 			actions.FlowDirection = FlowDirection.LeftToRight;
 			actions.WrapContents = false;
 
@@ -57,18 +60,23 @@ namespace SemiconductorUi.Forms
 			buttonIoMonitor.BackColor = Color.FromArgb(45, 98, 196);
 			actions.Controls.Add(buttonIoMonitor);
 
+			// 유지보수 카운터 (동작 횟수·점검 주기, 별도 창)
+			buttonCounters = CreateActionButton("유지보수 카운터", new Size(130, 34), buttonCounters_Click);
+			buttonCounters.BackColor = Color.FromArgb(45, 98, 196);
+			actions.Controls.Add(buttonCounters);
+
 			labelStatus = new Label();
 			labelStatus.Text = "Ready";
 			labelStatus.ForeColor = Color.FromArgb(40, 40, 40);
 			labelStatus.Location = new Point(16, 70);
-			labelStatus.Size = new Size(580, 24);
+			labelStatus.Size = new Size(720, 24);
 			labelStatus.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
 
 			buttonClose = new Button();
 			buttonClose.Text = "Close";
 			buttonClose.Width = 80;
 			buttonClose.Height = 28;
-			buttonClose.Location = new Point(520, 240);
+			buttonClose.Location = new Point(660, 240);
 			buttonClose.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
 			buttonClose.BackColor = Color.FromArgb(100, 120, 130);
 			buttonClose.FlatStyle = FlatStyle.Flat;
@@ -127,6 +135,13 @@ namespace SemiconductorUi.Forms
 		{
 			// 이 창은 모달이라, 닫은 뒤에 메인 화면이 I/O 모니터(모달 아님)를 엽니다.
 			OnOpenIoMonitor?.Invoke();
+			this.Close();
+		}
+
+		private void buttonCounters_Click(object sender, EventArgs e)
+		{
+			// 이 창은 모달이라, 닫은 뒤에 메인 화면이 유지보수 카운터(모달 아님)를 엽니다.
+			OnOpenMaintenanceCounters?.Invoke();
 			this.Close();
 		}
 

@@ -62,6 +62,10 @@
       <DependentUpon>Form1.cs</DependentUpon>
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="Form1.MaintenanceCounters.cs">
+      <DependentUpon>Form1.cs</DependentUpon>
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="Form1.LampPanel.cs">
       <DependentUpon>Form1.cs</DependentUpon>
       <SubType>Form</SubType>
@@ -115,6 +119,9 @@
     <Compile Include="Forms\MaintenanceForm.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="Forms\MaintenanceCounterForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="Forms\EquipmentControlForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -147,12 +154,14 @@
     <Compile Include="Controllers\TransferController.cs" />
     <Compile Include="Controllers\SimulationController.cs" />
     <Compile Include="Services\HardwareManager.cs" />
+    <Compile Include="Services\MaintenanceCounterService.cs" />
     <Compile Include="Hardware\CifxChannel.cs" />
     <Compile Include="Hardware\EmergencyStopActiveException.cs" />
     <Compile Include="Hardware\EmergencyStopPolicy.cs" />
     <Compile Include="Hardware\EthercatCommunicationStatus.cs" />
     <Compile Include="Hardware\HardwareInterlockException.cs" />
     <Compile Include="Hardware\HardwareOperation.cs" />
+    <Compile Include="Hardware\HardwareUsageCounters.cs" />
     <Compile Include="Hardware\IEthercatDevice.cs" />
     <Compile Include="Hardware\ResetHomingSequence.cs" />
     <Compile Include="Hardware\Ieg3268Device.cs" />
