@@ -20,6 +20,22 @@ namespace SemiconductorUi.Controls
         private readonly System.Diagnostics.Stopwatch animationClock = new System.Diagnostics.Stopwatch();
         private double lastAnimationSeconds;
         private float angularVelocity;   // rad/s, 부호 포함
+
+        // 하드웨어 모드: 회전축(Axis2) 엔코더 값으로 각도를 정한다.
+        // 각도는 "경로 좌표"(6시 방향을 지나지 않게 펼친 각도, 라디안)로 다루고, 그릴 때만 정규화한다.
+        // 위치는 DLL에서 약 0.3초마다 갱신되므로, 새 값이 들어오면 그 간격 동안 직선으로 이어 그린다.
+        private bool encoderMode;
+        private bool hasEncoderSample;
+        private long lastEncoderX;
+        private float encoderPathCurrent;
+        private float encoderPathFrom;
+        private float encoderPathTo;
+        private double encoderSegmentStart;
+        private double encoderSegmentDuration = 0.3;
+        private double lastEncoderChangeSeconds;
+        private static readonly System.Diagnostics.Stopwatch EncoderClock = System.Diagnostics.Stopwatch.StartNew();
+        private const double MinEncoderSegmentSeconds = 0.1;
+        private const double MaxEncoderSegmentSeconds = 0.45;
         private float extensionVelocity; // factor/s, 부호 포함
 
         // 움직임 속도. 실제 장비처럼 천천히 출발해 일정 속도로 돌고, 도착 전에 감속한다.
@@ -99,19 +115,145 @@ namespace SemiconductorUi.Controls
             targetRegion = target;
             carryingWafer = carrying;
             isSimulationMode = isSimulation;
+            encoderMode = false;
+            hasEncoderSample = false;
             if (waferDisplayColor.HasValue)
             {
                 waferColor = waferDisplayColor.Value;
             }
             targetExtensionFactor = Math.Max(0.4f, Math.Min(1.6f, extensionFactor));
             targetAngleRad = GetBladeAngle(targetRegion, isSimulation);
+            EnsureAnimationRunning();
+            Invalidate();
+        }
+
+        /// <summary>
+        /// 하드웨어 모드: 회전 각도를 실제 회전축 엔코더 값(axis2Position)으로 정한다.
+        /// teachX는 각 모듈의 티칭 X값. 티칭값 사이는 직선으로 이어서 각도를 구하므로
+        /// 모듈과 모듈 사이에서도 실제 위치를 그리고, 6시 방향(로봇이 가지 않는 쪽)으로는 그리지 않는다.
+        /// nearestRegion은 블레이드 길이(전진 시 닿는 모듈) 계산에만 쓴다.
+        /// </summary>
+        public void UpdateTmStateFromEncoder(EquipmentRegion nearestRegion, long axis2Position,
+            IList<KeyValuePair<EquipmentRegion, long>> teachX, bool carrying, float extensionFactor, Color? waferDisplayColor = null)
+        {
+            targetRegion = nearestRegion;
+            carryingWafer = carrying;
+            isSimulationMode = false;
+            if (waferDisplayColor.HasValue)
+            {
+                waferColor = waferDisplayColor.Value;
+            }
+            targetExtensionFactor = Math.Max(0.4f, Math.Min(1.6f, extensionFactor));
+
+            if (!TryMapEncoderToPath(axis2Position, teachX, out float path))
+            {
+                // 티칭값/배치가 없으면 예전 방식(가까운 모듈 방향)으로 그린다.
+                encoderMode = false;
+                hasEncoderSample = false;
+                targetAngleRad = GetBladeAngle(targetRegion, false);
+                EnsureAnimationRunning();
+                Invalidate();
+                return;
+            }
+
+            double now = EncoderClock.Elapsed.TotalSeconds;
+            if (!encoderMode || !hasEncoderSample)
+            {
+                // 처음 받은 값: 그 위치로 바로 놓는다.
+                encoderMode = true;
+                hasEncoderSample = true;
+                encoderPathCurrent = encoderPathFrom = encoderPathTo = path;
+                encoderSegmentStart = now;
+                lastEncoderChangeSeconds = now;
+                lastEncoderX = axis2Position;
+                angularVelocity = 0f;
+                currentAngleRad = targetAngleRad = NormalizeAngle(path);
+            }
+            else if (axis2Position != lastEncoderX)
+            {
+                // 새 위치: 지금 그리는 곳에서 새 위치까지, 직전 갱신 간격만큼에 걸쳐 이어 그린다.
+                double interval = now - lastEncoderChangeSeconds;
+                encoderSegmentDuration = Math.Max(MinEncoderSegmentSeconds, Math.Min(MaxEncoderSegmentSeconds, interval));
+                encoderPathFrom = encoderPathCurrent;
+                encoderPathTo = path;
+                encoderSegmentStart = now;
+                lastEncoderChangeSeconds = now;
+                lastEncoderX = axis2Position;
+                targetAngleRad = NormalizeAngle(path);
+            }
+
+            EnsureAnimationRunning();
+            Invalidate();
+        }
+
+        /// <summary>
+        /// 엔코더 X → 경로 좌표(라디안). 티칭 X값으로 모듈을 정렬하고, 이웃 모듈 사이 각도는
+        /// 6시 방향을 피하는 쪽으로 펼친 뒤, X에 대해 직선 보간한다. 양 끝 밖은 끝 모듈 각도로 고정.
+        /// </summary>
+        internal bool TryMapEncoderToPath(long x, IList<KeyValuePair<EquipmentRegion, long>> teachX, out float path)
+        {
+            path = 0f;
+            if (!hasLayout || teachX == null)
+            {
+                return false;
+            }
+
+            var points = new List<KeyValuePair<long, float>>();
+            foreach (var pair in teachX)
+            {
+                if (anchors.TryGetValue(pair.Key, out var anchor))
+                {
+                    points.Add(new KeyValuePair<long, float>(pair.Value,
+                        (float)Math.Atan2(anchor.Y - hubCenter.Y, anchor.X - hubCenter.X)));
+                }
+            }
+            if (points.Count < 2)
+            {
+                return false;
+            }
+            points.Sort((a, b) => a.Key.CompareTo(b.Key));
+
+            // 이웃끼리 6시 방향을 지나지 않도록 각도를 이어 붙인다.
+            var unwrapped = new float[points.Count];
+            unwrapped[0] = points[0].Value;
+            for (int i = 1; i < points.Count; i++)
+            {
+                unwrapped[i] = unwrapped[i - 1] + GetRotationPath(points[i - 1].Value, points[i].Value);
+            }
+
+            if (x <= points[0].Key)
+            {
+                path = unwrapped[0];
+                return true;
+            }
+            int last = points.Count - 1;
+            if (x >= points[last].Key)
+            {
+                path = unwrapped[last];
+                return true;
+            }
+            for (int i = 1; i <= last; i++)
+            {
+                if (x <= points[i].Key)
+                {
+                    long x0 = points[i - 1].Key, x1 = points[i].Key;
+                    float t = x1 == x0 ? 0f : (float)(x - x0) / (x1 - x0);
+                    path = unwrapped[i - 1] + (unwrapped[i] - unwrapped[i - 1]) * t;
+                    return true;
+                }
+            }
+            path = unwrapped[last];
+            return true;
+        }
+
+        private void EnsureAnimationRunning()
+        {
             if (!animationTimer.Enabled)
             {
                 lastAnimationSeconds = 0;
                 animationClock.Restart();
                 animationTimer.Start();
             }
-            Invalidate();
         }
 
         /// <summary>
@@ -158,8 +300,16 @@ namespace SemiconductorUi.Controls
             rangeRadius = CalculateRangeRadius(hubCenter);
 
             hasLayout = true;
-            targetAngleRad = GetBladeAngle(targetRegion, isSimulationMode);
-            currentAngleRad = targetAngleRad;
+            if (encoderMode)
+            {
+                // 배치가 바뀌면 모듈 각도도 바뀐다. 다음 엔코더 값에서 새 배치 기준으로 바로 놓는다.
+                hasEncoderSample = false;
+            }
+            else
+            {
+                targetAngleRad = GetBladeAngle(targetRegion, isSimulationMode);
+                currentAngleRad = targetAngleRad;
+            }
             Invalidate();
         }
 
@@ -619,6 +769,28 @@ namespace SemiconductorUi.Controls
 
             const float tolerance = 0.002f;
             float extensionRemaining = targetExtensionFactor - currentExtensionFactor;
+
+            if (encoderMode)
+            {
+                // 하드웨어 모드: 회전은 엔코더 값 사이를 이어 그리기만 한다 (실제 장비가 인터락을 지킴).
+                double elapsed = EncoderClock.Elapsed.TotalSeconds - encoderSegmentStart;
+                float t = encoderSegmentDuration <= 0 ? 1f : (float)Math.Min(1.0, Math.Max(0.0, elapsed / encoderSegmentDuration));
+                encoderPathCurrent = encoderPathFrom + (encoderPathTo - encoderPathFrom) * t;
+                currentAngleRad = NormalizeAngle(encoderPathCurrent);
+                angularVelocity = 0f;
+                bool encoderRotating = t < 1f;
+
+                bool encoderExtending = Step(ref currentExtensionFactor, ref extensionVelocity, extensionRemaining,
+                    MaxExtensionSpeed, ExtensionAcceleration, dt, tolerance);
+
+                if (!encoderRotating && !encoderExtending)
+                {
+                    animationTimer.Stop();
+                    animationClock.Stop();
+                }
+                Invalidate();
+                return;
+            }
             float angleRemaining = GetRotationPath(currentAngleRad, targetAngleRad);
             bool needsRotation = Math.Abs(angleRemaining) > tolerance;
 
