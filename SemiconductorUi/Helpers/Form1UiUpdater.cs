@@ -511,9 +511,11 @@ namespace SemiconductorUi.Helpers
                 var envInfo = form.BuildChamberEnvInfo(data.UnitKey);
                 var timeInfo = $"{data.StepTimeCurrent}/{data.StepTimeTotal}s · 웨이퍼 {data.StepIndex}/{Math.Max(1, data.StepCount)}";
                 var waferInfo = string.IsNullOrWhiteSpace(data.ActiveWaferText) ? "웨이퍼 정보 없음" : data.ActiveWaferText;
-                var stepMsg = string.IsNullOrWhiteSpace(data.StatusText)
+                // 아래쪽 한 줄: 앞은 웨이퍼 상태, 뒤는 챔버 상태. 섞여 보이지 않게 "챔버:"를 붙여 나눕니다.
+                var chamberText = ChamberStatusTexts.ToDisplay(data.StatusText);
+                var stepMsg = string.IsNullOrWhiteSpace(chamberText)
                     ? data.StepMessage
-                    : $"{data.StepMessage}    {data.StatusText}";
+                    : $"{data.StepMessage}   │   챔버: {chamberText}";
                 var isProcessing = data.StepTimeCurrent > 0 && data.StepTimeTotal > 0;
 
                 // 알람 상태 확인 및 설정
