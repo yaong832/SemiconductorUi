@@ -8241,6 +8241,19 @@ namespace SemiconductorUi
             uiUpdater?.UpdateNavButtonStates(selectedNav);
         }
 
+        /// <summary>
+        /// 창으로 열리는 메뉴(검증, 이송, 레시피, 유지보수, 설정, 추이, 보고서, 시스템)를 닫으면
+        /// 화면은 다시 기본 화면이므로, 선택 표시도 기본(운전 · 모니터링)으로 되돌립니다.
+        /// 창이 떠 있는 동안에는 그 메뉴가 선택된 것으로 보입니다.
+        /// </summary>
+        internal void ReturnToDefaultViewSelection()
+        {
+            currentSection = AppSection.Main;
+            UpdateTabButtonStates("Main");
+            UpdateNavButtonStates("Operate");
+            RefreshShellState();
+        }
+
         private void ButtonTabMain_Click(object sender, EventArgs e)
         {
             UpdateTabButtonStates("Main");

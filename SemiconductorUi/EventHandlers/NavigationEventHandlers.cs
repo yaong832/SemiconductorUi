@@ -53,6 +53,10 @@ namespace SemiconductorUi.EventHandlers
             {
                 form.AddLogMessage($"Verification 폼 오류: {ex.Message}", "ERROR");
             }
+            finally
+            {
+                form.ReturnToDefaultViewSelection();
+            }
         }
 
         /// <summary>
@@ -81,6 +85,10 @@ namespace SemiconductorUi.EventHandlers
             {
                 form.AddLogMessage($"Transfer 폼 오류: {ex.Message}", "ERROR");
             }
+            finally
+            {
+                form.ReturnToDefaultViewSelection();
+            }
         }
 
         /// <summary>
@@ -103,7 +111,18 @@ namespace SemiconductorUi.EventHandlers
         public void ButtonNavRecipe_Click(object sender, EventArgs e)
         {
             form.UpdateNavButtonStates("Recipe");
-            
+            try
+            {
+                OpenRecipeManager();
+            }
+            finally
+            {
+                form.ReturnToDefaultViewSelection();
+            }
+        }
+
+        private void OpenRecipeManager()
+        {
             if (!form.EnsureLoggedIn())
             {
                 return;
@@ -150,7 +169,8 @@ namespace SemiconductorUi.EventHandlers
         {
             form.UpdateNavButtonStates("Maintenance");
             form.NavigateToSection(Form1.AppSection.Maintenance);
-            // NavigateToSection에서 Maintenance 폼이 열림 (중복 방지)
+            // NavigateToSection에서 Maintenance 폼이 열림 (중복 방지). 닫히면 기본 화면 선택으로 복귀
+            form.ReturnToDefaultViewSelection();
         }
 
         /// <summary>
@@ -315,7 +335,8 @@ namespace SemiconductorUi.EventHandlers
         {
             form.UpdateNavButtonStates("Config");
             form.NavigateToSection(Form1.AppSection.Config);
-            // NavigateToSection에서 Config 폼이 열림 (권한 체크 및 콜백 포함, 중복 방지)
+            // NavigateToSection에서 Config 폼이 열림 (권한 체크 및 콜백 포함, 중복 방지). 닫히면 기본 화면 선택으로 복귀
+            form.ReturnToDefaultViewSelection();
         }
 
         /// <summary>
@@ -327,7 +348,8 @@ namespace SemiconductorUi.EventHandlers
         {
             form.UpdateNavButtonStates("Trend");
             form.NavigateToSection(Form1.AppSection.Trend);
-            // NavigateToSection에서 Trend 폼이 열림 (중복 방지)
+            // NavigateToSection에서 Trend 폼이 열림 (중복 방지). 닫히면 기본 화면 선택으로 복귀
+            form.ReturnToDefaultViewSelection();
         }
 
         /// <summary>
@@ -339,7 +361,8 @@ namespace SemiconductorUi.EventHandlers
         {
             form.UpdateNavButtonStates("Report");
             form.NavigateToSection(Form1.AppSection.Report);
-            // NavigateToSection에서 Report 폼이 열림 (콜백 포함, 중복 방지)
+            // NavigateToSection에서 Report 폼이 열림 (콜백 포함, 중복 방지). 닫히면 기본 화면 선택으로 복귀
+            form.ReturnToDefaultViewSelection();
         }
 
         /// <summary>
@@ -352,6 +375,7 @@ namespace SemiconductorUi.EventHandlers
             form.UpdateNavButtonStates("System");
             // 시스템 정보 창은 NavigateToSection(SysInfo) 안에서 한 번 띄웁니다. 여기서 또 부르면 두 번 뜹니다.
             form.NavigateToSection(Form1.AppSection.SysInfo);
+            form.ReturnToDefaultViewSelection();
         }
 
         /// <summary>
