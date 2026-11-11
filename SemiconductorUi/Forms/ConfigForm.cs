@@ -15,6 +15,8 @@ namespace SemiconductorUi.Forms
         public Action<EnvThresholdSnapshot> OnSaved;
         /// <summary>TM 티칭 위치 폼 열기 (Form1에서 하드웨어 콜백 연결)</summary>
         public Action OnOpenTeaching;
+        /// <summary>설정 백업·복원 창 열기 (이 창을 닫은 뒤 Form1이 엽니다)</summary>
+        public Action OnOpenBackup;
 
         public ConfigForm(EnvThresholdSnapshot initialThresholds)
         {
@@ -138,6 +140,53 @@ namespace SemiconductorUi.Forms
             {
                 form.ShowDialog(this);
             }
+        }
+
+        private void btnBackup_Click(object sender, EventArgs e)
+        {
+            if (OnOpenBackup == null)
+            {
+                return;
+            }
+
+            // 백업 창은 모달이 아니어서 이 창을 닫은 뒤에 엽니다.
+            if (!SameThresholds(GetThresholdsFromUI(), currentThresholds))
+            {
+                var answer = MessageBox.Show(this,
+                    "저장하지 않은 알람 임계값 변경이 있습니다.\n저장하지 않고 백업 · 복원 창을 열까요?",
+                    "백업 · 복원", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+                if (answer != DialogResult.Yes)
+                {
+                    return;
+                }
+            }
+
+            OnOpenBackup.Invoke();
+            this.DialogResult = DialogResult.Cancel;
+            this.Close();
+        }
+
+        private static bool SameThresholds(EnvThresholdSnapshot a, EnvThresholdSnapshot b)
+        {
+            if (a == null || b == null)
+            {
+                return a == b;
+            }
+
+            // 화면 입력칸은 소수 자리가 정해져 있어 작은 차이는 같은 값으로 봅니다.
+            const double eps = 0.0005;
+            return Math.Abs(a.TempWarn - b.TempWarn) < eps
+                && Math.Abs(a.TempAlarm - b.TempAlarm) < eps
+                && Math.Abs(a.PressWarnRatio - b.PressWarnRatio) < eps
+                && Math.Abs(a.PressAlarmRatio - b.PressAlarmRatio) < eps
+                && Math.Abs(a.PressWarnAbs - b.PressWarnAbs) < eps
+                && Math.Abs(a.PressAlarmAbs - b.PressAlarmAbs) < eps
+                && Math.Abs(a.RfWarnRatio - b.RfWarnRatio) < eps
+                && Math.Abs(a.RfAlarmRatio - b.RfAlarmRatio) < eps
+                && Math.Abs(a.GasWarn - b.GasWarn) < eps
+                && Math.Abs(a.GasAlarm - b.GasAlarm) < eps
+                && Math.Abs(a.GasLeakWarn - b.GasLeakWarn) < eps
+                && Math.Abs(a.GasLeakAlarm - b.GasLeakAlarm) < eps;
         }
     }
 }

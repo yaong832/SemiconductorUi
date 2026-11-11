@@ -5180,6 +5180,7 @@ namespace SemiconductorUi
                     
                     try
                     {
+                        bool openBackup = false;
                         using (var cf = new ConfigForm(currentSnapshot))
                         {
                             cf.OnSaved = (snapshot) =>
@@ -5188,7 +5189,13 @@ namespace SemiconductorUi
                                 AddLogMessage("알람 임계값 설정이 업데이트되었습니다.", "INFO");
                             };
                             cf.OnOpenTeaching = OpenTeachingPositionEditor;
+                            cf.OnOpenBackup = () => openBackup = true;
                             cf.ShowDialog(this);
+                        }
+
+                        if (openBackup)
+                        {
+                            ShowSettingsBackupWindow();
                         }
                     }
                     catch (Exception ex)
@@ -5477,6 +5484,7 @@ namespace SemiconductorUi
                 GasLeakAlarm = AlarmThresholds.GasLeakAlarmSccm
             };
 
+            bool openBackup = false;
             using (var configForm = new ConfigForm(currentSnapshot))
             {
                 configForm.OnSaved = (snapshot) =>
@@ -5500,7 +5508,13 @@ namespace SemiconductorUi
                     AddLogMessage("알람 임계값 설정이 업데이트되었습니다.", "INFO");
                 };
                 configForm.OnOpenTeaching = OpenTeachingPositionEditor;
+                configForm.OnOpenBackup = () => openBackup = true;
                 configForm.ShowDialog(this);
+            }
+
+            if (openBackup)
+            {
+                ShowSettingsBackupWindow();
             }
         }
 
