@@ -57,6 +57,7 @@
     <Compile Include="ConfigRepositoryTests.cs" />
     <Compile Include="Ieg3268DeviceTests.cs" />
     <Compile Include="EmergencyStopTests.cs" />
+    <Compile Include="EthercatCommWatchdogTests.cs" />
     <Compile Include="ServoFaultMonitorTests.cs" />
     <Compile Include="TmHeightEstimatorTests.cs" />
     <Compile Include="ResetHomingSequenceTests.cs" />
