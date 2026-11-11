@@ -6,6 +6,7 @@ using System.Windows.Forms;
 using SemiconductorUi.Helpers;
 using SemiconductorUi.Models;
 using SemiconductorUi.Repositories;
+using SemiconductorUi.Services;
 
 namespace SemiconductorUi.Forms
 {
@@ -236,7 +237,9 @@ namespace SemiconductorUi.Forms
 				return;
 			}
 			
+				var recipesBefore = ChangeHistory.TryLoad(() => RecipeRepository.LoadAll());
 				RecipeRepository.SaveAll(_recipes);
+				ChangeHistory.RecordRecipes(recipesBefore, _recipes);
 					BindList();
 					SelectByName(target.Name);
 					OnSavedAll?.Invoke(_recipes);
@@ -251,7 +254,9 @@ namespace SemiconductorUi.Forms
 			if (MessageBox.Show(this, $"'{r.Name}' 레시피를 삭제하시겠습니까?", "확인", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes)
 			{
 					_recipes.Remove(r);
+					var recipesBefore = ChangeHistory.TryLoad(() => RecipeRepository.LoadAll());
 					RecipeRepository.SaveAll(_recipes);
+					ChangeHistory.RecordRecipes(recipesBefore, _recipes);
 						BindList();
 						ClearEditor();
 						OnSavedAll?.Invoke(_recipes);

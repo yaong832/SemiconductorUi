@@ -7,6 +7,7 @@ using SemiconductorUi.Helpers;
 using SemiconductorUi.Controllers;
 using SemiconductorUi.Models;
 using SemiconductorUi.Repositories;
+using SemiconductorUi.Services;
 
 namespace SemiconductorUi.Forms
 {
@@ -553,7 +554,9 @@ namespace SemiconductorUi.Forms
                     return;
                 }
 
+                var teachingBefore = ChangeHistory.TryLoad(() => TeachingPositionsRepository.Load());
                 TeachingPositionsRepository.Save(data);
+                ChangeHistory.RecordTeaching(teachingBefore, data);
                 var set = new TmHardwareController.TmPositionSet();
                 set.ApplyFrom(data);
                 _onApplied?.Invoke(set);
@@ -561,6 +564,7 @@ namespace SemiconductorUi.Forms
                 if (speedsChanged)
                 {
                     ServoSpeedRepository.Save(speeds);
+                    ChangeHistory.RecordSpeeds(_savedSpeeds, speeds);
                     _savedSpeeds = ServoSpeedSettings.FromAppSettings();
                 }
 

@@ -4,6 +4,7 @@ using System.Windows.Forms;
 using System.Xml.Serialization;
 using SemiconductorUi.Models;
 using SemiconductorUi.Repositories;
+using SemiconductorUi.Services;
 using AppSettings = SemiconductorUi.AppSettings;
 
 namespace SemiconductorUi.Forms
@@ -82,7 +83,9 @@ namespace SemiconductorUi.Forms
             try
             {
                 var thresholds = GetThresholdsFromUI();
+                var thresholdsBefore = ChangeHistory.TryLoad(() => ConfigRepository.Load());
                 ConfigRepository.Save(thresholds);
+                ChangeHistory.RecordThresholds(thresholdsBefore, thresholds);
                 
                 // 저장 후 파일에서 다시 로드하여 확인
                 var savedThresholds = ConfigRepository.Load();

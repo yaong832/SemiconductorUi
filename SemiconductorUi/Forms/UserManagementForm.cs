@@ -6,6 +6,7 @@ using System.Windows.Forms;
 using SemiconductorUi.Helpers;
 using SemiconductorUi.Models;
 using SemiconductorUi.Repositories;
+using SemiconductorUi.Services;
 using SemiconductorUi;
 
 namespace SemiconductorUi.Forms
@@ -249,7 +250,9 @@ namespace SemiconductorUi.Forms
 				};
 
 				users.Add(newUser);
+					var usersBefore = ChangeHistory.TryLoad(() => UserRepository.LoadAll());
 					UserRepository.SaveAll(users);
+					ChangeHistory.RecordUsers(usersBefore, users);
 						LoadUsers();
 						MessageBox.Show("사용자가 추가되었습니다.", "완료", MessageBoxButtons.OK, MessageBoxIcon.Information);
 		}
@@ -274,7 +277,9 @@ namespace SemiconductorUi.Forms
 				{
 				user.Password = PasswordHelper.HashPassword(textBoxPassword.Text);
 					user.Role = comboBoxRole.SelectedItem?.ToString() ?? "작업자";
+					var usersBefore = ChangeHistory.TryLoad(() => UserRepository.LoadAll());
 					UserRepository.SaveAll(users);
+					ChangeHistory.RecordUsers(usersBefore, users);
 						LoadUsers();
 						MessageBox.Show("사용자 정보가 수정되었습니다.", "완료", MessageBoxButtons.OK, MessageBoxIcon.Information);
 			}
@@ -302,7 +307,9 @@ namespace SemiconductorUi.Forms
 			if (result == DialogResult.Yes)
 			{
 				users.RemoveAll(u => u.Username == selectedUser.Username);
+				var usersBefore = ChangeHistory.TryLoad(() => UserRepository.LoadAll());
 				UserRepository.SaveAll(users);
+				ChangeHistory.RecordUsers(usersBefore, users);
 				LoadUsers();
 				MessageBox.Show("사용자가 삭제되었습니다.", "완료", MessageBoxButtons.OK, MessageBoxIcon.Information);
 			}
