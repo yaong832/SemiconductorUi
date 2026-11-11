@@ -56,6 +56,7 @@ namespace SemiconductorUi
             if (components != null) components.Add(shellToolTip);
 
             shellTopBar = BuildShellTopBar();
+            AttachAlarmHistoryChip();
 
             var content = new TableLayoutPanel
             {
@@ -460,7 +461,7 @@ namespace SemiconductorUi
         {
             if (shellChipAlarm == null) return;
             shellChipAlarm.RefreshChip();
-            shellToolTip?.SetToolTip(shellChipAlarm, labelHeaderEventMessage?.Text ?? "");
+            shellToolTip?.SetToolTip(shellChipAlarm, (labelHeaderEventMessage?.Text ?? "") + "\n(누르면 현재 알람과 알람 이력을 봅니다)");
         }
 
         /// <summary>공정 상태가 바뀌면 상단 바의 큰 상태 표시를 다시 그립니다.</summary>

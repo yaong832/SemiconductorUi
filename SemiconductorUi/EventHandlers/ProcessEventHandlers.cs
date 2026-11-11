@@ -213,6 +213,8 @@ namespace SemiconductorUi.EventHandlers
                 form.EtherCAT_M.ClearEmergencyStop();
                 emergencyStopCleared = true;
                 form.AddLogMessage("비상정지 해제 (서보 OFF 유지, 서보 ON과 원점복귀 필요)", "WARN");
+                // 알람 이력: 비상정지·서보 알람 해제 기록 (서보 알람이 남아 있으면 1초 뒤 다시 발생으로 남습니다)
+                form.ClearRecordedAlarms(true);
                 form.ResetServoFaultsAfterEmergencyStopCleared();
             }
 
@@ -304,6 +306,9 @@ namespace SemiconductorUi.EventHandlers
             
             // 로그에 알람 리셋 메시지 추가
             form.AddLogMessage("알람이 리셋되었습니다.", "INFO");
+
+            // 알람 이력: 걸려 있던 알람 모두 해제 기록 (해제한 사용자 포함)
+            form.ClearRecordedAlarms(false);
             
             // 헤더 최근 알람 영역 즉시 초기화 (verification 알람 포함)
             form.SetHeaderAlarmIdle();

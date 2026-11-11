@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using SemiconductorUi.Services;
 using SemiconductorUi.ViewModels;
 
 namespace SemiconductorUi.Helpers
@@ -74,6 +75,7 @@ namespace SemiconductorUi.Helpers
             if (tempDiff > Thresholds.TempAlarmDiffC)
             {
                 _form.AddLogMessage($"{EquipmentRegionHelper.FormatUnitLabel(unitKey)} 온도 이탈(알람): PV={pvTemp:0.0}°C, SV={svTemp:0.0}°C (Δ={tempDiff:0.0}°C)", "ALARM");
+                RecordEnvironmentAlarm(unitKey, AlarmCodes.EnvTemperature, $"PV={pvTemp:0.0}°C, SV={svTemp:0.0}°C (Δ={tempDiff:0.0}°C)");
                 hasAlarmInChamber = true;
             }
             else if (tempDiff > Thresholds.TempWarnDiffC)
@@ -106,6 +108,7 @@ namespace SemiconductorUi.Helpers
                 if (isAlarm)
                 {
                     _form.AddLogMessage($"{EquipmentRegionHelper.FormatUnitLabel(unitKey)} 압력 이탈(알람): PV={pvPress:0.###} Torr, SV={svPress:0.###} Torr (Δ={pressDiff:0.###} Torr)", "ALARM");
+                    RecordEnvironmentAlarm(unitKey, AlarmCodes.EnvPressure, $"PV={pvPress:0.###} Torr, SV={svPress:0.###} Torr (Δ={pressDiff:0.###} Torr)");
                     hasAlarmInChamber = true;
                 }
                 else if (isWarn)
@@ -121,6 +124,7 @@ namespace SemiconductorUi.Helpers
                 if (rfRatio > Thresholds.RfAlarmRatio)
                 {
                     _form.AddLogMessage($"{EquipmentRegionHelper.FormatUnitLabel(unitKey)} RF 이탈(알람): PV={pvRf:0} W, SV={svRf:0} W", "ALARM");
+                    RecordEnvironmentAlarm(unitKey, AlarmCodes.EnvRf, $"PV={pvRf:0} W, SV={svRf:0} W");
                     hasAlarmInChamber = true;
                 }
                 else if (rfRatio > Thresholds.RfWarnRatio)
@@ -166,6 +170,7 @@ namespace SemiconductorUi.Helpers
                 if (diff > Thresholds.GasAlarmAbsSccm)
                 {
                     _form.AddLogMessage($"{EquipmentRegionHelper.FormatUnitLabel(unitKey)} {gasName} 유량 이탈(알람): PV={pv:0.0} sccm, SV={sv:0.0} sccm", "ALARM");
+                    RecordEnvironmentAlarm(unitKey, AlarmCodes.GasFlow(gasName), $"PV={pv:0.0} sccm, SV={sv:0.0} sccm");
                     localHasAlarm = true;
                 }
                 else if (diff > Thresholds.GasWarnAbsSccm)
@@ -178,6 +183,7 @@ namespace SemiconductorUi.Helpers
                 if (pv > Thresholds.GasLeakAlarmSccm)
                 {
                     _form.AddLogMessage($"{EquipmentRegionHelper.FormatUnitLabel(unitKey)} {gasName} 누설 의심(알람): PV={pv:0.0} sccm (SV=0)", "ALARM");
+                    RecordEnvironmentAlarm(unitKey, AlarmCodes.GasLeak(gasName), $"PV={pv:0.0} sccm (SV=0)");
                     localHasAlarm = true;
                 }
                 else if (pv > Thresholds.GasLeakWarnSccm)
@@ -186,6 +192,14 @@ namespace SemiconductorUi.Helpers
                 }
             }
             return localHasAlarm;
+        }
+
+        /// <summary>
+        /// 환경 알람을 이력에 남깁니다 (같은 챔버·같은 항목이 걸려 있으면 다시 남기지 않음).
+        /// </summary>
+        private void RecordEnvironmentAlarm(string unitKey, int item, string detail)
+        {
+            _form.RecordAlarm(AlarmCodes.ForEnvironment(unitKey, item), EquipmentRegionHelper.FormatUnitLabel(unitKey), detail);
         }
 
         /// <summary>

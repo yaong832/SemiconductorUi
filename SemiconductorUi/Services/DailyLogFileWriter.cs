@@ -8,16 +8,17 @@ namespace SemiconductorUi.Services
     /// <summary>
     /// 로그를 한 줄씩 날짜별 CSV 파일에 바로 씁니다.
     /// - 파일: {폴더}\Log_yyyyMMdd.csv, 열: Date,Time,Level,Message (Time은 밀리초까지)
+    ///   (알람 이력처럼 이름 앞부분과 열을 바꿔 다른 기록에도 씁니다.)
     /// - 한 줄 쓸 때마다 파일로 내보내므로, 프로그램이 닫히거나 멈춰도 그때까지 쓴 줄은 남습니다.
     /// - WARN 이상(WARN, ALARM, ERROR, CRITICAL)은 디스크까지 바로 기록해 정전에도 남게 합니다.
-    /// - 보관 기간이 지난 Log_yyyyMMdd.csv 파일만 지웁니다 (파일 이름의 날짜 기준). 0이면 지우지 않습니다.
+    /// - 보관 기간이 지난 {이름 앞부분}yyyyMMdd.csv 파일만 지웁니다 (파일 이름의 날짜 기준). 0이면 지우지 않습니다.
     /// - 쓰기에 실패해도 예외를 밖으로 던지지 않습니다. 화면 로그와 장비 동작은 그대로 이어 갑니다.
     /// </summary>
     public sealed class DailyLogFileWriter : IDisposable
     {
-        internal const string FilePrefix = "Log_";
+        internal const string DefaultFilePrefix = "Log_";
         internal const string FileExtension = ".csv";
-        internal const string Header = "Date,Time,Level,Message";
+        internal const string DefaultHeader = "Date,Time,Level,Message";
 
         /// <summary>
         /// 쓰기에 실패한 뒤 다시 파일을 열어 보기까지 기다리는 시간
@@ -27,6 +28,8 @@ namespace SemiconductorUi.Services
         private readonly object _lock = new object();
         private readonly string _folder;
         private readonly int _retentionDays;
+        private readonly string _filePrefix;
+        private readonly string _header;
 
         private StreamWriter _writer;
         private DateTime _currentDate = DateTime.MinValue;
@@ -36,14 +39,29 @@ namespace SemiconductorUi.Services
         /// <param name="folder">로그 폴더</param>
         /// <param name="retentionDays">보관 일수. 0 이하이면 지우지 않습니다.</param>
         public DailyLogFileWriter(string folder, int retentionDays)
+            : this(folder, retentionDays, DefaultFilePrefix, DefaultHeader)
+        {
+        }
+
+        /// <param name="folder">기록 폴더</param>
+        /// <param name="retentionDays">보관 일수. 0 이하이면 지우지 않습니다.</param>
+        /// <param name="filePrefix">파일 이름 앞부분 (예: "Alarm_")</param>
+        /// <param name="header">새 파일 첫 줄 (Date,Time으로 시작)</param>
+        public DailyLogFileWriter(string folder, int retentionDays, string filePrefix, string header)
         {
             if (string.IsNullOrWhiteSpace(folder))
             {
                 throw new ArgumentException("로그 폴더가 비어 있습니다.", nameof(folder));
             }
+            if (string.IsNullOrWhiteSpace(filePrefix))
+            {
+                throw new ArgumentException("파일 이름 앞부분이 비어 있습니다.", nameof(filePrefix));
+            }
 
             _folder = folder;
             _retentionDays = retentionDays;
+            _filePrefix = filePrefix;
+            _header = string.IsNullOrWhiteSpace(header) ? DefaultHeader : header;
         }
 
         /// <summary>
@@ -81,13 +99,27 @@ namespace SemiconductorUi.Services
         /// </summary>
         public string GetFilePath(DateTime date)
         {
-            return Path.Combine(_folder, FilePrefix + date.ToString("yyyyMMdd", CultureInfo.InvariantCulture) + FileExtension);
+            return Path.Combine(_folder, _filePrefix + date.ToString("yyyyMMdd", CultureInfo.InvariantCulture) + FileExtension);
         }
 
         /// <summary>
         /// 로그 한 줄을 씁니다.
         /// </summary>
         public void Write(DateTime time, string level, string message)
+        {
+            WriteLineCore(time, FormatLine(time, level, message), IsImportantLevel(level));
+        }
+
+        /// <summary>
+        /// 날짜, 시각 뒤에 열 값을 이어 한 줄을 씁니다. 값마다 큰따옴표로 감쌉니다.
+        /// durable이면 디스크까지 바로 기록합니다.
+        /// </summary>
+        public void WriteFields(DateTime time, bool durable, params string[] fields)
+        {
+            WriteLineCore(time, FormatFieldsLine(time, fields), durable);
+        }
+
+        private void WriteLineCore(DateTime time, string line, bool durable)
         {
             lock (_lock)
             {
@@ -105,10 +137,10 @@ namespace SemiconductorUi.Services
                 {
                     EnsureWriter(time.Date);
 
-                    _writer.WriteLine(FormatLine(time, level, message));
+                    _writer.WriteLine(line);
                     _writer.Flush();
 
-                    if (IsImportantLevel(level))
+                    if (durable)
                     {
                         var fileStream = _writer.BaseStream as FileStream;
                         fileStream?.Flush(true);
@@ -156,10 +188,10 @@ namespace SemiconductorUi.Services
 
                 // 오늘을 포함해 보관 일수만큼 남깁니다. 예: 90일이면 오늘부터 89일 전까지 남깁니다.
                 var oldestKept = today.Date.AddDays(-(_retentionDays - 1));
-                foreach (var path in Directory.GetFiles(_folder, FilePrefix + "*" + FileExtension))
+                foreach (var path in Directory.GetFiles(_folder, _filePrefix + "*" + FileExtension))
                 {
                     DateTime fileDate;
-                    if (!TryParseFileDate(Path.GetFileName(path), out fileDate))
+                    if (!TryParseFileDate(Path.GetFileName(path), _filePrefix, out fileDate))
                     {
                         continue;
                     }
@@ -191,17 +223,19 @@ namespace SemiconductorUi.Services
         /// <summary>
         /// 파일 이름에서 날짜를 읽습니다. Log_yyyyMMdd.csv 형식이 아니면 false.
         /// </summary>
-        internal static bool TryParseFileDate(string fileName, out DateTime date)
+        internal static bool TryParseFileDate(string fileName, string filePrefix, out DateTime date)
         {
             date = DateTime.MinValue;
             if (string.IsNullOrEmpty(fileName)
-                || !fileName.StartsWith(FilePrefix, StringComparison.OrdinalIgnoreCase)
+                || string.IsNullOrEmpty(filePrefix)
+                || fileName.Length < filePrefix.Length + FileExtension.Length
+                || !fileName.StartsWith(filePrefix, StringComparison.OrdinalIgnoreCase)
                 || !fileName.EndsWith(FileExtension, StringComparison.OrdinalIgnoreCase))
             {
                 return false;
             }
 
-            var datePart = fileName.Substring(FilePrefix.Length, fileName.Length - FilePrefix.Length - FileExtension.Length);
+            var datePart = fileName.Substring(filePrefix.Length, fileName.Length - filePrefix.Length - FileExtension.Length);
             return datePart.Length == 8
                 && DateTime.TryParseExact(datePart, "yyyyMMdd", CultureInfo.InvariantCulture, DateTimeStyles.None, out date);
         }
@@ -217,6 +251,27 @@ namespace SemiconductorUi.Services
                 + time.ToString("HH:mm:ss.fff", CultureInfo.InvariantCulture) + ","
                 + safeLevel + ",\""
                 + safeMessage + "\"";
+        }
+
+        /// <summary>
+        /// CSV 한 줄: 날짜,시각(밀리초),"값1","값2",...
+        /// </summary>
+        internal static string FormatFieldsLine(DateTime time, string[] fields)
+        {
+            var sb = new StringBuilder();
+            sb.Append(time.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture));
+            sb.Append(',');
+            sb.Append(time.ToString("HH:mm:ss.fff", CultureInfo.InvariantCulture));
+            if (fields != null)
+            {
+                foreach (var field in fields)
+                {
+                    sb.Append(",\"");
+                    sb.Append((field ?? string.Empty).Replace("\"", "\"\""));
+                    sb.Append('"');
+                }
+            }
+            return sb.ToString();
         }
 
         private static bool IsImportantLevel(string level)
@@ -261,7 +316,7 @@ namespace SemiconductorUi.Services
                 var writer = new StreamWriter(stream, new UTF8Encoding(true));
                 if (isNewFile)
                 {
-                    writer.WriteLine(Header);
+                    writer.WriteLine(_header);
                     writer.Flush();
                 }
 
