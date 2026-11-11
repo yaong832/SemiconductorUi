@@ -127,6 +127,14 @@
     <Compile Include="Forms\TransferForm.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="Forms\WaferHistoryForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Form1.WaferHistory.cs">
+      <DependentUpon>Form1.cs</DependentUpon>
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Services\WaferHistoryService.cs" />
     <Compile Include="Forms\MaintenanceForm.cs">
       <SubType>Form</SubType>
     </Compile>

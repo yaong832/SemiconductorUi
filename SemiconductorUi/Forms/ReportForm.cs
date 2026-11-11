@@ -22,6 +22,7 @@ namespace SemiconductorUi.Forms
 		public ReportForm()
 		{
 			InitializeComponent();
+			AddWaferHistoryButton();
 			if (IsDesignEnvironment())
 			{
 				InitializeDesignPreview();
@@ -152,6 +153,35 @@ namespace SemiconductorUi.Forms
 		private void buttonClose_Click(object sender, EventArgs e)
 		{
 			this.Close();
+		}
+
+		/// <summary>
+		/// [웨이퍼 이력]: 이 창을 닫은 뒤 메인 화면이 웨이퍼 이력 창(모달 아님)을 엽니다.
+		/// </summary>
+		private void AddWaferHistoryButton()
+		{
+			var buttonWaferHistory = new Button();
+			buttonWaferHistory.Name = "buttonWaferHistory";
+			buttonWaferHistory.Text = "웨이퍼 이력";
+			buttonWaferHistory.Width = 110;
+			buttonWaferHistory.Height = 28;
+			buttonWaferHistory.Location = new Point(136, 536);
+			buttonWaferHistory.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
+			buttonWaferHistory.BackColor = Color.FromArgb(45, 98, 196);
+			buttonWaferHistory.FlatStyle = FlatStyle.Flat;
+			buttonWaferHistory.FlatAppearance.BorderSize = 0;
+			buttonWaferHistory.ForeColor = Color.White;
+			buttonWaferHistory.Click += (s, e) =>
+			{
+				var main = this.Owner as Form1;
+				this.Close();
+				if (main != null && !main.IsDisposed)
+				{
+					// 이 창(모달)이 완전히 닫힌 뒤에 엽니다.
+					main.BeginInvoke(new Action(main.ShowWaferHistoryWindow));
+				}
+			};
+			this.Controls.Add(buttonWaferHistory);
 		}
 
 		private bool IsDesignEnvironment()

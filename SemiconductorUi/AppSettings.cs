@@ -53,6 +53,11 @@ namespace SemiconductorUi
         public static int MaxLogEntries => GetSetting("MaxLogEntries", 200);
 
         /// <summary>
+        /// 웨이퍼별 공정 이력 폴더 (Wafer_yyyyMMdd.csv, 지우지 않음). 비우면 문서\SemiconductorUi_Logs\Wafers
+        /// </summary>
+        public static string WaferHistoryFolder => GetSetting("WaferHistoryFolder", "");
+
+        /// <summary>
         /// 로그를 한 줄씩 날짜별 파일(Log_yyyyMMdd.csv)에 바로 쓸지 여부
         /// </summary>
         public static bool LogFileEnabled => GetSetting("LogFileEnabled", true);
