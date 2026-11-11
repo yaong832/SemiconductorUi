@@ -10,6 +10,7 @@ namespace SemiconductorUi.Forms
 		private Button buttonPumpPurge;
 		private Button buttonSensorCalib;
 		private Button buttonDoorCycle;
+		private Button buttonIoMonitor;
 		private Button buttonClose;
 		private Label labelStatus;
 
@@ -17,6 +18,8 @@ namespace SemiconductorUi.Forms
 		public Action OnPumpPurge;
 		public Action OnSensorCalibration;
 		public Action OnDoorCycleTest;
+		/// <summary>I/O 모니터를 누르면 부릅니다. 이 창을 닫은 뒤 메인 화면이 I/O 모니터를 엽니다.</summary>
+		public Action OnOpenIoMonitor;
 
 		public MaintenanceForm()
 		{
@@ -48,6 +51,11 @@ namespace SemiconductorUi.Forms
 			actions.Controls.Add(buttonPumpPurge);
 			actions.Controls.Add(buttonSensorCalib);
 			actions.Controls.Add(buttonDoorCycle);
+
+			// I/O 모니터 (읽기 전용, 별도 창)
+			buttonIoMonitor = CreateActionButton("I/O 모니터", new Size(110, 34), buttonIoMonitor_Click);
+			buttonIoMonitor.BackColor = Color.FromArgb(45, 98, 196);
+			actions.Controls.Add(buttonIoMonitor);
 
 			labelStatus = new Label();
 			labelStatus.Text = "Ready";
@@ -113,6 +121,13 @@ namespace SemiconductorUi.Forms
 		{
 			OnDoorCycleTest?.Invoke();
 			SetStatus("Door Cycle Test 실행");
+		}
+
+		private void buttonIoMonitor_Click(object sender, EventArgs e)
+		{
+			// 이 창은 모달이라, 닫은 뒤에 메인 화면이 I/O 모니터(모달 아님)를 엽니다.
+			OnOpenIoMonitor?.Invoke();
+			this.Close();
 		}
 
 		private void buttonClose_Click(object sender, EventArgs e)

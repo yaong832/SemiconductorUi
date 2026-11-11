@@ -66,6 +66,10 @@
       <DependentUpon>Form1.cs</DependentUpon>
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="Form1.IoMonitor.cs">
+      <DependentUpon>Form1.cs</DependentUpon>
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="Form1.AlarmHold.cs">
       <DependentUpon>Form1.cs</DependentUpon>
       <SubType>Form</SubType>
@@ -183,6 +187,9 @@
     <Compile Include="Services\DailyLogFileWriter.cs" />
     <Compile Include="Services\LoggerService.cs" />
     <Compile Include="ViewModels\MainFormViewModel.cs" />
+    <Compile Include="Forms\IoMonitorForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="Forms\UserManagementForm.cs">
       <SubType>Form</SubType>
     </Compile>

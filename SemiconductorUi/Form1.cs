@@ -5112,9 +5112,15 @@ namespace SemiconductorUi
                     // Maintenance 폼 열기
                     try
                     {
+                        bool openIoMonitor = false;
                         using (var mf = new MaintenanceForm())
                         {
+                            mf.OnOpenIoMonitor = () => openIoMonitor = true;
                             mf.ShowDialog(this);
+                        }
+                        if (openIoMonitor)
+                        {
+                            ShowIoMonitorWindow();
                         }
                     }
                     catch (Exception ex)
