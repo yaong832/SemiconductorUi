@@ -1418,6 +1418,8 @@ namespace SemiconductorUi
             // 
             // tmSideViewControl
             // 
+            this.tmSideViewControl.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.tmSideViewControl.Location = new System.Drawing.Point(648, 56);
             this.tmSideViewControl.Name = "tmSideViewControl";
             this.tmSideViewControl.Size = new System.Drawing.Size(262, 328);
@@ -1426,6 +1428,7 @@ namespace SemiconductorUi
             // 
             // tmVisualizationControl
             // 
+            this.tmVisualizationControl.Anchor = System.Windows.Forms.AnchorStyles.None;
             this.tmVisualizationControl.BackColor = System.Drawing.Color.Transparent;
             this.tmVisualizationControl.Location = new System.Drawing.Point(0, 0);
             this.tmVisualizationControl.Name = "tmVisualizationControl";
@@ -2889,6 +2892,7 @@ namespace SemiconductorUi
             // 
             // panelMainLamp
             // 
+            this.panelMainLamp.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.panelMainLamp.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(236)))), ((int)(((byte)(239)))), ((int)(((byte)(244)))));
             this.panelMainLamp.Controls.Add(this.labelMainLampRed);
             this.panelMainLamp.Controls.Add(this.labelMainLampYellow);
