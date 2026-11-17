@@ -158,6 +158,8 @@ namespace SemiconductorUi
             this.buttonEquipmentControl = new System.Windows.Forms.Button();
             this.groupBoxFoupReady = new System.Windows.Forms.GroupBox();
             this.flowLayoutFoupReadyButtons = new System.Windows.Forms.FlowLayoutPanel();
+            this.buttonMountFoupA = new System.Windows.Forms.Button();
+            this.buttonMountFoupB = new System.Windows.Forms.Button();
             this.buttonToggleFoupMount = new System.Windows.Forms.Button();
             this.buttonWaferLoading = new System.Windows.Forms.Button();
             this.buttonWaferUnloading = new System.Windows.Forms.Button();
@@ -2026,6 +2028,7 @@ namespace SemiconductorUi
             // 
             this.groupBoxControlButtons.AutoSize = true;
             this.groupBoxControlButtons.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+            this.groupBoxControlButtons.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(242)))), ((int)(((byte)(245)))), ((int)(((byte)(249)))));
             this.groupBoxControlButtons.Controls.Add(this.flowLayoutControlButtons);
             this.groupBoxControlButtons.ForeColor = System.Drawing.Color.Black;
             this.groupBoxControlButtons.Location = new System.Drawing.Point(0, 49);
@@ -2041,6 +2044,7 @@ namespace SemiconductorUi
             // 
             this.flowLayoutControlButtons.AutoSize = true;
             this.flowLayoutControlButtons.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+            this.flowLayoutControlButtons.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(242)))), ((int)(((byte)(245)))), ((int)(((byte)(249)))));
             this.flowLayoutControlButtons.Controls.Add(this.buttonStart);
             this.flowLayoutControlButtons.Controls.Add(this.buttonPause);
             this.flowLayoutControlButtons.Controls.Add(this.buttonStop);
@@ -2150,6 +2154,7 @@ namespace SemiconductorUi
             // 
             this.groupBoxFoupReady.AutoSize = true;
             this.groupBoxFoupReady.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+            this.groupBoxFoupReady.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(242)))), ((int)(((byte)(245)))), ((int)(((byte)(249)))));
             this.groupBoxFoupReady.Controls.Add(this.flowLayoutFoupReadyButtons);
             this.groupBoxFoupReady.ForeColor = System.Drawing.Color.Black;
             this.groupBoxFoupReady.Location = new System.Drawing.Point(0, 425);
@@ -2165,6 +2170,9 @@ namespace SemiconductorUi
             // 
             this.flowLayoutFoupReadyButtons.AutoSize = true;
             this.flowLayoutFoupReadyButtons.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+            this.flowLayoutFoupReadyButtons.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(242)))), ((int)(((byte)(245)))), ((int)(((byte)(249)))));
+            this.flowLayoutFoupReadyButtons.Controls.Add(this.buttonMountFoupA);
+            this.flowLayoutFoupReadyButtons.Controls.Add(this.buttonMountFoupB);
             this.flowLayoutFoupReadyButtons.Controls.Add(this.buttonToggleFoupMount);
             this.flowLayoutFoupReadyButtons.Controls.Add(this.buttonWaferLoading);
             this.flowLayoutFoupReadyButtons.Controls.Add(this.buttonWaferUnloading);
@@ -2173,9 +2181,45 @@ namespace SemiconductorUi
             this.flowLayoutFoupReadyButtons.Location = new System.Drawing.Point(10, 28);
             this.flowLayoutFoupReadyButtons.Name = "flowLayoutFoupReadyButtons";
             this.flowLayoutFoupReadyButtons.Padding = new System.Windows.Forms.Padding(0, 4, 0, 4);
-            this.flowLayoutFoupReadyButtons.Size = new System.Drawing.Size(236, 152);
+            this.flowLayoutFoupReadyButtons.Size = new System.Drawing.Size(236, 252);
             this.flowLayoutFoupReadyButtons.TabIndex = 0;
             this.flowLayoutFoupReadyButtons.WrapContents = false;
+            // 
+            // buttonMountFoupA
+            // 
+            this.buttonMountFoupA.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(232)))), ((int)(((byte)(237)))), ((int)(((byte)(244)))));
+            this.buttonMountFoupA.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.buttonMountFoupA.FlatAppearance.BorderSize = 0;
+            this.buttonMountFoupA.FlatAppearance.MouseDownBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(218)))), ((int)(((byte)(226)))), ((int)(((byte)(236)))));
+            this.buttonMountFoupA.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(218)))), ((int)(((byte)(226)))), ((int)(((byte)(236)))));
+            this.buttonMountFoupA.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.buttonMountFoupA.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
+            this.buttonMountFoupA.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(41)))), ((int)(((byte)(54)))));
+            this.buttonMountFoupA.Location = new System.Drawing.Point(0, 4);
+            this.buttonMountFoupA.Margin = new System.Windows.Forms.Padding(0, 0, 0, 10);
+            this.buttonMountFoupA.Name = "buttonMountFoupA";
+            this.buttonMountFoupA.Size = new System.Drawing.Size(236, 40);
+            this.buttonMountFoupA.TabIndex = 0;
+            this.buttonMountFoupA.Text = "FOUP A 미장착";
+            this.buttonMountFoupA.UseVisualStyleBackColor = false;
+            // 
+            // buttonMountFoupB
+            // 
+            this.buttonMountFoupB.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(232)))), ((int)(((byte)(237)))), ((int)(((byte)(244)))));
+            this.buttonMountFoupB.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.buttonMountFoupB.FlatAppearance.BorderSize = 0;
+            this.buttonMountFoupB.FlatAppearance.MouseDownBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(218)))), ((int)(((byte)(226)))), ((int)(((byte)(236)))));
+            this.buttonMountFoupB.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(218)))), ((int)(((byte)(226)))), ((int)(((byte)(236)))));
+            this.buttonMountFoupB.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.buttonMountFoupB.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
+            this.buttonMountFoupB.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(41)))), ((int)(((byte)(54)))));
+            this.buttonMountFoupB.Location = new System.Drawing.Point(0, 54);
+            this.buttonMountFoupB.Margin = new System.Windows.Forms.Padding(0, 0, 0, 10);
+            this.buttonMountFoupB.Name = "buttonMountFoupB";
+            this.buttonMountFoupB.Size = new System.Drawing.Size(236, 40);
+            this.buttonMountFoupB.TabIndex = 1;
+            this.buttonMountFoupB.Text = "FOUP B 미장착";
+            this.buttonMountFoupB.UseVisualStyleBackColor = false;
             // 
             // buttonToggleFoupMount
             // 
@@ -2184,11 +2228,11 @@ namespace SemiconductorUi
             this.buttonToggleFoupMount.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.buttonToggleFoupMount.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
             this.buttonToggleFoupMount.ForeColor = System.Drawing.Color.White;
-            this.buttonToggleFoupMount.Location = new System.Drawing.Point(0, 8);
+            this.buttonToggleFoupMount.Location = new System.Drawing.Point(0, 108);
             this.buttonToggleFoupMount.Margin = new System.Windows.Forms.Padding(0, 4, 0, 10);
             this.buttonToggleFoupMount.Name = "buttonToggleFoupMount";
             this.buttonToggleFoupMount.Size = new System.Drawing.Size(236, 40);
-            this.buttonToggleFoupMount.TabIndex = 0;
+            this.buttonToggleFoupMount.TabIndex = 2;
             this.buttonToggleFoupMount.Text = "FOUP 미장착";
             this.buttonToggleFoupMount.UseVisualStyleBackColor = false;
             // 
@@ -2199,11 +2243,11 @@ namespace SemiconductorUi
             this.buttonWaferLoading.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.buttonWaferLoading.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
             this.buttonWaferLoading.ForeColor = System.Drawing.Color.White;
-            this.buttonWaferLoading.Location = new System.Drawing.Point(0, 58);
+            this.buttonWaferLoading.Location = new System.Drawing.Point(0, 158);
             this.buttonWaferLoading.Margin = new System.Windows.Forms.Padding(0, 0, 0, 10);
             this.buttonWaferLoading.Name = "buttonWaferLoading";
             this.buttonWaferLoading.Size = new System.Drawing.Size(236, 40);
-            this.buttonWaferLoading.TabIndex = 1;
+            this.buttonWaferLoading.TabIndex = 3;
             this.buttonWaferLoading.Text = "웨이퍼 로딩 대기";
             this.buttonWaferLoading.UseVisualStyleBackColor = false;
             // 
@@ -2214,11 +2258,11 @@ namespace SemiconductorUi
             this.buttonWaferUnloading.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.buttonWaferUnloading.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
             this.buttonWaferUnloading.ForeColor = System.Drawing.Color.White;
-            this.buttonWaferUnloading.Location = new System.Drawing.Point(0, 108);
+            this.buttonWaferUnloading.Location = new System.Drawing.Point(0, 208);
             this.buttonWaferUnloading.Margin = new System.Windows.Forms.Padding(0);
             this.buttonWaferUnloading.Name = "buttonWaferUnloading";
             this.buttonWaferUnloading.Size = new System.Drawing.Size(236, 40);
-            this.buttonWaferUnloading.TabIndex = 2;
+            this.buttonWaferUnloading.TabIndex = 4;
             this.buttonWaferUnloading.Text = "웨이퍼 언로딩 대기";
             this.buttonWaferUnloading.UseVisualStyleBackColor = false;
             // 
@@ -2226,6 +2270,7 @@ namespace SemiconductorUi
             // 
             this.groupBoxRecipe.AutoSize = true;
             this.groupBoxRecipe.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+            this.groupBoxRecipe.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(242)))), ((int)(((byte)(245)))), ((int)(((byte)(249)))));
             this.groupBoxRecipe.Controls.Add(this.buttonApplyRecipe);
             this.groupBoxRecipe.Controls.Add(this.comboRecipeSelect);
             this.groupBoxRecipe.Controls.Add(this.labelRecipe);
@@ -2272,6 +2317,7 @@ namespace SemiconductorUi
             // labelRecipe
             // 
             this.labelRecipe.AutoSize = true;
+            this.labelRecipe.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(242)))), ((int)(((byte)(245)))), ((int)(((byte)(249)))));
             this.labelRecipe.Font = new System.Drawing.Font("Segoe UI", 10F);
             this.labelRecipe.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(41)))), ((int)(((byte)(54)))));
             this.labelRecipe.Location = new System.Drawing.Point(12, 32);
@@ -3642,6 +3688,8 @@ namespace SemiconductorUi
         internal System.Windows.Forms.GroupBox groupBoxRecipe;
         internal System.Windows.Forms.GroupBox groupBoxFoupReady;
         internal System.Windows.Forms.FlowLayoutPanel flowLayoutFoupReadyButtons;
+        internal System.Windows.Forms.Button buttonMountFoupA;
+        internal System.Windows.Forms.Button buttonMountFoupB;
         internal System.Windows.Forms.Button buttonToggleFoupMount;
         internal System.Windows.Forms.Button buttonWaferLoading;
         internal System.Windows.Forms.Button buttonWaferUnloading;

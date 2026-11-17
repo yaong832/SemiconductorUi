@@ -42,8 +42,7 @@ namespace SemiconductorUi
         // 개별 웨이퍼 트랙 패널 (1~5층)
         internal Panel[] foupATrackPanels = new Panel[5];
         internal Panel[] foupBTrackPanels = new Panel[5];
-        internal Button buttonMountFoupA;
-        internal Button buttonMountFoupB;
+        // buttonMountFoupA, buttonMountFoupB(FOUP A/B 장착 버튼)는 Designer.cs에서 정의됨
         // foupVisualizationControlA와 foupVisualizationControlB는 Designer.cs에서 정의됨
         // demoSetupApplied, demoSimulationStarted, WaferLoadState 등은 ViewModel 속성으로 관리됨
         // 로그 엔트리는 LoggerService를 통해 관리 (하위 호환성을 위한 속성)

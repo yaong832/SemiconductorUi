@@ -237,57 +237,26 @@ namespace SemiconductorUi.Helpers
         public void InitializeFoupMountButtons()
         {
             if (form.IsDesignEnvironment()) return;
-            if (form.flowLayoutFoupReadyButtons == null) return;
+            if (form.flowLayoutFoupReadyButtons == null || form.buttonMountFoupA == null || form.buttonMountFoupB == null) return;
 
             // 겹침 방지: 세로 스택, 랩 금지, 스크롤 허용
             form.flowLayoutFoupReadyButtons.FlowDirection = FlowDirection.TopDown;
             form.flowLayoutFoupReadyButtons.WrapContents = false;
             form.flowLayoutFoupReadyButtons.AutoScroll = true;
 
-            form.buttonMountFoupA = new Button
+            // FOUP A/B 버튼(buttonMountFoupA, buttonMountFoupB)은 Form1.Designer.cs에서 맨 위에 배치되어 있고,
+            // 여기서는 모양과 클릭 처리만 연결합니다. 기존 토글(buttonToggleFoupMount)은 숨김 처리됩니다.
+            foreach (var button in new[] { form.buttonMountFoupA, form.buttonMountFoupB })
             {
-                Width = form.flowLayoutFoupReadyButtons.ClientSize.Width,
-                Height = 40,
-                Margin = new Padding(0, 0, 0, 10),
-                FlatStyle = FlatStyle.Flat,
-            };
-            UiTheme.StyleSecondaryButton(form.buttonMountFoupA);
-            form.buttonMountFoupA.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
-            form.buttonMountFoupA.Click += (s, e) =>
-            {
-                if (!form.EnsureLoggedIn()) return;
-                form.IsFoupAMounted = !form.IsFoupAMounted;
-                form.IsFoupMounted = form.IsFoupAMounted && form.IsFoupBMounted;
-                form.AddLogMessage($"FOUP A {(form.IsFoupAMounted ? "장착" : "분리")}", "INFO");
-                form.UpdateFoupPreparationButtons();
-                form.UpdateSimulationUi();
-            };
-
-            form.buttonMountFoupB = new Button
-            {
-                Width = form.flowLayoutFoupReadyButtons.ClientSize.Width,
-                Height = 40,
-                Margin = new Padding(0, 0, 0, 10),
-                FlatStyle = FlatStyle.Flat,
-            };
-            UiTheme.StyleSecondaryButton(form.buttonMountFoupB);
-            form.buttonMountFoupB.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
-            form.buttonMountFoupB.Click += (s, e) =>
-            {
-                if (!form.EnsureLoggedIn()) return;
-                form.IsFoupBMounted = !form.IsFoupBMounted;
-                form.IsFoupMounted = form.IsFoupAMounted && form.IsFoupBMounted;
-                form.AddLogMessage($"FOUP B {(form.IsFoupBMounted ? "장착" : "분리")}", "INFO");
-                form.UpdateFoupPreparationButtons();
-                form.UpdateSimulationUi();
-            };
-
-            // 상단에 A/B 버튼을 추가하고 기존 토글은 숨김 처리
-            form.flowLayoutFoupReadyButtons.Controls.Add(form.buttonMountFoupA);
-            form.flowLayoutFoupReadyButtons.Controls.Add(form.buttonMountFoupB);
-            // A/B 버튼을 최상단으로 정렬
-            form.flowLayoutFoupReadyButtons.Controls.SetChildIndex(form.buttonMountFoupB, 0);
-            form.flowLayoutFoupReadyButtons.Controls.SetChildIndex(form.buttonMountFoupA, 0);
+                button.Width = form.flowLayoutFoupReadyButtons.ClientSize.Width;
+                button.Height = 40;
+                button.Margin = new Padding(0, 0, 0, 10);
+                button.FlatStyle = FlatStyle.Flat;
+                UiTheme.StyleSecondaryButton(button);
+                button.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            }
+            form.buttonMountFoupA.Click += ButtonMountFoupA_Click;
+            form.buttonMountFoupB.Click += ButtonMountFoupB_Click;
 
             // 패널 리사이즈 시 버튼 폭 동기화
             form.flowLayoutFoupReadyButtons.Resize += (s, e) =>
@@ -302,6 +271,28 @@ namespace SemiconductorUi.Helpers
                 }
             };
             form.UpdateFoupPreparationButtons();
+        }
+
+        /// <summary>FOUP A 장착/분리 버튼 (buttonMountFoupA).</summary>
+        private void ButtonMountFoupA_Click(object sender, EventArgs e)
+        {
+            if (!form.EnsureLoggedIn()) return;
+            form.IsFoupAMounted = !form.IsFoupAMounted;
+            form.IsFoupMounted = form.IsFoupAMounted && form.IsFoupBMounted;
+            form.AddLogMessage($"FOUP A {(form.IsFoupAMounted ? "장착" : "분리")}", "INFO");
+            form.UpdateFoupPreparationButtons();
+            form.UpdateSimulationUi();
+        }
+
+        /// <summary>FOUP B 장착/분리 버튼 (buttonMountFoupB).</summary>
+        private void ButtonMountFoupB_Click(object sender, EventArgs e)
+        {
+            if (!form.EnsureLoggedIn()) return;
+            form.IsFoupBMounted = !form.IsFoupBMounted;
+            form.IsFoupMounted = form.IsFoupAMounted && form.IsFoupBMounted;
+            form.AddLogMessage($"FOUP B {(form.IsFoupBMounted ? "장착" : "분리")}", "INFO");
+            form.UpdateFoupPreparationButtons();
+            form.UpdateSimulationUi();
         }
 
         /// <summary>
