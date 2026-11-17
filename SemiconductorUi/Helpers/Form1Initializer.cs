@@ -43,119 +43,19 @@ namespace SemiconductorUi.Helpers
                 doubleBufferedProperty.SetValue(form.panelEquipmentCanvas, true, null);
             }
 
-            // TM Visualization Control 초기화 (별도 컨트롤로 분리하여 부드러운 애니메이션)
-            if (form.tmVisualizationControl == null)
-            {
-                form.tmVisualizationControl = new TmVisualizationControl();
-                form.tmVisualizationControl.BackColor = Color.Transparent; // 투명 배경
-                form.tmVisualizationControl.Location = new Point(0, 0);
-                form.tmVisualizationControl.Name = "tmVisualizationControl";
-                form.tmVisualizationControl.Size = form.panelEquipmentCanvas.ClientSize;
-                form.tmVisualizationControl.TabIndex = 0;
-                form.panelEquipmentCanvas.Controls.Add(form.tmVisualizationControl);
-                form.tmVisualizationControl.SendToBack(); // FOUP/Chamber 뒤로 보내기 (가리지 않도록)
-            }
-
-            // TM 기준 화면(정면/옆면): 위치와 크기는 LayoutCentralEquipment에서 정한다.
-            if (form.tmSideViewControl == null)
-            {
-                form.tmSideViewControl = new TmSideViewControl
-                {
-                    Name = "tmSideViewControl",
-                    Size = new Size(262, 300),
-                    TabStop = false
-                };
-                form.panelEquipmentCanvas.Controls.Add(form.tmSideViewControl);
-            }
-            
-            // 초기 레이아웃 설정
+            // 캔버스 위의 구성 요소는 Form1.Designer.cs에서 panelEquipmentCanvas 안에 놓여 있다 (앞에서 뒤 순서):
+            // tmSideViewControl(TM 기준 화면), panelMainLamp(상태 램프), panelChamberA/B/C, panelFoupA/B
+            // (안에 foupVisualizationControlA/B), tmVisualizationControl(TM 그림, 맨 뒤).
+            // 위치와 크기는 LayoutCentralEquipment가 캔버스 크기에 맞춰 다시 정한다.
             form.LayoutCentralEquipment();
 
-            // FOUP A Visualization Control 초기화
-            if (form.foupVisualizationControlA == null && form.panelFoupA != null)
+            // FOUP 칸 수는 설정 파일(MaxFoupCapacity) 값을 따른다.
+            foreach (var foup in new[] { form.foupVisualizationControlA, form.foupVisualizationControlB })
             {
-                form.foupVisualizationControlA = new FoupVisualizationControl();
-                form.foupVisualizationControlA.Dock = DockStyle.Fill;
-                form.foupVisualizationControlA.Location = new Point(12, 12);
-                form.foupVisualizationControlA.Name = "foupVisualizationControlA";
-                form.foupVisualizationControlA.Size = new Size(176, 86);
-                form.foupVisualizationControlA.TabIndex = 0;
-                form.foupVisualizationControlA.Title = "FOUP A";
-                form.foupVisualizationControlA.Capacity = AppSettings.MaxFoupCapacity;
-                form.panelFoupA.Controls.Add(form.foupVisualizationControlA);
-            }
-
-            // FOUP B Visualization Control 초기화
-            if (form.foupVisualizationControlB == null && form.panelFoupB != null)
-            {
-                form.foupVisualizationControlB = new FoupVisualizationControl();
-                form.foupVisualizationControlB.Dock = DockStyle.Fill;
-                form.foupVisualizationControlB.Location = new Point(12, 12);
-                form.foupVisualizationControlB.Name = "foupVisualizationControlB";
-                form.foupVisualizationControlB.Size = new Size(176, 86);
-                form.foupVisualizationControlB.TabIndex = 0;
-                form.foupVisualizationControlB.Title = "FOUP B";
-                form.foupVisualizationControlB.Capacity = AppSettings.MaxFoupCapacity;
-                form.panelFoupB.Controls.Add(form.foupVisualizationControlB);
-            }
-
-            // Chamber와 FOUP 패널들을 panelEquipmentCanvas에 추가
-            if (form.panelChamberA != null && form.panelChamberA.Parent != form.panelEquipmentCanvas)
-            {
-                if (form.panelChamberA.Parent != null)
+                if (foup != null)
                 {
-                    form.panelChamberA.Parent.Controls.Remove(form.panelChamberA);
+                    foup.Capacity = AppSettings.MaxFoupCapacity;
                 }
-                form.panelEquipmentCanvas.Controls.Add(form.panelChamberA);
-            }
-
-            if (form.panelChamberB != null && form.panelChamberB.Parent != form.panelEquipmentCanvas)
-            {
-                if (form.panelChamberB.Parent != null)
-                {
-                    form.panelChamberB.Parent.Controls.Remove(form.panelChamberB);
-                }
-                form.panelEquipmentCanvas.Controls.Add(form.panelChamberB);
-            }
-
-            if (form.panelChamberC != null && form.panelChamberC.Parent != form.panelEquipmentCanvas)
-            {
-                if (form.panelChamberC.Parent != null)
-                {
-                    form.panelChamberC.Parent.Controls.Remove(form.panelChamberC);
-                }
-                form.panelEquipmentCanvas.Controls.Add(form.panelChamberC);
-            }
-
-            if (form.panelFoupA != null && form.panelFoupA.Parent != form.panelEquipmentCanvas)
-            {
-                if (form.panelFoupA.Parent != null)
-                {
-                    form.panelFoupA.Parent.Controls.Remove(form.panelFoupA);
-                }
-                form.panelEquipmentCanvas.Controls.Add(form.panelFoupA);
-            }
-
-            if (form.panelFoupB != null && form.panelFoupB.Parent != form.panelEquipmentCanvas)
-            {
-                if (form.panelFoupB.Parent != null)
-                {
-                    form.panelFoupB.Parent.Controls.Remove(form.panelFoupB);
-                }
-                form.panelEquipmentCanvas.Controls.Add(form.panelFoupB);
-            }
-
-            // Main Lamp 패널을 panelEquipmentCanvas에 추가
-            if (form.panelMainLamp != null && form.panelMainLamp.Parent != form.panelEquipmentCanvas)
-            {
-                if (form.panelMainLamp.Parent != null)
-                {
-                    form.panelMainLamp.Parent.Controls.Remove(form.panelMainLamp);
-                }
-                // Main Lamp는 우측 상단에 고정 위치
-                form.panelMainLamp.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-                form.panelEquipmentCanvas.Controls.Add(form.panelMainLamp);
-                form.panelMainLamp.BringToFront();
             }
 
             ApplyEquipmentCanvasStyle();
