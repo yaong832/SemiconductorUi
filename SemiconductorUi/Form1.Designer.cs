@@ -165,6 +165,18 @@ namespace SemiconductorUi
             this.buttonApplyRecipe = new System.Windows.Forms.Button();
             this.comboRecipeSelect = new System.Windows.Forms.ComboBox();
             this.labelRecipe = new System.Windows.Forms.Label();
+            this.shellTopBar = new SemiconductorUi.Controls.ShellTopBar();
+            this.flowShellTopRight = new System.Windows.Forms.FlowLayoutPanel();
+            this.shellChipEthercat = new SemiconductorUi.Controls.ShellChip();
+            this.panelShellTopDivider1 = new System.Windows.Forms.Panel();
+            this.shellChipServo = new SemiconductorUi.Controls.ShellChip();
+            this.panelShellTopDivider2 = new System.Windows.Forms.Panel();
+            this.shellChipAlarm = new SemiconductorUi.Controls.ShellChip();
+            this.shellClock = new SemiconductorUi.Controls.ShellClock();
+            this.shellTowerLamp = new SemiconductorUi.Controls.ShellTowerLamp();
+            this.flowShellTopLeft = new System.Windows.Forms.FlowLayoutPanel();
+            this.shellUserCard = new SemiconductorUi.Controls.ShellUserCard();
+            this.panelShellParking = new System.Windows.Forms.Panel();
             this.tableShellContent = new System.Windows.Forms.TableLayoutPanel();
             this.panelShellSubTabs = new System.Windows.Forms.Panel();
             this.flowShellSubTabs = new System.Windows.Forms.FlowLayoutPanel();
@@ -286,6 +298,10 @@ namespace SemiconductorUi
             this.groupBoxFoupReady.SuspendLayout();
             this.flowLayoutFoupReadyButtons.SuspendLayout();
             this.groupBoxRecipe.SuspendLayout();
+            this.shellTopBar.SuspendLayout();
+            this.flowShellTopRight.SuspendLayout();
+            this.flowShellTopLeft.SuspendLayout();
+            this.panelShellParking.SuspendLayout();
             this.tableShellContent.SuspendLayout();
             this.panelShellSubTabs.SuspendLayout();
             this.flowShellSubTabs.SuspendLayout();
@@ -315,14 +331,15 @@ namespace SemiconductorUi
             // 
             this.tableLayoutRoot.ColumnCount = 1;
             this.tableLayoutRoot.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
-            this.tableLayoutRoot.Controls.Add(this.panelHeader, 0, 0);
+            this.tableLayoutRoot.Controls.Add(this.shellTopBar, 0, 0);
             this.tableLayoutRoot.Controls.Add(this.tableShellContent, 0, 1);
             this.tableLayoutRoot.Controls.Add(this.tableShellBottomBar, 0, 2);
             this.tableLayoutRoot.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tableLayoutRoot.Location = new System.Drawing.Point(0, 0);
+            this.tableLayoutRoot.Margin = new System.Windows.Forms.Padding(0);
             this.tableLayoutRoot.Name = "tableLayoutRoot";
             this.tableLayoutRoot.RowCount = 3;
-            this.tableLayoutRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 170F));
+            this.tableLayoutRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 60F));
             this.tableLayoutRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
             this.tableLayoutRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 64F));
             this.tableLayoutRoot.Size = new System.Drawing.Size(1701, 976);
@@ -333,10 +350,10 @@ namespace SemiconductorUi
             this.panelHeader.BackColor = System.Drawing.Color.White;
             this.panelHeader.Controls.Add(this.tableLayoutHeader);
             this.panelHeader.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.panelHeader.Location = new System.Drawing.Point(3, 3);
+            this.panelHeader.Location = new System.Drawing.Point(0, 0);
             this.panelHeader.Name = "panelHeader";
             this.panelHeader.Padding = new System.Windows.Forms.Padding(20, 15, 20, 15);
-            this.panelHeader.Size = new System.Drawing.Size(1695, 164);
+            this.panelHeader.Size = new System.Drawing.Size(200, 100);
             this.panelHeader.TabIndex = 0;
             // 
             // tableLayoutHeader
@@ -381,12 +398,6 @@ namespace SemiconductorUi
             // 
             this.flowLoginTopRow.AutoSize = true;
             this.flowLoginTopRow.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
-            this.flowLoginTopRow.Controls.Add(this.buttonLogin);
-            this.flowLoginTopRow.Controls.Add(this.buttonLogout);
-            this.flowLoginTopRow.Controls.Add(this.buttonEthercatConnect);
-            this.flowLoginTopRow.Controls.Add(this.buttonEthercatDisconnect);
-            this.flowLoginTopRow.Controls.Add(this.buttonServoOn);
-            this.flowLoginTopRow.Controls.Add(this.buttonServoOff);
             this.flowLoginTopRow.Location = new System.Drawing.Point(16, 10);
             this.flowLoginTopRow.Margin = new System.Windows.Forms.Padding(0, 2, 0, 6);
             this.flowLoginTopRow.Name = "flowLoginTopRow";
@@ -396,91 +407,109 @@ namespace SemiconductorUi
             // 
             // buttonLogin
             // 
-            this.buttonLogin.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(36)))), ((int)(((byte)(150)))), ((int)(((byte)(90)))));
-            this.buttonLogin.FlatAppearance.BorderSize = 0;
+            this.buttonLogin.BackColor = System.Drawing.Color.White;
+            this.buttonLogin.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.buttonLogin.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(208)))), ((int)(((byte)(215)))), ((int)(((byte)(225)))));
+            this.buttonLogin.FlatAppearance.MouseDownBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(242)))), ((int)(((byte)(245)))), ((int)(((byte)(249)))));
+            this.buttonLogin.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(242)))), ((int)(((byte)(245)))), ((int)(((byte)(249)))));
             this.buttonLogin.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.buttonLogin.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
-            this.buttonLogin.ForeColor = System.Drawing.Color.White;
-            this.buttonLogin.Location = new System.Drawing.Point(0, 3);
-            this.buttonLogin.Margin = new System.Windows.Forms.Padding(0, 3, 10, 3);
+            this.buttonLogin.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
+            this.buttonLogin.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(45)))), ((int)(((byte)(98)))), ((int)(((byte)(196)))));
+            this.buttonLogin.Location = new System.Drawing.Point(98, 15);
+            this.buttonLogin.Margin = new System.Windows.Forms.Padding(6, 15, 0, 0);
             this.buttonLogin.Name = "buttonLogin";
-            this.buttonLogin.Size = new System.Drawing.Size(103, 26);
+            this.buttonLogin.Size = new System.Drawing.Size(64, 28);
             this.buttonLogin.TabIndex = 2;
             this.buttonLogin.Text = "로그인";
             this.buttonLogin.UseVisualStyleBackColor = false;
             // 
             // buttonLogout
             // 
-            this.buttonLogout.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(232)))), ((int)(((byte)(237)))), ((int)(((byte)(244)))));
+            this.buttonLogout.BackColor = System.Drawing.Color.White;
+            this.buttonLogout.Cursor = System.Windows.Forms.Cursors.Hand;
             this.buttonLogout.Enabled = false;
-            this.buttonLogout.FlatAppearance.BorderSize = 0;
+            this.buttonLogout.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(208)))), ((int)(((byte)(215)))), ((int)(((byte)(225)))));
+            this.buttonLogout.FlatAppearance.MouseDownBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(242)))), ((int)(((byte)(245)))), ((int)(((byte)(249)))));
+            this.buttonLogout.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(242)))), ((int)(((byte)(245)))), ((int)(((byte)(249)))));
             this.buttonLogout.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.buttonLogout.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
-            this.buttonLogout.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(41)))), ((int)(((byte)(54)))));
-            this.buttonLogout.Location = new System.Drawing.Point(113, 3);
-            this.buttonLogout.Margin = new System.Windows.Forms.Padding(0, 3, 10, 3);
+            this.buttonLogout.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
+            this.buttonLogout.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(45)))), ((int)(((byte)(98)))), ((int)(((byte)(196)))));
+            this.buttonLogout.Location = new System.Drawing.Point(166, 15);
+            this.buttonLogout.Margin = new System.Windows.Forms.Padding(4, 15, 0, 0);
             this.buttonLogout.Name = "buttonLogout";
-            this.buttonLogout.Size = new System.Drawing.Size(103, 26);
+            this.buttonLogout.Size = new System.Drawing.Size(76, 28);
             this.buttonLogout.TabIndex = 3;
             this.buttonLogout.Text = "로그아웃";
             this.buttonLogout.UseVisualStyleBackColor = false;
             // 
             // buttonEthercatConnect
             // 
-            this.buttonEthercatConnect.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(45)))), ((int)(((byte)(98)))), ((int)(((byte)(196)))));
-            this.buttonEthercatConnect.FlatAppearance.BorderSize = 0;
+            this.buttonEthercatConnect.BackColor = System.Drawing.Color.White;
+            this.buttonEthercatConnect.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.buttonEthercatConnect.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(208)))), ((int)(((byte)(215)))), ((int)(((byte)(225)))));
+            this.buttonEthercatConnect.FlatAppearance.MouseDownBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(242)))), ((int)(((byte)(245)))), ((int)(((byte)(249)))));
+            this.buttonEthercatConnect.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(242)))), ((int)(((byte)(245)))), ((int)(((byte)(249)))));
             this.buttonEthercatConnect.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.buttonEthercatConnect.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
-            this.buttonEthercatConnect.ForeColor = System.Drawing.Color.White;
-            this.buttonEthercatConnect.Location = new System.Drawing.Point(236, 3);
-            this.buttonEthercatConnect.Margin = new System.Windows.Forms.Padding(10, 3, 0, 0);
+            this.buttonEthercatConnect.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(45)))), ((int)(((byte)(98)))), ((int)(((byte)(196)))));
+            this.buttonEthercatConnect.Location = new System.Drawing.Point(126, 15);
+            this.buttonEthercatConnect.Margin = new System.Windows.Forms.Padding(6, 15, 0, 0);
             this.buttonEthercatConnect.Name = "buttonEthercatConnect";
-            this.buttonEthercatConnect.Size = new System.Drawing.Size(108, 26);
+            this.buttonEthercatConnect.Size = new System.Drawing.Size(52, 28);
             this.buttonEthercatConnect.TabIndex = 11;
-            this.buttonEthercatConnect.Text = "EtherCAT 연결";
+            this.buttonEthercatConnect.Text = "연결";
             this.buttonEthercatConnect.UseVisualStyleBackColor = false;
             // 
             // buttonEthercatDisconnect
             // 
-            this.buttonEthercatDisconnect.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(232)))), ((int)(((byte)(237)))), ((int)(((byte)(244)))));
-            this.buttonEthercatDisconnect.FlatAppearance.BorderSize = 0;
+            this.buttonEthercatDisconnect.BackColor = System.Drawing.Color.White;
+            this.buttonEthercatDisconnect.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.buttonEthercatDisconnect.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(208)))), ((int)(((byte)(215)))), ((int)(((byte)(225)))));
+            this.buttonEthercatDisconnect.FlatAppearance.MouseDownBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(242)))), ((int)(((byte)(245)))), ((int)(((byte)(249)))));
+            this.buttonEthercatDisconnect.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(242)))), ((int)(((byte)(245)))), ((int)(((byte)(249)))));
             this.buttonEthercatDisconnect.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.buttonEthercatDisconnect.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
-            this.buttonEthercatDisconnect.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(41)))), ((int)(((byte)(54)))));
-            this.buttonEthercatDisconnect.Location = new System.Drawing.Point(354, 3);
-            this.buttonEthercatDisconnect.Margin = new System.Windows.Forms.Padding(10, 3, 0, 0);
+            this.buttonEthercatDisconnect.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(45)))), ((int)(((byte)(98)))), ((int)(((byte)(196)))));
+            this.buttonEthercatDisconnect.Location = new System.Drawing.Point(182, 15);
+            this.buttonEthercatDisconnect.Margin = new System.Windows.Forms.Padding(4, 15, 0, 0);
             this.buttonEthercatDisconnect.Name = "buttonEthercatDisconnect";
-            this.buttonEthercatDisconnect.Size = new System.Drawing.Size(108, 26);
+            this.buttonEthercatDisconnect.Size = new System.Drawing.Size(52, 28);
             this.buttonEthercatDisconnect.TabIndex = 12;
-            this.buttonEthercatDisconnect.Text = "연결 해제";
+            this.buttonEthercatDisconnect.Text = "해제";
             this.buttonEthercatDisconnect.UseVisualStyleBackColor = false;
             // 
             // buttonServoOn
             // 
-            this.buttonServoOn.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(45)))), ((int)(((byte)(98)))), ((int)(((byte)(196)))));
-            this.buttonServoOn.FlatAppearance.BorderSize = 0;
+            this.buttonServoOn.BackColor = System.Drawing.Color.White;
+            this.buttonServoOn.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.buttonServoOn.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(208)))), ((int)(((byte)(215)))), ((int)(((byte)(225)))));
+            this.buttonServoOn.FlatAppearance.MouseDownBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(242)))), ((int)(((byte)(245)))), ((int)(((byte)(249)))));
+            this.buttonServoOn.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(242)))), ((int)(((byte)(245)))), ((int)(((byte)(249)))));
             this.buttonServoOn.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.buttonServoOn.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
-            this.buttonServoOn.ForeColor = System.Drawing.Color.White;
-            this.buttonServoOn.Location = new System.Drawing.Point(472, 3);
-            this.buttonServoOn.Margin = new System.Windows.Forms.Padding(10, 3, 0, 0);
+            this.buttonServoOn.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(45)))), ((int)(((byte)(98)))), ((int)(((byte)(196)))));
+            this.buttonServoOn.Location = new System.Drawing.Point(385, 15);
+            this.buttonServoOn.Margin = new System.Windows.Forms.Padding(6, 15, 0, 0);
             this.buttonServoOn.Name = "buttonServoOn";
-            this.buttonServoOn.Size = new System.Drawing.Size(80, 26);
+            this.buttonServoOn.Size = new System.Drawing.Size(68, 28);
             this.buttonServoOn.TabIndex = 13;
             this.buttonServoOn.Text = "서보 ON";
             this.buttonServoOn.UseVisualStyleBackColor = false;
             // 
             // buttonServoOff
             // 
-            this.buttonServoOff.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(232)))), ((int)(((byte)(237)))), ((int)(((byte)(244)))));
-            this.buttonServoOff.FlatAppearance.BorderSize = 0;
+            this.buttonServoOff.BackColor = System.Drawing.Color.White;
+            this.buttonServoOff.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.buttonServoOff.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(208)))), ((int)(((byte)(215)))), ((int)(((byte)(225)))));
+            this.buttonServoOff.FlatAppearance.MouseDownBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(242)))), ((int)(((byte)(245)))), ((int)(((byte)(249)))));
+            this.buttonServoOff.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(242)))), ((int)(((byte)(245)))), ((int)(((byte)(249)))));
             this.buttonServoOff.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.buttonServoOff.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
-            this.buttonServoOff.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(41)))), ((int)(((byte)(54)))));
-            this.buttonServoOff.Location = new System.Drawing.Point(562, 3);
-            this.buttonServoOff.Margin = new System.Windows.Forms.Padding(10, 3, 0, 0);
+            this.buttonServoOff.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(45)))), ((int)(((byte)(98)))), ((int)(((byte)(196)))));
+            this.buttonServoOff.Location = new System.Drawing.Point(457, 15);
+            this.buttonServoOff.Margin = new System.Windows.Forms.Padding(4, 15, 0, 0);
             this.buttonServoOff.Name = "buttonServoOff";
-            this.buttonServoOff.Size = new System.Drawing.Size(80, 26);
+            this.buttonServoOff.Size = new System.Drawing.Size(72, 28);
             this.buttonServoOff.TabIndex = 14;
             this.buttonServoOff.Text = "서보 OFF";
             this.buttonServoOff.UseVisualStyleBackColor = false;
@@ -1171,7 +1200,6 @@ namespace SemiconductorUi
             this.flowHeaderTimeAndUser.AutoSize = true;
             this.flowHeaderTimeAndUser.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
             this.flowHeaderTimeAndUser.Controls.Add(this.labelHeaderCurrentTime);
-            this.flowHeaderTimeAndUser.Controls.Add(this.buttonUserManagement);
             this.flowHeaderTimeAndUser.Dock = System.Windows.Forms.DockStyle.Fill;
             this.flowHeaderTimeAndUser.Location = new System.Drawing.Point(1356, 96);
             this.flowHeaderTimeAndUser.Margin = new System.Windows.Forms.Padding(0);
@@ -1200,15 +1228,18 @@ namespace SemiconductorUi
             // 
             // buttonUserManagement
             // 
-            this.buttonUserManagement.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(232)))), ((int)(((byte)(237)))), ((int)(((byte)(244)))));
-            this.buttonUserManagement.FlatAppearance.BorderSize = 0;
+            this.buttonUserManagement.BackColor = System.Drawing.Color.White;
+            this.buttonUserManagement.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.buttonUserManagement.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(208)))), ((int)(((byte)(215)))), ((int)(((byte)(225)))));
+            this.buttonUserManagement.FlatAppearance.MouseDownBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(242)))), ((int)(((byte)(245)))), ((int)(((byte)(249)))));
+            this.buttonUserManagement.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(242)))), ((int)(((byte)(245)))), ((int)(((byte)(249)))));
             this.buttonUserManagement.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.buttonUserManagement.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
-            this.buttonUserManagement.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(41)))), ((int)(((byte)(54)))));
-            this.buttonUserManagement.Location = new System.Drawing.Point(240, 6);
-            this.buttonUserManagement.Margin = new System.Windows.Forms.Padding(0);
+            this.buttonUserManagement.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(45)))), ((int)(((byte)(98)))), ((int)(((byte)(196)))));
+            this.buttonUserManagement.Location = new System.Drawing.Point(246, 15);
+            this.buttonUserManagement.Margin = new System.Windows.Forms.Padding(4, 15, 0, 0);
             this.buttonUserManagement.Name = "buttonUserManagement";
-            this.buttonUserManagement.Size = new System.Drawing.Size(100, 26);
+            this.buttonUserManagement.Size = new System.Drawing.Size(92, 28);
             this.buttonUserManagement.TabIndex = 5;
             this.buttonUserManagement.Text = "사용자 관리";
             this.buttonUserManagement.UseVisualStyleBackColor = false;
@@ -2249,6 +2280,146 @@ namespace SemiconductorUi
             this.labelRecipe.TabIndex = 0;
             this.labelRecipe.Text = "현재 선택 레시피/작업:";
             // 
+            // shellTopBar
+            // 
+            this.shellTopBar.BackColor = System.Drawing.Color.White;
+            this.shellTopBar.Controls.Add(this.flowShellTopRight);
+            this.shellTopBar.Controls.Add(this.flowShellTopLeft);
+            this.shellTopBar.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.shellTopBar.LeftArea = this.flowShellTopLeft;
+            this.shellTopBar.Location = new System.Drawing.Point(0, 0);
+            this.shellTopBar.Margin = new System.Windows.Forms.Padding(0);
+            this.shellTopBar.Name = "shellTopBar";
+            this.shellTopBar.Padding = new System.Windows.Forms.Padding(0, 0, 0, 1);
+            this.shellTopBar.RightArea = this.flowShellTopRight;
+            this.shellTopBar.Size = new System.Drawing.Size(1701, 60);
+            this.shellTopBar.TabIndex = 0;
+            // 
+            // flowShellTopRight
+            // 
+            this.flowShellTopRight.AutoSize = true;
+            this.flowShellTopRight.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+            this.flowShellTopRight.BackColor = System.Drawing.Color.White;
+            this.flowShellTopRight.Controls.Add(this.shellChipEthercat);
+            this.flowShellTopRight.Controls.Add(this.buttonEthercatConnect);
+            this.flowShellTopRight.Controls.Add(this.buttonEthercatDisconnect);
+            this.flowShellTopRight.Controls.Add(this.panelShellTopDivider1);
+            this.flowShellTopRight.Controls.Add(this.shellChipServo);
+            this.flowShellTopRight.Controls.Add(this.buttonServoOn);
+            this.flowShellTopRight.Controls.Add(this.buttonServoOff);
+            this.flowShellTopRight.Controls.Add(this.panelShellTopDivider2);
+            this.flowShellTopRight.Controls.Add(this.shellChipAlarm);
+            this.flowShellTopRight.Controls.Add(this.shellClock);
+            this.flowShellTopRight.Controls.Add(this.shellTowerLamp);
+            this.flowShellTopRight.Dock = System.Windows.Forms.DockStyle.Right;
+            this.flowShellTopRight.Location = new System.Drawing.Point(863, 0);
+            this.flowShellTopRight.Margin = new System.Windows.Forms.Padding(0);
+            this.flowShellTopRight.Name = "flowShellTopRight";
+            this.flowShellTopRight.Padding = new System.Windows.Forms.Padding(0, 0, 16, 0);
+            this.flowShellTopRight.Size = new System.Drawing.Size(838, 59);
+            this.flowShellTopRight.TabIndex = 0;
+            this.flowShellTopRight.WrapContents = false;
+            // 
+            // shellChipEthercat
+            // 
+            this.shellChipEthercat.BackColor = System.Drawing.Color.White;
+            this.shellChipEthercat.Location = new System.Drawing.Point(0, 15);
+            this.shellChipEthercat.Margin = new System.Windows.Forms.Padding(0, 15, 0, 0);
+            this.shellChipEthercat.Name = "shellChipEthercat";
+            this.shellChipEthercat.Size = new System.Drawing.Size(120, 28);
+            this.shellChipEthercat.TabIndex = 0;
+            // 
+            // panelShellTopDivider1
+            // 
+            this.panelShellTopDivider1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(208)))), ((int)(((byte)(215)))), ((int)(((byte)(225)))));
+            this.panelShellTopDivider1.Location = new System.Drawing.Point(246, 15);
+            this.panelShellTopDivider1.Margin = new System.Windows.Forms.Padding(12, 15, 0, 0);
+            this.panelShellTopDivider1.Name = "panelShellTopDivider1";
+            this.panelShellTopDivider1.Size = new System.Drawing.Size(1, 28);
+            this.panelShellTopDivider1.TabIndex = 3;
+            // 
+            // shellChipServo
+            // 
+            this.shellChipServo.BackColor = System.Drawing.Color.White;
+            this.shellChipServo.Location = new System.Drawing.Point(259, 15);
+            this.shellChipServo.Margin = new System.Windows.Forms.Padding(12, 15, 0, 0);
+            this.shellChipServo.MaxChipWidth = 200;
+            this.shellChipServo.Name = "shellChipServo";
+            this.shellChipServo.Size = new System.Drawing.Size(120, 28);
+            this.shellChipServo.TabIndex = 4;
+            // 
+            // panelShellTopDivider2
+            // 
+            this.panelShellTopDivider2.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(208)))), ((int)(((byte)(215)))), ((int)(((byte)(225)))));
+            this.panelShellTopDivider2.Location = new System.Drawing.Point(541, 15);
+            this.panelShellTopDivider2.Margin = new System.Windows.Forms.Padding(12, 15, 0, 0);
+            this.panelShellTopDivider2.Name = "panelShellTopDivider2";
+            this.panelShellTopDivider2.Size = new System.Drawing.Size(1, 28);
+            this.panelShellTopDivider2.TabIndex = 7;
+            // 
+            // shellChipAlarm
+            // 
+            this.shellChipAlarm.BackColor = System.Drawing.Color.White;
+            this.shellChipAlarm.Location = new System.Drawing.Point(554, 15);
+            this.shellChipAlarm.Margin = new System.Windows.Forms.Padding(12, 15, 0, 0);
+            this.shellChipAlarm.MaxChipWidth = 220;
+            this.shellChipAlarm.Name = "shellChipAlarm";
+            this.shellChipAlarm.Size = new System.Drawing.Size(120, 28);
+            this.shellChipAlarm.TabIndex = 8;
+            // 
+            // shellClock
+            // 
+            this.shellClock.BackColor = System.Drawing.Color.White;
+            this.shellClock.Location = new System.Drawing.Point(688, 9);
+            this.shellClock.Margin = new System.Windows.Forms.Padding(14, 9, 0, 0);
+            this.shellClock.Name = "shellClock";
+            this.shellClock.Size = new System.Drawing.Size(104, 40);
+            this.shellClock.TabIndex = 9;
+            // 
+            // shellTowerLamp
+            // 
+            this.shellTowerLamp.BackColor = System.Drawing.Color.White;
+            this.shellTowerLamp.Location = new System.Drawing.Point(800, 7);
+            this.shellTowerLamp.Margin = new System.Windows.Forms.Padding(8, 7, 0, 0);
+            this.shellTowerLamp.Name = "shellTowerLamp";
+            this.shellTowerLamp.Size = new System.Drawing.Size(22, 44);
+            this.shellTowerLamp.TabIndex = 10;
+            // 
+            // flowShellTopLeft
+            // 
+            this.flowShellTopLeft.AutoSize = true;
+            this.flowShellTopLeft.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+            this.flowShellTopLeft.BackColor = System.Drawing.Color.White;
+            this.flowShellTopLeft.Controls.Add(this.shellUserCard);
+            this.flowShellTopLeft.Controls.Add(this.buttonLogin);
+            this.flowShellTopLeft.Controls.Add(this.buttonLogout);
+            this.flowShellTopLeft.Controls.Add(this.buttonUserManagement);
+            this.flowShellTopLeft.Location = new System.Drawing.Point(314, 0);
+            this.flowShellTopLeft.Margin = new System.Windows.Forms.Padding(0);
+            this.flowShellTopLeft.Name = "flowShellTopLeft";
+            this.flowShellTopLeft.Size = new System.Drawing.Size(338, 47);
+            this.flowShellTopLeft.TabIndex = 1;
+            this.flowShellTopLeft.WrapContents = false;
+            // 
+            // shellUserCard
+            // 
+            this.shellUserCard.BackColor = System.Drawing.Color.White;
+            this.shellUserCard.Horizontal = true;
+            this.shellUserCard.Location = new System.Drawing.Point(0, 11);
+            this.shellUserCard.Margin = new System.Windows.Forms.Padding(0, 11, 0, 0);
+            this.shellUserCard.Name = "shellUserCard";
+            this.shellUserCard.Size = new System.Drawing.Size(92, 36);
+            this.shellUserCard.TabIndex = 0;
+            // 
+            // panelShellParking
+            // 
+            this.panelShellParking.Controls.Add(this.panelHeader);
+            this.panelShellParking.Location = new System.Drawing.Point(0, 0);
+            this.panelShellParking.Name = "panelShellParking";
+            this.panelShellParking.Size = new System.Drawing.Size(200, 100);
+            this.panelShellParking.TabIndex = 1;
+            this.panelShellParking.Visible = false;
+            // 
             // tableShellContent
             // 
             this.tableShellContent.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(226)))), ((int)(((byte)(231)))), ((int)(((byte)(238)))));
@@ -3170,6 +3341,7 @@ namespace SemiconductorUi
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(226)))), ((int)(((byte)(231)))), ((int)(((byte)(238)))));
             this.ClientSize = new System.Drawing.Size(1701, 976);
             this.Controls.Add(this.tableLayoutRoot);
+            this.Controls.Add(this.panelShellParking);
             this.Font = new System.Drawing.Font("Segoe UI", 9F);
             this.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(41)))), ((int)(((byte)(54)))));
             this.MinimumSize = new System.Drawing.Size(1300, 840);
@@ -3239,6 +3411,11 @@ namespace SemiconductorUi
             this.flowLayoutFoupReadyButtons.ResumeLayout(false);
             this.groupBoxRecipe.ResumeLayout(false);
             this.groupBoxRecipe.PerformLayout();
+            this.shellTopBar.ResumeLayout(false);
+            this.shellTopBar.PerformLayout();
+            this.flowShellTopRight.ResumeLayout(false);
+            this.flowShellTopLeft.ResumeLayout(false);
+            this.panelShellParking.ResumeLayout(false);
             this.tableShellContent.ResumeLayout(false);
             this.panelShellSubTabs.ResumeLayout(false);
             this.panelShellSubTabs.PerformLayout();
@@ -3471,6 +3648,18 @@ namespace SemiconductorUi
         internal System.Windows.Forms.Button buttonApplyRecipe;
         internal System.Windows.Forms.ComboBox comboRecipeSelect;
         private System.Windows.Forms.Label labelRecipe;
+        private SemiconductorUi.Controls.ShellTopBar shellTopBar;
+        private System.Windows.Forms.FlowLayoutPanel flowShellTopRight;
+        private SemiconductorUi.Controls.ShellChip shellChipEthercat;
+        private System.Windows.Forms.Panel panelShellTopDivider1;
+        private SemiconductorUi.Controls.ShellChip shellChipServo;
+        private System.Windows.Forms.Panel panelShellTopDivider2;
+        private SemiconductorUi.Controls.ShellChip shellChipAlarm;
+        private SemiconductorUi.Controls.ShellClock shellClock;
+        private SemiconductorUi.Controls.ShellTowerLamp shellTowerLamp;
+        private System.Windows.Forms.FlowLayoutPanel flowShellTopLeft;
+        private SemiconductorUi.Controls.ShellUserCard shellUserCard;
+        private System.Windows.Forms.Panel panelShellParking;
         private System.Windows.Forms.TableLayoutPanel tableShellContent;
         private System.Windows.Forms.Panel panelShellSubTabs;
         private System.Windows.Forms.FlowLayoutPanel flowShellSubTabs;

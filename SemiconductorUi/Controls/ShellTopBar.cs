@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Windows.Forms;
@@ -29,6 +30,7 @@ namespace SemiconductorUi.Controls
     /// 메인 화면 맨 위 한 줄(SEMI E95의 타이틀 패널): 장비 이름과 지금 보는 화면 이름, 큰 상태 표시,
     /// 그 옆에 로그인 사용자와 로그인 버튼, 오른쪽에 연결·서보·알람·시계·3색 램프.
     /// 상태 표시는 그릴 때마다 StateProvider에서 읽으므로 화면 표시만 하고 장비에 명령을 보내지 않습니다.
+    /// 왼쪽 줄(LeftArea)과 오른쪽 줄(RightArea)과 그 안의 칩·버튼은 Form1.Designer.cs에 배치되어 있습니다.
     /// </summary>
     public sealed class ShellTopBar : Panel
     {
@@ -45,8 +47,8 @@ namespace SemiconductorUi.Controls
 
         private bool large;
 
-        private readonly FlowLayoutPanel rightArea;
-        private readonly FlowLayoutPanel leftArea;
+        private FlowLayoutPanel rightArea;
+        private FlowLayoutPanel leftArea;
 
         public ShellTopBar()
         {
@@ -56,57 +58,77 @@ namespace SemiconductorUi.Controls
             Margin = Padding.Empty;
             // 아래 1px은 구분선 자리로 비워 둡니다.
             Padding = new Padding(0, 0, 0, 1);
-
-            rightArea = new FlowLayoutPanel
-            {
-                Name = "flowShellTopRight",
-                Dock = DockStyle.Right,
-                AutoSize = true,
-                AutoSizeMode = AutoSizeMode.GrowAndShrink,
-                WrapContents = false,
-                FlowDirection = FlowDirection.LeftToRight,
-                BackColor = UiTheme.Surface,
-                Padding = new Padding(0, 0, 16, 0),
-                Margin = Padding.Empty
-            };
-            Controls.Add(rightArea);
-
-            // 큰 상태 표시 바로 오른쪽 줄(로그인 사용자와 버튼). 위치는 OnLayout에서 정합니다.
-            leftArea = new FlowLayoutPanel
-            {
-                Name = "flowShellTopLeft",
-                AutoSize = true,
-                AutoSizeMode = AutoSizeMode.GrowAndShrink,
-                WrapContents = false,
-                FlowDirection = FlowDirection.LeftToRight,
-                BackColor = UiTheme.Surface,
-                Padding = Padding.Empty,
-                Margin = Padding.Empty
-            };
-            Controls.Add(leftArea);
-            leftArea.SizeChanged += (s, e) => PerformLayout();
-            rightArea.SizeChanged += (s, e) => PerformLayout();
-            // 오른쪽 줄 너비가 바뀌면 장비 이름을 줄일지 다시 정합니다.
-            rightArea.LocationChanged += (s, e) => Invalidate();
         }
 
-        /// <summary>오른쪽 칩·버튼이 들어가는 줄.</summary>
-        public FlowLayoutPanel RightArea => rightArea;
+        /// <summary>오른쪽 칩·버튼이 들어가는 줄 (Dock = Right). 디자이너의 flowShellTopRight.</summary>
+        [DefaultValue(null)]
+        public FlowLayoutPanel RightArea
+        {
+            get => rightArea;
+            set
+            {
+                if (rightArea == value) return;
+                if (rightArea != null)
+                {
+                    rightArea.SizeChanged -= Area_SizeChanged;
+                    rightArea.LocationChanged -= RightArea_LocationChanged;
+                }
+                rightArea = value;
+                if (rightArea != null)
+                {
+                    rightArea.SizeChanged += Area_SizeChanged;
+                    // 오른쪽 줄 너비가 바뀌면 장비 이름을 줄일지 다시 정합니다.
+                    rightArea.LocationChanged += RightArea_LocationChanged;
+                }
+                PerformLayout();
+                Invalidate();
+            }
+        }
 
+        /// <summary>
+        /// 큰 상태 표시 바로 오른쪽 줄(로그인 사용자와 버튼). 디자이너의 flowShellTopLeft.
+        /// 가로 위치는 상태 표시 폭에 맞춰 OnLayout에서 정합니다.
+        /// </summary>
+        [DefaultValue(null)]
+        public FlowLayoutPanel LeftArea
+        {
+            get => leftArea;
+            set
+            {
+                if (leftArea == value) return;
+                if (leftArea != null) leftArea.SizeChanged -= Area_SizeChanged;
+                leftArea = value;
+                if (leftArea != null) leftArea.SizeChanged += Area_SizeChanged;
+                PerformLayout();
+                Invalidate();
+            }
+        }
+
+        private void Area_SizeChanged(object sender, EventArgs e) => PerformLayout();
+
+        private void RightArea_LocationChanged(object sender, EventArgs e) => Invalidate();
+
+        [Browsable(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public Func<ShellStatePill> StateProvider { get; set; }
 
         /// <summary>장비 이름 아래 작은 글자: 지금 보는 화면 이름(예: "운전 · 모니터링").</summary>
+        [Browsable(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public Func<string> SubtitleProvider { get; set; }
 
         /// <summary>
         /// 큰 상태 표시에 나올 수 있는 글자들. 가장 긴 글자에 맞춘 자리를 잡아 두어,
         /// 상태가 바뀌어도 옆의 로그인 줄이 움직이지 않게 합니다.
         /// </summary>
+        [Browsable(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string[] PillSlotTexts { get; set; } = new string[0];
 
         /// <summary>
         /// 넓은 화면용 큰 글자. 오른쪽 줄 컨트롤 크기는 바꾼 쪽에서 정하고, 여기서는 세로 가운데만 다시 맞춥니다.
         /// </summary>
+        [DefaultValue(false)]
         public bool Large
         {
             get => large;
@@ -114,10 +136,13 @@ namespace SemiconductorUi.Controls
             {
                 if (large == value) return;
                 large = value;
-                foreach (Control control in rightArea.Controls)
+                if (rightArea != null)
                 {
-                    // 세로 구분선
-                    if (control.Width == 1) control.Height = large ? 32 : 28;
+                    foreach (Control control in rightArea.Controls)
+                    {
+                        // 세로 구분선
+                        if (control.Width == 1) control.Height = large ? 32 : 28;
+                    }
                 }
                 RecenterRightArea();
                 PerformLayout();
@@ -130,41 +155,13 @@ namespace SemiconductorUi.Controls
         {
             foreach (var area in new[] { rightArea, leftArea })
             {
+                if (area == null) continue;
                 foreach (Control control in area.Controls)
                 {
                     int top = Math.Max(0, (BarHeight - 1 - control.Height) / 2);
                     control.Margin = new Padding(control.Margin.Left, top, 0, 0);
                 }
             }
-        }
-
-        /// <summary>큰 상태 표시 옆 줄(로그인 사용자와 버튼)에 넣습니다.</summary>
-        public void AddLeft(Control control, int leftGap)
-        {
-            int top = Math.Max(0, (BarHeight - 1 - control.Height) / 2);
-            control.Margin = new Padding(leftGap, top, 0, 0);
-            leftArea.Controls.Add(control);
-        }
-
-        /// <summary>
-        /// 오른쪽 줄에 넣을 컨트롤의 위아래 여백을 맞춰 세로 가운데에 오게 합니다.
-        /// </summary>
-        public void AddRight(Control control, int leftGap)
-        {
-            int top = Math.Max(0, (BarHeight - 1 - control.Height) / 2);
-            control.Margin = new Padding(leftGap, top, 0, 0);
-            rightArea.Controls.Add(control);
-        }
-
-        /// <summary>오른쪽 줄 사이에 넣는 얇은 세로 구분선.</summary>
-        public void AddDivider()
-        {
-            var divider = new Panel
-            {
-                Size = new Size(1, 28),
-                BackColor = UiTheme.Border
-            };
-            AddRight(divider, 12);
         }
 
         private int FullBrandWidth => large ? BrandWidth + 24 : BrandWidth;
@@ -190,8 +187,9 @@ namespace SemiconductorUi.Controls
         /// </summary>
         private int ChooseBrandWidth(int pillSlot)
         {
-            int leftNeed = pillSlot + 18 + (leftArea.Controls.Count > 0 ? 14 + leftArea.Width : 0);
-            return FullBrandWidth + leftNeed + 12 > rightArea.Left ? CompactBrandWidth : FullBrandWidth;
+            int leftNeed = pillSlot + 18 + (leftArea != null && leftArea.Controls.Count > 0 ? 14 + leftArea.Width : 0);
+            int rightLeft = rightArea != null ? rightArea.Left : Width;
+            return FullBrandWidth + leftNeed + 12 > rightLeft ? CompactBrandWidth : FullBrandWidth;
         }
 
         protected override void OnLayout(LayoutEventArgs levent)
@@ -261,7 +259,7 @@ namespace SemiconductorUi.Controls
             {
                 g.DrawLine(pen, brandWidth, 16, brandWidth, BarHeight - 17);
                 g.DrawLine(pen, 0, Height - 1, Width, Height - 1);
-                if (leftArea.Controls.Count > 0)
+                if (leftArea != null && leftArea.Controls.Count > 0)
                 {
                     int dividerX = leftArea.Left - 7;
                     g.DrawLine(pen, dividerX, 16, dividerX, BarHeight - 17);
@@ -315,11 +313,20 @@ namespace SemiconductorUi.Controls
             MaxChipWidth = 260;
         }
 
+        [Browsable(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public Func<string> TextProvider { get; set; }
+
+        [Browsable(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public Func<Color> DotProvider { get; set; }
+
+        /// <summary>글자가 길어도 이 너비 이상으로 늘리지 않습니다.</summary>
+        [DefaultValue(260)]
         public int MaxChipWidth { get; set; }
 
         /// <summary>넓은 화면용 큰 글자와 높이.</summary>
+        [DefaultValue(false)]
         public bool Large
         {
             get => large;
@@ -394,6 +401,7 @@ namespace SemiconductorUi.Controls
         }
 
         /// <summary>넓은 화면용 큰 글자.</summary>
+        [DefaultValue(false)]
         public bool Large
         {
             get => large;
@@ -437,11 +445,20 @@ namespace SemiconductorUi.Controls
             Size = new Size(80, 66);
         }
 
+        [Browsable(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public Func<string> UserProvider { get; set; }
+
+        [Browsable(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public Func<string> RoleProvider { get; set; }
+
+        [Browsable(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public Func<bool> LoggedInProvider { get; set; }
 
         /// <summary>true면 첫 글자 동그라미를 왼쪽에, 이름과 권한을 오른쪽에 두 줄로 그립니다.</summary>
+        [DefaultValue(false)]
         public bool Horizontal { get; set; }
 
         protected override void OnPaint(PaintEventArgs e)
@@ -502,8 +519,16 @@ namespace SemiconductorUi.Controls
             Size = new Size(22, 44);
         }
 
+        [Browsable(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public Func<Color> RedProvider { get; set; }
+
+        [Browsable(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public Func<Color> YellowProvider { get; set; }
+
+        [Browsable(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public Func<Color> GreenProvider { get; set; }
 
         protected override void OnPaint(PaintEventArgs e)
@@ -534,8 +559,8 @@ namespace SemiconductorUi.Controls
         }
 
         /// <summary>그릴 글자를 읽어 오는 곳. 실행할 때 코드(Form1.Shell.cs)에서 연결하며, 디자이너에는 나오지 않습니다.</summary>
-        [System.ComponentModel.Browsable(false)]
-        [System.ComponentModel.DesignerSerializationVisibility(System.ComponentModel.DesignerSerializationVisibility.Hidden)]
+        [Browsable(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public Func<string> TextProvider { get; set; }
 
         protected override void OnPaint(PaintEventArgs e)
