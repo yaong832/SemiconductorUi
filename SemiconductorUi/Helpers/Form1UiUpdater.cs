@@ -94,7 +94,7 @@ namespace SemiconductorUi.Helpers
                             // 하드웨어는 OFF인데 UI 상태가 ON인 경우 동기화
                             isServoOn = false;
                             form.IsServoOn = false;
-                            form.TmHardwareInitialized = false;
+                            form.RequireRehome("서보가 꺼져 있는 것을 확인");
                             form.AddLogMessage("서보 상태 확인: 하드웨어는 OFF 상태입니다", "WARN");
                         }
                         else
