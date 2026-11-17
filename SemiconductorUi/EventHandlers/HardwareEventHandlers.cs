@@ -211,6 +211,8 @@ namespace SemiconductorUi.EventHandlers
             }
 
             form.AddLogMessage("서보모터 ON 시작...", "INFO");
+            // 서보 ON은 서보를 먼저 끄고 다시 켭니다. 꺼진 동안 축이 밀리거나 상하축이 내려앉을 수 있으므로 원점복귀를 다시 해야 합니다.
+            form.RequireRehome("상단 바 서보 ON (서보를 껐다 켬)");
             var ethercat = form.EtherCAT_M;
             Int64 velocity = AppSettings.ServoDefaultVelocity;
             Int64 maxVelocity = AppSettings.ServoDefaultMaxVelocity;
@@ -303,13 +305,26 @@ namespace SemiconductorUi.EventHandlers
                 return;
             }
 
+            // 공정 중 서보 OFF는 공정을 멈추지 않습니다. 다음 이동 명령 때 DLL이 서보를 다시 켜서 TM이 움직입니다.
+            // 그래서 공정 중(일시정지·알람 대기 포함)이나 서보 ON·원점복귀 중에는 막고, 멈출 때는 긴급 정지를 쓰게 합니다.
+            if (form.IsProcessActiveOrStarting())
+            {
+                form.AddLogMessage($"공정 진행 중 서보 OFF 시도 차단 (사용자: {form.CurrentUser})", "WARN");
+                MessageBox.Show(
+                    "공정이 진행 중(일시정지·알람 대기 포함)이거나 서보 ON·원점복귀 중에는 서보 OFF를 할 수 없습니다.\n\n" +
+                    "공정 중 서보 OFF는 공정을 멈추지 않고, 다음 이동 때 서보가 다시 켜져 TM이 움직입니다.\n" +
+                    "멈춰야 하면 긴급 정지를 누르세요.",
+                    "서보 OFF 제한", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
             try
             {
                 form.EtherCAT_M.Axis1_OFF();
                 form.EtherCAT_M.Axis2_OFF();
 
-                        form.IsServoOn = false;  // 서보 OFF 상태 플래그 설정
-                form.TmHardwareInitialized = false;  // 원점복귀 상태도 초기화
+                form.IsServoOn = false;  // 서보 OFF 상태 플래그 설정
+                form.RequireRehome("상단 바 서보 OFF");  // 원점복귀를 다시 할 때까지 이동 금지
                 form.AddLogMessage("서보모터 OFF", "INFO");
                 form.UpdateServoStatusLabel();
             }

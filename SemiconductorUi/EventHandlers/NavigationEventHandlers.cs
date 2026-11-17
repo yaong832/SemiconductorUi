@@ -259,7 +259,7 @@ namespace SemiconductorUi.EventHandlers
                                 form.IsServoOn = servoIsOn;  // 서보 상태 플래그 업데이트
                                 if (!servoIsOn)
                                 {
-                                    form.TmHardwareInitialized = false;  // 서보 OFF 시 원점복귀 상태 초기화
+                                    form.RequireRehome("장비 제어 창 서보 OFF");  // 원점복귀를 다시 할 때까지 이동 금지
                                 }
                                 form.UpdateServoStatusLabel();
                             }));
@@ -269,7 +269,7 @@ namespace SemiconductorUi.EventHandlers
                             form.IsServoOn = servoIsOn;  // 서보 상태 플래그 업데이트
                             if (!servoIsOn)
                             {
-                                form.TmHardwareInitialized = false;  // 서보 OFF 시 원점복귀 상태 초기화
+                                form.RequireRehome("장비 제어 창 서보 OFF");  // 원점복귀를 다시 할 때까지 이동 금지
                             }
                             form.UpdateServoStatusLabel();
                         }

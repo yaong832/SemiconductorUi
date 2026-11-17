@@ -1299,6 +1299,25 @@ namespace SemiconductorUi
             return IsBackgroundHomingInProgress() ? "공정 상태: 대기 · TM 원점복귀 중" : "공정 상태: 대기";
         }
 
+        /// <summary>
+        /// 서보가 꺼졌을 때(서보 OFF, 비상정지, 서보 알람, 꺼진 것을 확인했을 때) 부릅니다.
+        /// 원점복귀 완료 표시를 지우고, 원점복귀를 다시 끝낼 때까지 TM 컨트롤러가 축 이동을 보내지 않게 합니다.
+        /// 다음 공정 시작은 서보 ON·원점복귀부터 합니다 (드라이브의 원점복귀 완료 신호만으로 건너뛰지 않음).
+        /// </summary>
+        internal void RequireRehome(string reason)
+        {
+            TmHardwareInitialized = false;
+            TmHardwareController?.RequireRehome(reason);
+        }
+
+        /// <summary>
+        /// 서보가 꺼진 뒤 아직 원점복귀를 다시 하지 않았는지 (TM 컨트롤러가 없으면 true).
+        /// </summary>
+        internal bool IsRehomeRequired()
+        {
+            return TmHardwareController == null || TmHardwareController.RehomeRequired;
+        }
+
         private void buttonLogout_Click(object sender, EventArgs e)
         {
             if (!IsLoggedIn)
@@ -2729,7 +2748,8 @@ namespace SemiconductorUi
                     SetChamberLamp(EquipmentRegion.ChamberC, false);
                     
                     // 공정 시작 전 서보 ON + 원점복귀 — UI 스레드 블로킹 방지(백그라운드)
-                    if (!TmHardwareInitialized)
+                    // 서보가 꺼졌던 뒤(원점복귀 필요)에는 원점복귀 완료 표시가 남아 있어도 원점복귀부터 합니다.
+                    if (!TmHardwareInitialized || IsRehomeRequired())
                     {
                         AddLogMessage("공정 시작 - TM 하드웨어 초기화 중 (서보 ON + 원점복귀, UI 비차단)", "INFO");
                         BeginHardwareInitThenStartSimulation();
@@ -2985,7 +3005,7 @@ namespace SemiconductorUi
             }
 
             IsServoOn = false;
-            TmHardwareInitialized = false;
+            RequireRehome($"비상정지 ({source})");
             TmHardwareActionPending = false;
             TmSettleWaiting = false;
             HasAlarm = true;
@@ -4400,7 +4420,7 @@ namespace SemiconductorUi
                     {
                         // 하드웨어는 OFF인데 UI 상태가 ON인 경우 동기화
                         IsServoOn = false;
-                        TmHardwareInitialized = false;
+                        RequireRehome("서보가 꺼져 있는 것을 확인");
                         AddLogMessage("서보 상태 동기화: 하드웨어는 OFF 상태입니다", "WARN");
                     }
                     // 하드웨어가 ON인데 UI가 OFF인 경우는 자동 동기화하지 않음
@@ -4414,9 +4434,10 @@ namespace SemiconductorUi
                     bool isHomed = axis1Homed && axis2Homed;
                     bool isProcessRunning = CurrentProcessState == ProcessState.Running || TmPhase != TransferController.TmPhase.Idle;
                     
-                    if (isHomed && !TmHardwareInitialized)
+                    if (isHomed && !TmHardwareInitialized && !IsRehomeRequired())
                     {
                         // 하드웨어는 원점복귀 완료인데 UI 상태가 미완료인 경우 동기화
+                        // (이 프로그램이 원점복귀를 끝낸 뒤 서보가 꺼진 적이 없을 때만)
                         TmHardwareInitialized = true;
                         AddLogMessage("원점복귀 상태 동기화: 완료 상태로 업데이트", "INFO");
                     }
@@ -7189,7 +7210,12 @@ namespace SemiconductorUi
                         servoAlreadyOn = true;
                         IsServoOn = true; // 플래그 동기화
                         
-                        if (isHomed)
+                        if (isHomed && IsRehomeRequired())
+                        {
+                            // 드라이브는 원점복귀 완료 신호를 내지만, 연결 뒤 아직 원점복귀를 안 했거나 서보가 꺼졌던 뒤라 믿지 않음
+                            AddLogMessage($"드라이브는 원점복귀 완료 상태지만 원점복귀를 다시 합니다 ({TmHardwareController?.RehomeReason ?? "TM 컨트롤러 없음"})", "INFO");
+                        }
+                        else if (isHomed)
                         {
                             // 원점복귀도 완료된 상태
                             homingAlreadyDone = true;
