@@ -125,6 +125,50 @@ namespace SemiconductorUi.Controls
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string[] PillSlotTexts { get; set; } = new string[0];
 
+        private string previewStateText = "";
+        private string previewSubtitle = "";
+
+        /// <summary>디자이너에서 큰 상태 표시 자리에 보여 줄 글자(대기 색). 실행 중에는 StateProvider가 정합니다.</summary>
+        [Category("디자이너 미리보기")]
+        [Description("디자이너에서만 보이는 상태 글자입니다. 실행 중 상태는 Form1.Shell.cs(GetShellStatePill)가 정합니다.")]
+        [DefaultValue("")]
+        public string PreviewStateText
+        {
+            get => previewStateText;
+            set
+            {
+                previewStateText = value ?? "";
+                if (DesignPreview.IsDesigner(this))
+                {
+                    PerformLayout();
+                    Invalidate();
+                }
+            }
+        }
+
+        /// <summary>디자이너에서 장비 이름 아래에 보여 줄 화면 이름. 실행 중에는 SubtitleProvider가 정합니다.</summary>
+        [Category("디자이너 미리보기")]
+        [Description("디자이너에서만 보이는 화면 이름입니다. 실행 중 화면 이름은 Form1.Shell.cs(GetShellViewTitle)가 정합니다.")]
+        [DefaultValue("")]
+        public string PreviewSubtitle
+        {
+            get => previewSubtitle;
+            set
+            {
+                previewSubtitle = value ?? "";
+                if (DesignPreview.IsDesigner(this)) Invalidate();
+            }
+        }
+
+        /// <summary>지금 그릴 큰 상태 표시: 실행 중에는 StateProvider 값, 디자이너에서는 미리보기 글자.</summary>
+        private ShellStatePill? CurrentState()
+        {
+            if (StateProvider != null) return StateProvider();
+            string preview = DesignPreview.Text(this, previewStateText);
+            if (preview.Length == 0) return null;
+            return new ShellStatePill(preview, Color.FromArgb(140, 150, 164), Color.FromArgb(58, 69, 85), Color.FromArgb(238, 241, 245));
+        }
+
         /// <summary>
         /// 넓은 화면용 큰 글자. 오른쪽 줄 컨트롤 크기는 바꾼 쪽에서 정하고, 여기서는 세로 가운데만 다시 맞춥니다.
         /// </summary>
@@ -196,7 +240,7 @@ namespace SemiconductorUi.Controls
         {
             base.OnLayout(levent);
             if (leftArea == null) return;
-            int slot = MeasurePillSlot(StateProvider?.Invoke().Text);
+            int slot = MeasurePillSlot(CurrentState()?.Text);
             int brandWidth = ChooseBrandWidth(slot);
             int x = brandWidth + 18 + slot + 14;
             if (leftArea.Location != new Point(x, 0))
@@ -214,7 +258,7 @@ namespace SemiconductorUi.Controls
             g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
 
             // 큰 상태 표시의 크기를 먼저 재서, 창이 좁아 오른쪽 줄과 겹칠 것 같으면 장비 이름 글자를 빼고 로고만 둡니다.
-            ShellStatePill? state = StateProvider?.Invoke();
+            ShellStatePill? state = CurrentState();
             var titleFont = large ? LargeTitleFont : TitleFont;
             var subFont = large ? LargeSubFont : SubFont;
             var pillFont = large ? LargePillFont : PillFont;
@@ -249,7 +293,7 @@ namespace SemiconductorUi.Controls
             if (brandWidth == fullBrandWidth)
             {
                 TextRenderer.DrawText(g, "웨이퍼 이송 장비", titleFont, new Point(logo.Right + 10, large ? 9 : 12), UiTheme.TextPrimary, TextFormatFlags.NoPadding);
-                string subtitle = SubtitleProvider?.Invoke();
+                string subtitle = SubtitleProvider != null ? SubtitleProvider() : DesignPreview.Text(this, previewSubtitle);
                 bool hasView = !string.IsNullOrWhiteSpace(subtitle);
                 TextRenderer.DrawText(g, hasView ? subtitle : "SemiconductorUi", subFont, new Point(logo.Right + 11, large ? 34 : 33),
                     hasView ? UiTheme.Primary : UiTheme.TextSecondary, TextFormatFlags.NoPadding);
@@ -325,6 +369,22 @@ namespace SemiconductorUi.Controls
         [DefaultValue(260)]
         public int MaxChipWidth { get; set; }
 
+        private string previewText = "";
+
+        /// <summary>디자이너에서만 보이는 글자. 실행 중 글자는 TextProvider(Form1.Shell.cs InitShellTopBar)가 정합니다.</summary>
+        [Category("디자이너 미리보기")]
+        [Description("디자이너에서만 보이는 글자입니다. 실행 중 글자는 Form1.Shell.cs(InitShellTopBar)가 연결한 값을 읽습니다.")]
+        [DefaultValue("")]
+        public string PreviewText
+        {
+            get => previewText;
+            set
+            {
+                previewText = value ?? "";
+                if (DesignPreview.IsDesigner(this)) Invalidate();
+            }
+        }
+
         /// <summary>넓은 화면용 큰 글자와 높이.</summary>
         [DefaultValue(false)]
         public bool Large
@@ -375,7 +435,8 @@ namespace SemiconductorUi.Controls
                 g.FillEllipse(brush, 11, (Height - 8) / 2, 8, 8);
             }
             var textRect = new Rectangle(24, 0, Width - 32, Height);
-            TextRenderer.DrawText(g, TextProvider?.Invoke() ?? "", CurrentFont, textRect, fore,
+            string text = TextProvider != null ? (TextProvider() ?? "") : DesignPreview.Text(this, previewText);
+            TextRenderer.DrawText(g, text, CurrentFont, textRect, fore,
                 TextFormatFlags.VerticalCenter | TextFormatFlags.Left | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPadding | TextFormatFlags.SingleLine);
         }
     }
@@ -563,6 +624,22 @@ namespace SemiconductorUi.Controls
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public Func<string> TextProvider { get; set; }
 
+        private string previewText = "";
+
+        /// <summary>디자이너에서만 보이는 글자. 실행 중 글자는 TextProvider(Form1.Shell.cs InitShellBottomBar)가 정합니다.</summary>
+        [Category("디자이너 미리보기")]
+        [Description("디자이너에서만 보이는 글자입니다. 실행 중 글자는 FOUP 교환 상태(labelFoupSummaryInfo)를 읽습니다.")]
+        [DefaultValue("")]
+        public string PreviewText
+        {
+            get => previewText;
+            set
+            {
+                previewText = value ?? "";
+                if (DesignPreview.IsDesigner(this)) Invalidate();
+            }
+        }
+
         protected override void OnPaint(PaintEventArgs e)
         {
             var g = e.Graphics;
@@ -579,7 +656,8 @@ namespace SemiconductorUi.Controls
             int mid = Height / 2;
             TextRenderer.DrawText(g, "현재 상태", CaptionFont, new Rectangle(14, mid - 18, Width - 28, 15), UiTheme.TextSecondary,
                 TextFormatFlags.Left | TextFormatFlags.Bottom | TextFormatFlags.NoPadding | TextFormatFlags.SingleLine);
-            TextRenderer.DrawText(g, TextProvider?.Invoke() ?? "", LineFont, new Rectangle(14, mid - 1, Width - 28, 20), UiTheme.TextPrimary,
+            string text = TextProvider != null ? (TextProvider() ?? "") : DesignPreview.Text(this, previewText);
+            TextRenderer.DrawText(g, text, LineFont, new Rectangle(14, mid - 1, Width - 28, 20), UiTheme.TextPrimary,
                 TextFormatFlags.Left | TextFormatFlags.Top | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPadding | TextFormatFlags.SingleLine);
         }
     }

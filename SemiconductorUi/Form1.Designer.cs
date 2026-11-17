@@ -83,9 +83,9 @@ namespace SemiconductorUi
             this.labelHeaderEventLevel = new System.Windows.Forms.Label();
             this.labelHeaderEventMessage = new System.Windows.Forms.Label();
             this.flowHeaderTabs = new System.Windows.Forms.FlowLayoutPanel();
-            this.buttonTabMain = new System.Windows.Forms.Button();
-            this.buttonTabVerification = new System.Windows.Forms.Button();
-            this.buttonTabTransfer = new System.Windows.Forms.Button();
+            this.buttonTabMain = new SemiconductorUi.Controls.ShellNavButton();
+            this.buttonTabVerification = new SemiconductorUi.Controls.ShellNavButton();
+            this.buttonTabTransfer = new SemiconductorUi.Controls.ShellNavButton();
             this.flowHeaderTimeAndUser = new System.Windows.Forms.FlowLayoutPanel();
             this.labelHeaderCurrentTime = new System.Windows.Forms.Label();
             this.buttonUserManagement = new System.Windows.Forms.Button();
@@ -161,23 +161,23 @@ namespace SemiconductorUi
             this.panelControlPanel = new System.Windows.Forms.Panel();
             this.flowControlPanelStack = new System.Windows.Forms.FlowLayoutPanel();
             this.labelControlTitle = new System.Windows.Forms.Label();
-            this.groupBoxControlButtons = new System.Windows.Forms.GroupBox();
+            this.groupBoxControlButtons = new SemiconductorUi.Controls.PlateGroupBox();
             this.flowLayoutControlButtons = new System.Windows.Forms.FlowLayoutPanel();
-            this.buttonStart = new System.Windows.Forms.Button();
-            this.buttonPause = new System.Windows.Forms.Button();
-            this.buttonStop = new System.Windows.Forms.Button();
-            this.buttonResetAlarm = new System.Windows.Forms.Button();
-            this.buttonResetProcess = new System.Windows.Forms.Button();
-            this.buttonEquipmentControl = new System.Windows.Forms.Button();
-            this.groupBoxFoupReady = new System.Windows.Forms.GroupBox();
+            this.buttonStart = new SemiconductorUi.Controls.LampButton();
+            this.buttonPause = new SemiconductorUi.Controls.LampButton();
+            this.buttonStop = new SemiconductorUi.Controls.LampButton();
+            this.buttonResetAlarm = new SemiconductorUi.Controls.LampButton();
+            this.buttonResetProcess = new SemiconductorUi.Controls.LampButton();
+            this.buttonEquipmentControl = new SemiconductorUi.Controls.LampButton();
+            this.groupBoxFoupReady = new SemiconductorUi.Controls.PlateGroupBox();
             this.flowLayoutFoupReadyButtons = new System.Windows.Forms.FlowLayoutPanel();
-            this.buttonMountFoupA = new System.Windows.Forms.Button();
-            this.buttonMountFoupB = new System.Windows.Forms.Button();
+            this.buttonMountFoupA = new SemiconductorUi.Controls.LampButton();
+            this.buttonMountFoupB = new SemiconductorUi.Controls.LampButton();
             this.buttonToggleFoupMount = new System.Windows.Forms.Button();
-            this.buttonWaferLoading = new System.Windows.Forms.Button();
-            this.buttonWaferUnloading = new System.Windows.Forms.Button();
-            this.groupBoxRecipe = new System.Windows.Forms.GroupBox();
-            this.buttonApplyRecipe = new System.Windows.Forms.Button();
+            this.buttonWaferLoading = new SemiconductorUi.Controls.LampButton();
+            this.buttonWaferUnloading = new SemiconductorUi.Controls.LampButton();
+            this.groupBoxRecipe = new SemiconductorUi.Controls.PlateGroupBox();
+            this.buttonApplyRecipe = new SemiconductorUi.Controls.LampButton();
             this.comboRecipeSelect = new System.Windows.Forms.ComboBox();
             this.labelRecipe = new System.Windows.Forms.Label();
             this.shellTopBar = new SemiconductorUi.Controls.ShellTopBar();
@@ -199,13 +199,13 @@ namespace SemiconductorUi
             this.flowShellNavMenu = new System.Windows.Forms.FlowLayoutPanel();
             this.shellStatusLine = new SemiconductorUi.Controls.ShellStatusLine();
             this.flowShellNavSystem = new System.Windows.Forms.FlowLayoutPanel();
-            this.buttonNavOperate = new System.Windows.Forms.Button();
-            this.buttonNavRecipe = new System.Windows.Forms.Button();
-            this.buttonNavMaintenance = new System.Windows.Forms.Button();
-            this.buttonNavConfig = new System.Windows.Forms.Button();
-            this.buttonNavTrend = new System.Windows.Forms.Button();
-            this.buttonNavReport = new System.Windows.Forms.Button();
-            this.buttonNavSystem = new System.Windows.Forms.Button();
+            this.buttonNavOperate = new SemiconductorUi.Controls.ShellNavButton();
+            this.buttonNavRecipe = new SemiconductorUi.Controls.ShellNavButton();
+            this.buttonNavMaintenance = new SemiconductorUi.Controls.ShellNavButton();
+            this.buttonNavConfig = new SemiconductorUi.Controls.ShellNavButton();
+            this.buttonNavTrend = new SemiconductorUi.Controls.ShellNavButton();
+            this.buttonNavReport = new SemiconductorUi.Controls.ShellNavButton();
+            this.buttonNavSystem = new SemiconductorUi.Controls.ShellNavButton();
             this.buttonServoHome = new System.Windows.Forms.Button();
             this.panelMainLamp = new System.Windows.Forms.Panel();
             this.labelMainLampRed = new System.Windows.Forms.Label();
@@ -1179,6 +1179,8 @@ namespace SemiconductorUi
             this.buttonTabMain.Location = new System.Drawing.Point(3, 3);
             this.buttonTabMain.Margin = new System.Windows.Forms.Padding(0, 0, 2, 0);
             this.buttonTabMain.Name = "buttonTabMain";
+            this.buttonTabMain.NavKind = SemiconductorUi.Controls.ShellNavButtonKind.SubTab;
+            this.buttonTabMain.PreviewSelected = true;
             this.buttonTabMain.Size = new System.Drawing.Size(88, 28);
             this.buttonTabMain.TabIndex = 0;
             this.buttonTabMain.Text = "모니터링";
@@ -1196,6 +1198,7 @@ namespace SemiconductorUi
             this.buttonTabVerification.Location = new System.Drawing.Point(93, 3);
             this.buttonTabVerification.Margin = new System.Windows.Forms.Padding(0, 0, 2, 0);
             this.buttonTabVerification.Name = "buttonTabVerification";
+            this.buttonTabVerification.NavKind = SemiconductorUi.Controls.ShellNavButtonKind.SubTab;
             this.buttonTabVerification.Size = new System.Drawing.Size(88, 28);
             this.buttonTabVerification.TabIndex = 1;
             this.buttonTabVerification.Text = "검증";
@@ -1213,6 +1216,7 @@ namespace SemiconductorUi
             this.buttonTabTransfer.Location = new System.Drawing.Point(183, 3);
             this.buttonTabTransfer.Margin = new System.Windows.Forms.Padding(0, 0, 2, 0);
             this.buttonTabTransfer.Name = "buttonTabTransfer";
+            this.buttonTabTransfer.NavKind = SemiconductorUi.Controls.ShellNavButtonKind.SubTab;
             this.buttonTabTransfer.Size = new System.Drawing.Size(88, 28);
             this.buttonTabTransfer.TabIndex = 2;
             this.buttonTabTransfer.Text = "이송";
@@ -2242,6 +2246,7 @@ namespace SemiconductorUi
             this.buttonStart.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.buttonStart.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold);
             this.buttonStart.ForeColor = System.Drawing.Color.White;
+            this.buttonStart.LampLook = SemiconductorUi.Controls.LampButtonLook.Primary;
             this.buttonStart.Location = new System.Drawing.Point(0, 8);
             this.buttonStart.Margin = new System.Windows.Forms.Padding(0, 4, 0, 10);
             this.buttonStart.Name = "buttonStart";
@@ -2272,6 +2277,7 @@ namespace SemiconductorUi
             this.buttonStop.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.buttonStop.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold);
             this.buttonStop.ForeColor = System.Drawing.Color.White;
+            this.buttonStop.LampLook = SemiconductorUi.Controls.LampButtonLook.Emergency;
             this.buttonStop.Location = new System.Drawing.Point(0, 116);
             this.buttonStop.Margin = new System.Windows.Forms.Padding(0, 0, 0, 10);
             this.buttonStop.Name = "buttonStop";
@@ -2512,6 +2518,8 @@ namespace SemiconductorUi
             this.shellTopBar.Margin = new System.Windows.Forms.Padding(0);
             this.shellTopBar.Name = "shellTopBar";
             this.shellTopBar.Padding = new System.Windows.Forms.Padding(0, 0, 0, 1);
+            this.shellTopBar.PreviewStateText = "대기";
+            this.shellTopBar.PreviewSubtitle = "운전 · 모니터링";
             this.shellTopBar.RightArea = this.flowShellTopRight;
             this.shellTopBar.Size = new System.Drawing.Size(1701, 60);
             this.shellTopBar.TabIndex = 0;
@@ -2547,6 +2555,7 @@ namespace SemiconductorUi
             this.shellChipEthercat.Location = new System.Drawing.Point(0, 15);
             this.shellChipEthercat.Margin = new System.Windows.Forms.Padding(0, 15, 0, 0);
             this.shellChipEthercat.Name = "shellChipEthercat";
+            this.shellChipEthercat.PreviewText = "EtherCAT 끊김";
             this.shellChipEthercat.Size = new System.Drawing.Size(120, 28);
             this.shellChipEthercat.TabIndex = 0;
             // 
@@ -2566,6 +2575,7 @@ namespace SemiconductorUi
             this.shellChipServo.Margin = new System.Windows.Forms.Padding(12, 15, 0, 0);
             this.shellChipServo.MaxChipWidth = 200;
             this.shellChipServo.Name = "shellChipServo";
+            this.shellChipServo.PreviewText = "서보 OFF";
             this.shellChipServo.Size = new System.Drawing.Size(120, 28);
             this.shellChipServo.TabIndex = 4;
             // 
@@ -2585,6 +2595,7 @@ namespace SemiconductorUi
             this.shellChipAlarm.Margin = new System.Windows.Forms.Padding(12, 15, 0, 0);
             this.shellChipAlarm.MaxChipWidth = 220;
             this.shellChipAlarm.Name = "shellChipAlarm";
+            this.shellChipAlarm.PreviewText = "알람 없음";
             this.shellChipAlarm.Size = new System.Drawing.Size(120, 28);
             this.shellChipAlarm.TabIndex = 8;
             // 
@@ -2731,6 +2742,7 @@ namespace SemiconductorUi
             this.shellStatusLine.Location = new System.Drawing.Point(842, 8);
             this.shellStatusLine.Margin = new System.Windows.Forms.Padding(10, 0, 10, 0);
             this.shellStatusLine.Name = "shellStatusLine";
+            this.shellStatusLine.PreviewText = "교환 상태: FOUP A/B 미장착";
             this.shellStatusLine.Size = new System.Drawing.Size(695, 48);
             this.shellStatusLine.TabIndex = 1;
             // 
@@ -2758,6 +2770,7 @@ namespace SemiconductorUi
             this.buttonNavOperate.Location = new System.Drawing.Point(0, 0);
             this.buttonNavOperate.Margin = new System.Windows.Forms.Padding(0, 0, 8, 0);
             this.buttonNavOperate.Name = "buttonNavOperate";
+            this.buttonNavOperate.PreviewSelected = true;
             this.buttonNavOperate.Size = new System.Drawing.Size(128, 48);
             this.buttonNavOperate.TabIndex = 0;
             this.buttonNavOperate.Text = "운전";
@@ -2773,6 +2786,7 @@ namespace SemiconductorUi
             this.buttonNavRecipe.Location = new System.Drawing.Point(136, 0);
             this.buttonNavRecipe.Margin = new System.Windows.Forms.Padding(0, 0, 8, 0);
             this.buttonNavRecipe.Name = "buttonNavRecipe";
+            this.buttonNavRecipe.NavIcon = SemiconductorUi.Helpers.ShellNavIcon.Recipe;
             this.buttonNavRecipe.Size = new System.Drawing.Size(128, 48);
             this.buttonNavRecipe.TabIndex = 1;
             this.buttonNavRecipe.Text = "레시피";
@@ -2788,6 +2802,7 @@ namespace SemiconductorUi
             this.buttonNavMaintenance.Location = new System.Drawing.Point(272, 0);
             this.buttonNavMaintenance.Margin = new System.Windows.Forms.Padding(0, 0, 8, 0);
             this.buttonNavMaintenance.Name = "buttonNavMaintenance";
+            this.buttonNavMaintenance.NavIcon = SemiconductorUi.Helpers.ShellNavIcon.Maintenance;
             this.buttonNavMaintenance.Size = new System.Drawing.Size(128, 48);
             this.buttonNavMaintenance.TabIndex = 2;
             this.buttonNavMaintenance.Text = "유지보수";
@@ -2803,6 +2818,7 @@ namespace SemiconductorUi
             this.buttonNavConfig.Location = new System.Drawing.Point(408, 0);
             this.buttonNavConfig.Margin = new System.Windows.Forms.Padding(0, 0, 8, 0);
             this.buttonNavConfig.Name = "buttonNavConfig";
+            this.buttonNavConfig.NavIcon = SemiconductorUi.Helpers.ShellNavIcon.Config;
             this.buttonNavConfig.Size = new System.Drawing.Size(128, 48);
             this.buttonNavConfig.TabIndex = 3;
             this.buttonNavConfig.Text = "설정";
@@ -2818,6 +2834,7 @@ namespace SemiconductorUi
             this.buttonNavTrend.Location = new System.Drawing.Point(544, 0);
             this.buttonNavTrend.Margin = new System.Windows.Forms.Padding(0, 0, 8, 0);
             this.buttonNavTrend.Name = "buttonNavTrend";
+            this.buttonNavTrend.NavIcon = SemiconductorUi.Helpers.ShellNavIcon.Trend;
             this.buttonNavTrend.Size = new System.Drawing.Size(128, 48);
             this.buttonNavTrend.TabIndex = 5;
             this.buttonNavTrend.Text = "추이";
@@ -2833,6 +2850,7 @@ namespace SemiconductorUi
             this.buttonNavReport.Location = new System.Drawing.Point(680, 0);
             this.buttonNavReport.Margin = new System.Windows.Forms.Padding(0, 0, 8, 0);
             this.buttonNavReport.Name = "buttonNavReport";
+            this.buttonNavReport.NavIcon = SemiconductorUi.Helpers.ShellNavIcon.Report;
             this.buttonNavReport.Size = new System.Drawing.Size(128, 48);
             this.buttonNavReport.TabIndex = 6;
             this.buttonNavReport.Text = "보고서";
@@ -2848,6 +2866,7 @@ namespace SemiconductorUi
             this.buttonNavSystem.Location = new System.Drawing.Point(0, 0);
             this.buttonNavSystem.Margin = new System.Windows.Forms.Padding(0);
             this.buttonNavSystem.Name = "buttonNavSystem";
+            this.buttonNavSystem.NavIcon = SemiconductorUi.Helpers.ShellNavIcon.System;
             this.buttonNavSystem.Size = new System.Drawing.Size(128, 48);
             this.buttonNavSystem.TabIndex = 7;
             this.buttonNavSystem.Text = "시스템";
@@ -3789,9 +3808,9 @@ namespace SemiconductorUi
         internal System.Windows.Forms.Label labelServoStatus;
         private System.Windows.Forms.TableLayoutPanel tableLayoutProcessArea;
         private System.Windows.Forms.FlowLayoutPanel flowHeaderTabs;
-        internal System.Windows.Forms.Button buttonTabMain;
-        internal System.Windows.Forms.Button buttonTabVerification;
-        internal System.Windows.Forms.Button buttonTabTransfer;
+        internal SemiconductorUi.Controls.ShellNavButton buttonTabMain;
+        internal SemiconductorUi.Controls.ShellNavButton buttonTabVerification;
+        internal SemiconductorUi.Controls.ShellNavButton buttonTabTransfer;
         private System.Windows.Forms.FlowLayoutPanel flowHeaderTimeAndUser;
         private System.Windows.Forms.Panel panelStatusMonitoring;
         private System.Windows.Forms.Label labelStatusTitle;
@@ -3887,23 +3906,23 @@ namespace SemiconductorUi
         internal System.Windows.Forms.Panel panelControlPanel;
         private System.Windows.Forms.FlowLayoutPanel flowControlPanelStack;
         internal System.Windows.Forms.Label labelControlTitle;
-        internal System.Windows.Forms.GroupBox groupBoxControlButtons;
+        internal SemiconductorUi.Controls.PlateGroupBox groupBoxControlButtons;
         private System.Windows.Forms.FlowLayoutPanel flowLayoutControlButtons;
-        internal System.Windows.Forms.Button buttonStart;
-        internal System.Windows.Forms.Button buttonPause;
-        internal System.Windows.Forms.Button buttonStop;
-        internal System.Windows.Forms.Button buttonResetAlarm;
-        internal System.Windows.Forms.Button buttonResetProcess;
-        internal System.Windows.Forms.Button buttonEquipmentControl;
-        internal System.Windows.Forms.GroupBox groupBoxRecipe;
-        internal System.Windows.Forms.GroupBox groupBoxFoupReady;
+        internal SemiconductorUi.Controls.LampButton buttonStart;
+        internal SemiconductorUi.Controls.LampButton buttonPause;
+        internal SemiconductorUi.Controls.LampButton buttonStop;
+        internal SemiconductorUi.Controls.LampButton buttonResetAlarm;
+        internal SemiconductorUi.Controls.LampButton buttonResetProcess;
+        internal SemiconductorUi.Controls.LampButton buttonEquipmentControl;
+        internal SemiconductorUi.Controls.PlateGroupBox groupBoxRecipe;
+        internal SemiconductorUi.Controls.PlateGroupBox groupBoxFoupReady;
         internal System.Windows.Forms.FlowLayoutPanel flowLayoutFoupReadyButtons;
-        internal System.Windows.Forms.Button buttonMountFoupA;
-        internal System.Windows.Forms.Button buttonMountFoupB;
+        internal SemiconductorUi.Controls.LampButton buttonMountFoupA;
+        internal SemiconductorUi.Controls.LampButton buttonMountFoupB;
         internal System.Windows.Forms.Button buttonToggleFoupMount;
-        internal System.Windows.Forms.Button buttonWaferLoading;
-        internal System.Windows.Forms.Button buttonWaferUnloading;
-        internal System.Windows.Forms.Button buttonApplyRecipe;
+        internal SemiconductorUi.Controls.LampButton buttonWaferLoading;
+        internal SemiconductorUi.Controls.LampButton buttonWaferUnloading;
+        internal SemiconductorUi.Controls.LampButton buttonApplyRecipe;
         internal System.Windows.Forms.ComboBox comboRecipeSelect;
         private System.Windows.Forms.Label labelRecipe;
         private SemiconductorUi.Controls.ShellTopBar shellTopBar;
@@ -3925,13 +3944,13 @@ namespace SemiconductorUi
         private System.Windows.Forms.FlowLayoutPanel flowShellNavMenu;
         private SemiconductorUi.Controls.ShellStatusLine shellStatusLine;
         private System.Windows.Forms.FlowLayoutPanel flowShellNavSystem;
-        internal System.Windows.Forms.Button buttonNavOperate;
-        internal System.Windows.Forms.Button buttonNavRecipe;
-        internal System.Windows.Forms.Button buttonNavMaintenance;
-        internal System.Windows.Forms.Button buttonNavConfig;
-        internal System.Windows.Forms.Button buttonNavTrend;
-        internal System.Windows.Forms.Button buttonNavReport;
-        internal System.Windows.Forms.Button buttonNavSystem;
+        internal SemiconductorUi.Controls.ShellNavButton buttonNavOperate;
+        internal SemiconductorUi.Controls.ShellNavButton buttonNavRecipe;
+        internal SemiconductorUi.Controls.ShellNavButton buttonNavMaintenance;
+        internal SemiconductorUi.Controls.ShellNavButton buttonNavConfig;
+        internal SemiconductorUi.Controls.ShellNavButton buttonNavTrend;
+        internal SemiconductorUi.Controls.ShellNavButton buttonNavReport;
+        internal SemiconductorUi.Controls.ShellNavButton buttonNavSystem;
 
         #endregion
     }

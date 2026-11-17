@@ -208,7 +208,11 @@ namespace SemiconductorUi.Helpers
             edge = new Rectangle(0, EdgeDepth, button.Width - 1, button.Height - 1 - EdgeDepth);
         }
 
-        private static void PaintLampButton(Button button, Graphics g, Func<LampState> stateProvider, bool primary, bool showLamp)
+        /// <summary>
+        /// 램프 버튼 한 개를 그립니다. 실행 중에는 Attach* 가 붙인 Paint가 부르고,
+        /// Visual Studio 디자이너에서는 LampButton이 램프 꺼짐 상태로 부릅니다.
+        /// </summary>
+        internal static void PaintLampButton(Button button, Graphics g, Func<LampState> stateProvider, bool primary, bool showLamp)
         {
             g.SmoothingMode = SmoothingMode.AntiAlias;
             g.Clear(button.Parent?.BackColor ?? UiTheme.Surface);
@@ -298,7 +302,8 @@ namespace SemiconductorUi.Helpers
             DrawFocus(button, g, face);
         }
 
-        private static void PaintEmergency(Button button, Graphics g)
+        /// <summary>긴급 정지 버튼을 그립니다 (실행 중에는 AttachEmergency의 Paint, 디자이너에서는 LampButton이 부릅니다).</summary>
+        internal static void PaintEmergency(Button button, Graphics g)
         {
             g.SmoothingMode = SmoothingMode.AntiAlias;
             g.Clear(button.Parent?.BackColor ?? UiTheme.Surface);
@@ -330,7 +335,8 @@ namespace SemiconductorUi.Helpers
             DrawFocus(button, g, face);
         }
 
-        private static void PaintPlate(Control group, Graphics g)
+        /// <summary>연회색 판을 그립니다 (실행 중에는 AttachPlate의 Paint, 디자이너에서는 PlateGroupBox가 부릅니다).</summary>
+        internal static void PaintPlate(Control group, Graphics g)
         {
             g.SmoothingMode = SmoothingMode.AntiAlias;
             g.Clear(group.Parent?.BackColor ?? UiTheme.Surface);

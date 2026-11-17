@@ -9,6 +9,8 @@ namespace SemiconductorUi
     /// 오른쪽 제어 패널을 "장비 조작반" 모양으로 그립니다 (램프 버튼 + 상태 칩, 밝은 색).
     /// 버튼 객체, 클릭 처리, Enabled 판단은 그대로이고, 그리기만 바꿉니다.
     /// 램프는 화면에 이미 있는 상태(공정 상태, 알람 표시, FOUP 장착, 웨이퍼 로드 상태)만 읽습니다.
+    /// Form1.Designer.cs에서 이 버튼들은 LampButton, 묶음 상자는 PlateGroupBox로 선언되어 디자이너에서도 같은 모양으로 보입니다
+    /// (실행 중에는 보통 Button/GroupBox와 같고, 모양은 여기서 붙인 그리기가 정합니다).
     /// </summary>
     public partial class Form1
     {
