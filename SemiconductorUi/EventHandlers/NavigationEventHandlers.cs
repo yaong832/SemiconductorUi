@@ -190,9 +190,9 @@ namespace SemiconductorUi.EventHandlers
             {
                 using (var ecf = new EquipmentControlForm(form.EtherCAT_M, form.EthercatConnected))
                 {
-                    ecf.IsAutoProcessActive = () =>
-                        form.CurrentProcessState == ViewModels.MainFormViewModel.ProcessState.Running ||
-                        form.CurrentProcessState == ViewModels.MainFormViewModel.ProcessState.Paused;
+                    // 로그아웃·연결 해제·종료 차단과 같은 판단: 실행·일시정지·알람 대기, 시작의 서보 ON·원점복귀,
+                    // 공정이 끝난 뒤(완료·공정 리셋) 원점복귀 중이면 수동 조작을 막습니다.
+                    ecf.IsAutoProcessActive = form.IsProcessActiveOrStarting;
                     ecf.IsHomedBySequence = () => form.TmHardwareInitialized;
 
                     // 도어 상태 변경 시 UI 업데이트 콜백
