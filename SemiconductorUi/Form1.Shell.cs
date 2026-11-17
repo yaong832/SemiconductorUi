@@ -19,7 +19,6 @@ namespace SemiconductorUi
     {
         private const int ShellBottomBarHeight = 64;
         private const int ShellBottomBarLargeHeight = 72;
-        private const int ShellSubTabHeight = 46;
         // 창이 이 폭 이상이면(2560x1440 최대화 등) 상단 바 글자와 버튼을 한 단계 키웁니다.
         private const int ShellLargeMinWidth = 2200;
 
@@ -30,26 +29,22 @@ namespace SemiconductorUi
         private ShellClock shellClock;
         private ShellUserCard shellUserCard;
         private ShellTowerLamp shellTowerLamp;
-        private ShellStatusLine shellStatusLine;
-        private Control shellBottomBar;
         private ToolTip shellToolTip;
         private readonly System.Collections.Generic.List<Tuple<Button, int>> shellBarButtons = new System.Collections.Generic.List<Tuple<Button, int>>();
 
         private void BuildMainShell()
         {
             if (IsDesignEnvironment()) return;
-            if (tableLayoutRoot == null || panelHeader == null || panelAlarmArea == null || tableLayoutProcessArea == null) return;
+            if (tableLayoutRoot == null || panelHeader == null || tableShellContent == null || tableShellBottomBar == null) return;
 
             SuspendLayout();
             tableLayoutRoot.SuspendLayout();
 
-            // 기존 상단 영역과 하단 메뉴 줄은 화면에서 빼고 숨긴 채 보관합니다.
+            // 기존 상단 영역은 화면에서 빼고 숨긴 채 보관합니다.
+            // 가운데(탭 줄 + 공정 화면)와 하단 메뉴 줄은 Form1.Designer.cs에 배치되어 있습니다.
             tableLayoutRoot.Controls.Remove(panelHeader);
-            tableLayoutRoot.Controls.Remove(panelAlarmArea);
-            tableLayoutRoot.Controls.Remove(tableLayoutProcessArea);
             var parking = new Panel { Name = "panelShellParking", Visible = false };
             parking.Controls.Add(panelHeader);
-            parking.Controls.Add(panelAlarmArea);
             Controls.Add(parking);
 
             shellToolTip = new ToolTip();
@@ -58,23 +53,8 @@ namespace SemiconductorUi
             shellTopBar = BuildShellTopBar();
             AttachAlarmHistoryChip();
 
-            var content = new TableLayoutPanel
-            {
-                Name = "tableShellContent",
-                Dock = DockStyle.Fill,
-                Margin = Padding.Empty,
-                Padding = new Padding(10, 0, 6, 6),
-                ColumnCount = 1,
-                RowCount = 2,
-                BackColor = UiTheme.AppBack
-            };
-            content.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
-            content.RowStyles.Add(new RowStyle(SizeType.Absolute, ShellSubTabHeight));
-            content.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
-            content.Controls.Add(BuildShellSubTabs(), 0, 0);
-            content.Controls.Add(tableLayoutProcessArea, 0, 1);
-
-            shellBottomBar = BuildShellBottomBar();
+            InitShellSubTabs();
+            InitShellBottomBar();
 
             tableLayoutRoot.RowStyles.Clear();
             tableLayoutRoot.RowCount = 3;
@@ -84,8 +64,6 @@ namespace SemiconductorUi
             tableLayoutRoot.Margin = Padding.Empty;
             tableLayoutRoot.Padding = Padding.Empty;
             tableLayoutRoot.Controls.Add(shellTopBar, 0, 0);
-            tableLayoutRoot.Controls.Add(content, 0, 1);
-            tableLayoutRoot.Controls.Add(shellBottomBar, 0, 2);
 
             // FOUP 표 아래 "교환 상태" 한 줄은 하단 메뉴 줄 가운데(현재 상태)로 옮겨 보여 줍니다.
             // 글자는 기존 코드가 계속 바꾸므로 라벨은 숨겨서 그대로 둡니다.
@@ -245,83 +223,44 @@ namespace SemiconductorUi
 
         /// <summary>
         /// 맨 아래 메뉴 줄 (SEMI E95 내비게이션 패널): 왼쪽에 화면 메뉴, 가운데 현재 상태 한 줄, 오른쪽 끝에 시스템.
-        /// 기존 메뉴 버튼 객체를 그대로 옮겨 쓰므로 클릭 동작은 같습니다.
+        /// 배치(tableShellBottomBar, flowShellNavMenu, shellStatusLine, flowShellNavSystem)는 Form1.Designer.cs에 있고,
+        /// 여기서는 메뉴 버튼 그리기와 이벤트만 연결합니다.
         /// </summary>
-        private Control BuildShellBottomBar()
+        private void InitShellBottomBar()
         {
-            var bar = new TableLayoutPanel
-            {
-                Name = "tableShellBottomBar",
-                Dock = DockStyle.Fill,
-                Margin = Padding.Empty,
-                Padding = new Padding(16, 8, 16, 8),
-                ColumnCount = 3,
-                RowCount = 1,
-                BackColor = UiTheme.Surface
-            };
-            bar.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
-            bar.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
-            bar.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
-            bar.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
-            bar.Paint += (s, e) =>
-            {
-                using (var pen = new Pen(UiTheme.Border))
-                {
-                    e.Graphics.DrawLine(pen, 0, 0, bar.Width, 0);
-                }
-            };
+            var bar = tableShellBottomBar;
+            bar.Paint += TableShellBottomBar_Paint;
 
-            var menu = new FlowLayoutPanel
-            {
-                Name = "flowShellNavMenu",
-                FlowDirection = FlowDirection.LeftToRight,
-                WrapContents = false,
-                AutoSize = true,
-                AutoSizeMode = AutoSizeMode.GrowAndShrink,
-                Dock = DockStyle.Fill,
-                Margin = Padding.Empty,
-                Padding = Padding.Empty,
-                BackColor = UiTheme.Surface
-            };
-            AddShellNavItem(menu, buttonNavOperate, "운전", ShellNavIcon.Operate);
-            AddShellNavItem(menu, buttonNavRecipe, "레시피", ShellNavIcon.Recipe);
-            AddShellNavItem(menu, buttonNavMaintenance, "유지보수", ShellNavIcon.Maintenance);
-            AddShellNavItem(menu, buttonNavConfig, "설정", ShellNavIcon.Config);
-            AddShellNavItem(menu, buttonNavTrend, "추이", ShellNavIcon.Trend);
-            AddShellNavItem(menu, buttonNavReport, "보고서", ShellNavIcon.Report);
+            StyleShellNavItem(buttonNavOperate, "운전", ShellNavIcon.Operate);
+            StyleShellNavItem(buttonNavRecipe, "레시피", ShellNavIcon.Recipe);
+            StyleShellNavItem(buttonNavMaintenance, "유지보수", ShellNavIcon.Maintenance);
+            StyleShellNavItem(buttonNavConfig, "설정", ShellNavIcon.Config);
+            StyleShellNavItem(buttonNavTrend, "추이", ShellNavIcon.Trend);
+            StyleShellNavItem(buttonNavReport, "보고서", ShellNavIcon.Report);
 
-            shellStatusLine = new ShellStatusLine
+            if (shellStatusLine != null)
             {
-                Name = "shellStatusLine",
-                Dock = DockStyle.Fill,
-                Margin = new Padding(10, 0, 10, 0),
-                TextProvider = () => labelFoupSummaryInfo?.Text ?? ""
-            };
+                shellStatusLine.TextProvider = () => labelFoupSummaryInfo?.Text ?? "";
+            }
             if (labelFoupSummaryInfo != null)
             {
                 labelFoupSummaryInfo.TextChanged += (s, e) => shellStatusLine?.Invalidate();
             }
 
-            var system = new FlowLayoutPanel
-            {
-                Name = "flowShellNavSystem",
-                FlowDirection = FlowDirection.LeftToRight,
-                WrapContents = false,
-                AutoSize = true,
-                AutoSizeMode = AutoSizeMode.GrowAndShrink,
-                Dock = DockStyle.Fill,
-                Margin = Padding.Empty,
-                Padding = Padding.Empty,
-                BackColor = UiTheme.Surface
-            };
-            AddShellNavItem(system, buttonNavSystem, "시스템", ShellNavIcon.System);
+            StyleShellNavItem(buttonNavSystem, "시스템", ShellNavIcon.System);
             if (buttonNavSystem != null) buttonNavSystem.Margin = Padding.Empty;
 
-            bar.Controls.Add(menu, 0, 0);
-            bar.Controls.Add(shellStatusLine, 1, 0);
-            bar.Controls.Add(system, 2, 0);
             bar.SizeChanged += (s, e) => FitShellNavItems(bar);
-            return bar;
+            FitShellNavItems(bar);
+        }
+
+        private void TableShellBottomBar_Paint(object sender, PaintEventArgs e)
+        {
+            var bar = (Control)sender;
+            using (var pen = new Pen(UiTheme.Border))
+            {
+                e.Graphics.DrawLine(pen, 0, 0, bar.Width, 0);
+            }
         }
 
         private static readonly string[] ShellStateTexts = { "비상정지", "공정 진행 중", "일시 정지", "경고 · 정지", "대기" };
@@ -356,42 +295,21 @@ namespace SemiconductorUi
             return tab == null || nav != "운전" ? nav : nav + " · " + tab;
         }
 
-        private static void AddShellNavItem(FlowLayoutPanel stack, Button button, string text, ShellNavIcon icon)
+        private static void StyleShellNavItem(Button button, string text, ShellNavIcon icon)
         {
             if (button == null) return;
             ShellNavPainter.StyleNavBarItem(button, text, icon, new Size(128, 48));
             button.Margin = new Padding(0, 0, 8, 0);
-            stack.Controls.Add(button);
         }
 
-        private Control BuildShellSubTabs()
+        /// <summary>
+        /// 모니터링·검증·이송 탭 줄. 배치(panelShellSubTabs, flowShellSubTabs)는 Form1.Designer.cs에 있고,
+        /// 여기서는 탭 그리기와 테두리만 연결합니다.
+        /// </summary>
+        private void InitShellSubTabs()
         {
-            var bar = new Panel
-            {
-                Name = "panelShellSubTabs",
-                Dock = DockStyle.Fill,
-                Margin = Padding.Empty,
-                BackColor = UiTheme.AppBack
-            };
-
-            var segment = new FlowLayoutPanel
-            {
-                Name = "flowShellSubTabs",
-                FlowDirection = FlowDirection.LeftToRight,
-                WrapContents = false,
-                AutoSize = true,
-                AutoSizeMode = AutoSizeMode.GrowAndShrink,
-                Padding = new Padding(3),
-                BackColor = UiTheme.Surface,
-                Location = new Point(3, 8)
-            };
-            segment.Paint += (s, e) =>
-            {
-                using (var pen = new Pen(UiTheme.Border))
-                {
-                    e.Graphics.DrawRectangle(pen, 0, 0, segment.Width - 1, segment.Height - 1);
-                }
-            };
+            if (flowShellSubTabs == null) return;
+            flowShellSubTabs.Paint += FlowShellSubTabs_Paint;
 
             var tabSize = new Size(88, 28);
             foreach (var pair in new[]
@@ -404,11 +322,16 @@ namespace SemiconductorUi
                 if (pair.Item1 == null) continue;
                 ShellNavPainter.StyleSubTab(pair.Item1, pair.Item2, tabSize);
                 pair.Item1.Margin = new Padding(0, 0, 2, 0);
-                segment.Controls.Add(pair.Item1);
             }
+        }
 
-            bar.Controls.Add(segment);
-            return bar;
+        private void FlowShellSubTabs_Paint(object sender, PaintEventArgs e)
+        {
+            var segment = (Control)sender;
+            using (var pen = new Pen(UiTheme.Border))
+            {
+                e.Graphics.DrawRectangle(pen, 0, 0, segment.Width - 1, segment.Height - 1);
+            }
         }
 
         /// <summary>
