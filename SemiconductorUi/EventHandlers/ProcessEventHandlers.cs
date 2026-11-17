@@ -340,12 +340,27 @@ namespace SemiconductorUi.EventHandlers
                 return;
             }
 
-            string confirmMessage = "현재 공정을 완전히 초기화하시겠습니까?\nTM 대기 상태, FOUP 표시, 챔버 상태 등이 리셋됩니다.";
-            
-            // 하드웨어 모드 추가 안내
+            // 안내 문구는 아래 실제 동작(화면 초기화 → 하드웨어 백그라운드 처리) 순서와 조건대로 적습니다.
+            bool keepFoupDisplay = form.WaferLoadState == MainFormViewModel.WaferLoadStateType.Loading;
+            string confirmMessage =
+                "진행 중인 공정을 중단하고 초기화하시겠습니까?\n\n" +
+                "• 진행 중인 이송을 취소하고, 현재 로트는 '중단'으로 기록합니다.\n" +
+                "• TM은 대기 위치, 챔버는 대기 상태로 표시하고 완료 개수를 0으로 합니다.\n" +
+                "• 환경 알람으로 멈춘 상태도 해제합니다.\n" +
+                (keepFoupDisplay
+                    ? "• FOUP 표시는 그대로 둡니다 (웨이퍼 로딩 중).\n"
+                    : "• FOUP 표시를 비웁니다.\n") +
+                "• 챔버나 블레이드에 있던 웨이퍼는 화면에서 사라집니다. 실제 웨이퍼 위치는 직접 확인하세요.";
+
+            // 하드웨어 모드 추가 안내 (아래 HardwareOperation.Run 안의 순서와 같음)
             if (form.EthercatConnected)
             {
-                confirmMessage += "\n\n[하드웨어 모드]\n• 실린더 후진 확인\n• 진공 OFF\n• 원점복귀 수행";
+                confirmMessage +=
+                    "\n\n[하드웨어 모드] 화면은 바로 대기 상태로 바뀌고, 장비는 뒤에서 아래 순서로 진행합니다.\n" +
+                    "1. 진공 OFF\n" +
+                    "2. 실린더가 후진 상태가 아니면 후진 (최대 5초)\n" +
+                    "3. 원점복귀: 상하 → 회전 (서보 ON이고 실린더 후진이 확인된 경우만)\n" +
+                    "• 도어와 챔버 램프에는 명령을 보내지 않습니다 (화면의 도어 표시만 닫힘으로 바뀜).";
             }
 
             var confirm = MessageBox.Show(
