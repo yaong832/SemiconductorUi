@@ -342,14 +342,6 @@ namespace SemiconductorUi.EventHandlers
                 return;
             }
 
-            if (IsEmergencyStopped())
-            {
-                MessageBox.Show(
-                    "비상정지 중에는 공정 리셋을 할 수 없습니다.\n공정 리셋은 진공 OFF, 실린더 후진, 원점복귀를 함께 수행합니다.\n\n먼저 알람 리셋으로 비상정지를 해제하세요.",
-                    "비상정지 중", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-
             // 서보 ON·원점복귀가 백그라운드에서 도는 중에 리셋하면 원점복귀가 하나 더 나가고,
             // 공정 시작의 초기화 중이면 리셋 뒤에 공정이 그대로 시작됩니다.
             if (form.IsBackgroundHomingInProgress())
@@ -359,6 +351,14 @@ namespace SemiconductorUi.EventHandlers
                     "서보 ON·원점복귀가 진행 중이라 공정 리셋을 할 수 없습니다.\n\n" +
                     "원점복귀가 끝나 화면 위 상태가 바뀐 뒤 다시 누르세요. 급히 멈춰야 하면 긴급 정지를 누르세요.",
                     "공정 리셋 제한", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            if (IsEmergencyStopped())
+            {
+                MessageBox.Show(
+                    "비상정지 중에는 공정 리셋을 할 수 없습니다.\n공정 리셋은 진공 OFF, 실린더 후진, 원점복귀를 함께 수행합니다.\n\n먼저 알람 리셋으로 비상정지를 해제하세요.",
+                    "비상정지 중", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
