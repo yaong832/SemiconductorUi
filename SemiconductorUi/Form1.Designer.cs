@@ -104,15 +104,22 @@ namespace SemiconductorUi
             this.panelPmStatus = new System.Windows.Forms.Panel();
             this.tableLayoutPmStatus = new System.Windows.Forms.TableLayoutPanel();
             this.panelSummaryPMA = new System.Windows.Forms.Panel();
+            this.pmStatusPanelA = new SemiconductorUi.Controls.PmStatusPanel();
             this.panelSummaryPMB = new System.Windows.Forms.Panel();
+            this.pmStatusPanelB = new SemiconductorUi.Controls.PmStatusPanel();
             this.panelSummaryPMC = new System.Windows.Forms.Panel();
+            this.pmStatusPanelC = new SemiconductorUi.Controls.PmStatusPanel();
             this.labelPmStatusTitle = new System.Windows.Forms.Label();
             this.tableProcessMetrics = new System.Windows.Forms.TableLayoutPanel();
             this.panelFoupStatusA = new System.Windows.Forms.Panel();
             this.tableFoupACard = new System.Windows.Forms.TableLayoutPanel();
             this.panelFoupALevelContainer = new System.Windows.Forms.Panel();
-            this.panelFoupALevelTrack = new System.Windows.Forms.Panel();
-            this.panelFoupALevelFill = new System.Windows.Forms.Panel();
+            this.tableFoupASlots = new System.Windows.Forms.TableLayoutPanel();
+            this.panelFoupASlot1 = new System.Windows.Forms.Panel();
+            this.panelFoupASlot2 = new System.Windows.Forms.Panel();
+            this.panelFoupASlot3 = new System.Windows.Forms.Panel();
+            this.panelFoupASlot4 = new System.Windows.Forms.Panel();
+            this.panelFoupASlot5 = new System.Windows.Forms.Panel();
             this.panelFoupADetail = new System.Windows.Forms.Panel();
             this.tableFoupAInfo = new System.Windows.Forms.TableLayoutPanel();
             this.labelFoupAFieldPath = new System.Windows.Forms.Label();
@@ -130,8 +137,12 @@ namespace SemiconductorUi
             this.panelFoupStatusB = new System.Windows.Forms.Panel();
             this.tableFoupBCard = new System.Windows.Forms.TableLayoutPanel();
             this.panelFoupBLevelContainer = new System.Windows.Forms.Panel();
-            this.panelFoupBLevelTrack = new System.Windows.Forms.Panel();
-            this.panelFoupBLevelFill = new System.Windows.Forms.Panel();
+            this.tableFoupBSlots = new System.Windows.Forms.TableLayoutPanel();
+            this.panelFoupBSlot1 = new System.Windows.Forms.Panel();
+            this.panelFoupBSlot2 = new System.Windows.Forms.Panel();
+            this.panelFoupBSlot3 = new System.Windows.Forms.Panel();
+            this.panelFoupBSlot4 = new System.Windows.Forms.Panel();
+            this.panelFoupBSlot5 = new System.Windows.Forms.Panel();
             this.panelFoupBDetail = new System.Windows.Forms.Panel();
             this.tableFoupBInfo = new System.Windows.Forms.TableLayoutPanel();
             this.labelFoupBFieldPath = new System.Windows.Forms.Label();
@@ -285,17 +296,20 @@ namespace SemiconductorUi
             this.panelEquipmentCanvas.SuspendLayout();
             this.panelPmStatus.SuspendLayout();
             this.tableLayoutPmStatus.SuspendLayout();
+            this.panelSummaryPMA.SuspendLayout();
+            this.panelSummaryPMB.SuspendLayout();
+            this.panelSummaryPMC.SuspendLayout();
             this.tableProcessMetrics.SuspendLayout();
             this.panelFoupStatusA.SuspendLayout();
             this.tableFoupACard.SuspendLayout();
             this.panelFoupALevelContainer.SuspendLayout();
-            this.panelFoupALevelTrack.SuspendLayout();
+            this.tableFoupASlots.SuspendLayout();
             this.panelFoupADetail.SuspendLayout();
             this.tableFoupAInfo.SuspendLayout();
             this.panelFoupStatusB.SuspendLayout();
             this.tableFoupBCard.SuspendLayout();
             this.panelFoupBLevelContainer.SuspendLayout();
-            this.panelFoupBLevelTrack.SuspendLayout();
+            this.tableFoupBSlots.SuspendLayout();
             this.panelFoupBDetail.SuspendLayout();
             this.tableFoupBInfo.SuspendLayout();
             this.panelControlPanel.SuspendLayout();
@@ -1451,40 +1465,70 @@ namespace SemiconductorUi
             // 
             this.panelSummaryPMA.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(248)))), ((int)(((byte)(250)))), ((int)(((byte)(252)))));
             this.panelSummaryPMA.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.panelSummaryPMA.Controls.Add(this.pmStatusPanelA);
             this.panelSummaryPMA.Dock = System.Windows.Forms.DockStyle.Fill;
             this.panelSummaryPMA.Location = new System.Drawing.Point(12, 0);
-            this.panelSummaryPMA.Margin = new System.Windows.Forms.Padding(12, 0, 12, 6);
+            this.panelSummaryPMA.Margin = new System.Windows.Forms.Padding(0, 0, 0, 12);
             this.panelSummaryPMA.MinimumSize = new System.Drawing.Size(2, 190);
             this.panelSummaryPMA.Name = "panelSummaryPMA";
-            this.panelSummaryPMA.Padding = new System.Windows.Forms.Padding(12, 12, 12, 4);
             this.panelSummaryPMA.Size = new System.Drawing.Size(278, 193);
             this.panelSummaryPMA.TabIndex = 1;
+            // 
+            // pmStatusPanelA
+            // 
+            this.pmStatusPanelA.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.pmStatusPanelA.Location = new System.Drawing.Point(0, 0);
+            this.pmStatusPanelA.MinimumSize = new System.Drawing.Size(180, 0);
+            this.pmStatusPanelA.Name = "pmStatusPanelA";
+            this.pmStatusPanelA.Size = new System.Drawing.Size(276, 191);
+            this.pmStatusPanelA.TabIndex = 0;
+            this.pmStatusPanelA.Title = "Chamber A";
             // 
             // panelSummaryPMB
             // 
             this.panelSummaryPMB.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(248)))), ((int)(((byte)(250)))), ((int)(((byte)(252)))));
             this.panelSummaryPMB.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.panelSummaryPMB.Controls.Add(this.pmStatusPanelB);
             this.panelSummaryPMB.Dock = System.Windows.Forms.DockStyle.Fill;
             this.panelSummaryPMB.Location = new System.Drawing.Point(12, 199);
-            this.panelSummaryPMB.Margin = new System.Windows.Forms.Padding(12, 0, 12, 6);
+            this.panelSummaryPMB.Margin = new System.Windows.Forms.Padding(0, 0, 0, 12);
             this.panelSummaryPMB.MinimumSize = new System.Drawing.Size(2, 190);
             this.panelSummaryPMB.Name = "panelSummaryPMB";
-            this.panelSummaryPMB.Padding = new System.Windows.Forms.Padding(12, 12, 12, 4);
             this.panelSummaryPMB.Size = new System.Drawing.Size(278, 193);
             this.panelSummaryPMB.TabIndex = 2;
+            // 
+            // pmStatusPanelB
+            // 
+            this.pmStatusPanelB.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.pmStatusPanelB.Location = new System.Drawing.Point(0, 0);
+            this.pmStatusPanelB.MinimumSize = new System.Drawing.Size(180, 0);
+            this.pmStatusPanelB.Name = "pmStatusPanelB";
+            this.pmStatusPanelB.Size = new System.Drawing.Size(276, 191);
+            this.pmStatusPanelB.TabIndex = 0;
+            this.pmStatusPanelB.Title = "Chamber B";
             // 
             // panelSummaryPMC
             // 
             this.panelSummaryPMC.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(248)))), ((int)(((byte)(250)))), ((int)(((byte)(252)))));
             this.panelSummaryPMC.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.panelSummaryPMC.Controls.Add(this.pmStatusPanelC);
             this.panelSummaryPMC.Dock = System.Windows.Forms.DockStyle.Fill;
             this.panelSummaryPMC.Location = new System.Drawing.Point(12, 398);
-            this.panelSummaryPMC.Margin = new System.Windows.Forms.Padding(12, 0, 12, 0);
+            this.panelSummaryPMC.Margin = new System.Windows.Forms.Padding(0);
             this.panelSummaryPMC.MinimumSize = new System.Drawing.Size(2, 190);
             this.panelSummaryPMC.Name = "panelSummaryPMC";
-            this.panelSummaryPMC.Padding = new System.Windows.Forms.Padding(12, 12, 12, 4);
             this.panelSummaryPMC.Size = new System.Drawing.Size(278, 201);
             this.panelSummaryPMC.TabIndex = 3;
+            // 
+            // pmStatusPanelC
+            // 
+            this.pmStatusPanelC.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.pmStatusPanelC.Location = new System.Drawing.Point(0, 0);
+            this.pmStatusPanelC.MinimumSize = new System.Drawing.Size(180, 0);
+            this.pmStatusPanelC.Name = "pmStatusPanelC";
+            this.pmStatusPanelC.Size = new System.Drawing.Size(276, 199);
+            this.pmStatusPanelC.TabIndex = 0;
+            this.pmStatusPanelC.Title = "Chamber C";
             // 
             // labelPmStatusTitle
             // 
@@ -1497,7 +1541,7 @@ namespace SemiconductorUi
             this.labelPmStatusTitle.Padding = new System.Windows.Forms.Padding(0, 0, 0, 6);
             this.labelPmStatusTitle.Size = new System.Drawing.Size(100, 26);
             this.labelPmStatusTitle.TabIndex = 0;
-            this.labelPmStatusTitle.Text = "Chamber 진행 현황";
+            this.labelPmStatusTitle.Text = "장비 상태 상세";
             // 
             // tableProcessMetrics
             // 
@@ -1546,7 +1590,7 @@ namespace SemiconductorUi
             // 
             // panelFoupALevelContainer
             // 
-            this.panelFoupALevelContainer.Controls.Add(this.panelFoupALevelTrack);
+            this.panelFoupALevelContainer.Controls.Add(this.tableFoupASlots);
             this.panelFoupALevelContainer.Dock = System.Windows.Forms.DockStyle.Fill;
             this.panelFoupALevelContainer.Location = new System.Drawing.Point(3, 3);
             this.panelFoupALevelContainer.Name = "panelFoupALevelContainer";
@@ -1554,25 +1598,75 @@ namespace SemiconductorUi
             this.panelFoupALevelContainer.Size = new System.Drawing.Size(144, 166);
             this.panelFoupALevelContainer.TabIndex = 0;
             // 
-            // panelFoupALevelTrack
+            // tableFoupASlots
             // 
-            this.panelFoupALevelTrack.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(242)))), ((int)(((byte)(245)))), ((int)(((byte)(249)))));
-            this.panelFoupALevelTrack.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.panelFoupALevelTrack.Controls.Add(this.panelFoupALevelFill);
-            this.panelFoupALevelTrack.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.panelFoupALevelTrack.Location = new System.Drawing.Point(8, 5);
-            this.panelFoupALevelTrack.Name = "panelFoupALevelTrack";
-            this.panelFoupALevelTrack.Size = new System.Drawing.Size(128, 156);
-            this.panelFoupALevelTrack.TabIndex = 0;
+            this.tableFoupASlots.ColumnCount = 1;
+            this.tableFoupASlots.Controls.Add(this.panelFoupASlot1, 0, 4);
+            this.tableFoupASlots.Controls.Add(this.panelFoupASlot2, 0, 3);
+            this.tableFoupASlots.Controls.Add(this.panelFoupASlot3, 0, 2);
+            this.tableFoupASlots.Controls.Add(this.panelFoupASlot4, 0, 1);
+            this.tableFoupASlots.Controls.Add(this.panelFoupASlot5, 0, 0);
+            this.tableFoupASlots.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.tableFoupASlots.Location = new System.Drawing.Point(8, 5);
+            this.tableFoupASlots.Name = "tableFoupASlots";
+            this.tableFoupASlots.RowCount = 5;
+            this.tableFoupASlots.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 20F));
+            this.tableFoupASlots.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 20F));
+            this.tableFoupASlots.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 20F));
+            this.tableFoupASlots.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 20F));
+            this.tableFoupASlots.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 20F));
+            this.tableFoupASlots.Size = new System.Drawing.Size(128, 156);
+            this.tableFoupASlots.TabIndex = 0;
             // 
-            // panelFoupALevelFill
+            // panelFoupASlot1
             // 
-            this.panelFoupALevelFill.BackColor = System.Drawing.Color.MediumBlue;
-            this.panelFoupALevelFill.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.panelFoupALevelFill.Location = new System.Drawing.Point(0, 154);
-            this.panelFoupALevelFill.Name = "panelFoupALevelFill";
-            this.panelFoupALevelFill.Size = new System.Drawing.Size(126, 0);
-            this.panelFoupALevelFill.TabIndex = 0;
+            this.panelFoupASlot1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(245)))), ((int)(((byte)(245)))), ((int)(((byte)(250)))));
+            this.panelFoupASlot1.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.panelFoupASlot1.Location = new System.Drawing.Point(0, 124);
+            this.panelFoupASlot1.Margin = new System.Windows.Forms.Padding(0);
+            this.panelFoupASlot1.Name = "panelFoupASlot1";
+            this.panelFoupASlot1.Size = new System.Drawing.Size(128, 31);
+            this.panelFoupASlot1.TabIndex = 0;
+            // 
+            // panelFoupASlot2
+            // 
+            this.panelFoupASlot2.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(245)))), ((int)(((byte)(245)))), ((int)(((byte)(250)))));
+            this.panelFoupASlot2.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.panelFoupASlot2.Location = new System.Drawing.Point(0, 93);
+            this.panelFoupASlot2.Margin = new System.Windows.Forms.Padding(0);
+            this.panelFoupASlot2.Name = "panelFoupASlot2";
+            this.panelFoupASlot2.Size = new System.Drawing.Size(128, 31);
+            this.panelFoupASlot2.TabIndex = 1;
+            // 
+            // panelFoupASlot3
+            // 
+            this.panelFoupASlot3.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(245)))), ((int)(((byte)(245)))), ((int)(((byte)(250)))));
+            this.panelFoupASlot3.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.panelFoupASlot3.Location = new System.Drawing.Point(0, 62);
+            this.panelFoupASlot3.Margin = new System.Windows.Forms.Padding(0);
+            this.panelFoupASlot3.Name = "panelFoupASlot3";
+            this.panelFoupASlot3.Size = new System.Drawing.Size(128, 31);
+            this.panelFoupASlot3.TabIndex = 2;
+            // 
+            // panelFoupASlot4
+            // 
+            this.panelFoupASlot4.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(245)))), ((int)(((byte)(245)))), ((int)(((byte)(250)))));
+            this.panelFoupASlot4.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.panelFoupASlot4.Location = new System.Drawing.Point(0, 31);
+            this.panelFoupASlot4.Margin = new System.Windows.Forms.Padding(0);
+            this.panelFoupASlot4.Name = "panelFoupASlot4";
+            this.panelFoupASlot4.Size = new System.Drawing.Size(128, 31);
+            this.panelFoupASlot4.TabIndex = 3;
+            // 
+            // panelFoupASlot5
+            // 
+            this.panelFoupASlot5.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(245)))), ((int)(((byte)(245)))), ((int)(((byte)(250)))));
+            this.panelFoupASlot5.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.panelFoupASlot5.Location = new System.Drawing.Point(0, 0);
+            this.panelFoupASlot5.Margin = new System.Windows.Forms.Padding(0);
+            this.panelFoupASlot5.Name = "panelFoupASlot5";
+            this.panelFoupASlot5.Size = new System.Drawing.Size(128, 31);
+            this.panelFoupASlot5.TabIndex = 4;
             // 
             // panelFoupADetail
             // 
@@ -1787,7 +1881,7 @@ namespace SemiconductorUi
             // 
             // panelFoupBLevelContainer
             // 
-            this.panelFoupBLevelContainer.Controls.Add(this.panelFoupBLevelTrack);
+            this.panelFoupBLevelContainer.Controls.Add(this.tableFoupBSlots);
             this.panelFoupBLevelContainer.Dock = System.Windows.Forms.DockStyle.Fill;
             this.panelFoupBLevelContainer.Location = new System.Drawing.Point(3, 3);
             this.panelFoupBLevelContainer.Name = "panelFoupBLevelContainer";
@@ -1795,25 +1889,75 @@ namespace SemiconductorUi
             this.panelFoupBLevelContainer.Size = new System.Drawing.Size(144, 166);
             this.panelFoupBLevelContainer.TabIndex = 0;
             // 
-            // panelFoupBLevelTrack
+            // tableFoupBSlots
             // 
-            this.panelFoupBLevelTrack.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(242)))), ((int)(((byte)(245)))), ((int)(((byte)(249)))));
-            this.panelFoupBLevelTrack.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.panelFoupBLevelTrack.Controls.Add(this.panelFoupBLevelFill);
-            this.panelFoupBLevelTrack.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.panelFoupBLevelTrack.Location = new System.Drawing.Point(8, 5);
-            this.panelFoupBLevelTrack.Name = "panelFoupBLevelTrack";
-            this.panelFoupBLevelTrack.Size = new System.Drawing.Size(128, 156);
-            this.panelFoupBLevelTrack.TabIndex = 0;
+            this.tableFoupBSlots.ColumnCount = 1;
+            this.tableFoupBSlots.Controls.Add(this.panelFoupBSlot1, 0, 4);
+            this.tableFoupBSlots.Controls.Add(this.panelFoupBSlot2, 0, 3);
+            this.tableFoupBSlots.Controls.Add(this.panelFoupBSlot3, 0, 2);
+            this.tableFoupBSlots.Controls.Add(this.panelFoupBSlot4, 0, 1);
+            this.tableFoupBSlots.Controls.Add(this.panelFoupBSlot5, 0, 0);
+            this.tableFoupBSlots.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.tableFoupBSlots.Location = new System.Drawing.Point(8, 5);
+            this.tableFoupBSlots.Name = "tableFoupBSlots";
+            this.tableFoupBSlots.RowCount = 5;
+            this.tableFoupBSlots.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 20F));
+            this.tableFoupBSlots.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 20F));
+            this.tableFoupBSlots.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 20F));
+            this.tableFoupBSlots.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 20F));
+            this.tableFoupBSlots.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 20F));
+            this.tableFoupBSlots.Size = new System.Drawing.Size(128, 156);
+            this.tableFoupBSlots.TabIndex = 0;
             // 
-            // panelFoupBLevelFill
+            // panelFoupBSlot1
             // 
-            this.panelFoupBLevelFill.BackColor = System.Drawing.Color.MediumBlue;
-            this.panelFoupBLevelFill.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.panelFoupBLevelFill.Location = new System.Drawing.Point(0, 154);
-            this.panelFoupBLevelFill.Name = "panelFoupBLevelFill";
-            this.panelFoupBLevelFill.Size = new System.Drawing.Size(126, 0);
-            this.panelFoupBLevelFill.TabIndex = 0;
+            this.panelFoupBSlot1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(245)))), ((int)(((byte)(245)))), ((int)(((byte)(250)))));
+            this.panelFoupBSlot1.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.panelFoupBSlot1.Location = new System.Drawing.Point(0, 124);
+            this.panelFoupBSlot1.Margin = new System.Windows.Forms.Padding(0);
+            this.panelFoupBSlot1.Name = "panelFoupBSlot1";
+            this.panelFoupBSlot1.Size = new System.Drawing.Size(128, 31);
+            this.panelFoupBSlot1.TabIndex = 0;
+            // 
+            // panelFoupBSlot2
+            // 
+            this.panelFoupBSlot2.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(245)))), ((int)(((byte)(245)))), ((int)(((byte)(250)))));
+            this.panelFoupBSlot2.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.panelFoupBSlot2.Location = new System.Drawing.Point(0, 93);
+            this.panelFoupBSlot2.Margin = new System.Windows.Forms.Padding(0);
+            this.panelFoupBSlot2.Name = "panelFoupBSlot2";
+            this.panelFoupBSlot2.Size = new System.Drawing.Size(128, 31);
+            this.panelFoupBSlot2.TabIndex = 1;
+            // 
+            // panelFoupBSlot3
+            // 
+            this.panelFoupBSlot3.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(245)))), ((int)(((byte)(245)))), ((int)(((byte)(250)))));
+            this.panelFoupBSlot3.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.panelFoupBSlot3.Location = new System.Drawing.Point(0, 62);
+            this.panelFoupBSlot3.Margin = new System.Windows.Forms.Padding(0);
+            this.panelFoupBSlot3.Name = "panelFoupBSlot3";
+            this.panelFoupBSlot3.Size = new System.Drawing.Size(128, 31);
+            this.panelFoupBSlot3.TabIndex = 2;
+            // 
+            // panelFoupBSlot4
+            // 
+            this.panelFoupBSlot4.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(245)))), ((int)(((byte)(245)))), ((int)(((byte)(250)))));
+            this.panelFoupBSlot4.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.panelFoupBSlot4.Location = new System.Drawing.Point(0, 31);
+            this.panelFoupBSlot4.Margin = new System.Windows.Forms.Padding(0);
+            this.panelFoupBSlot4.Name = "panelFoupBSlot4";
+            this.panelFoupBSlot4.Size = new System.Drawing.Size(128, 31);
+            this.panelFoupBSlot4.TabIndex = 3;
+            // 
+            // panelFoupBSlot5
+            // 
+            this.panelFoupBSlot5.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(245)))), ((int)(((byte)(245)))), ((int)(((byte)(250)))));
+            this.panelFoupBSlot5.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.panelFoupBSlot5.Location = new System.Drawing.Point(0, 0);
+            this.panelFoupBSlot5.Margin = new System.Windows.Forms.Padding(0);
+            this.panelFoupBSlot5.Name = "panelFoupBSlot5";
+            this.panelFoupBSlot5.Size = new System.Drawing.Size(128, 31);
+            this.panelFoupBSlot5.TabIndex = 4;
             // 
             // panelFoupBDetail
             // 
@@ -3481,18 +3625,21 @@ namespace SemiconductorUi
             this.panelPmStatus.ResumeLayout(false);
             this.panelPmStatus.PerformLayout();
             this.tableLayoutPmStatus.ResumeLayout(false);
+            this.panelSummaryPMA.ResumeLayout(false);
+            this.panelSummaryPMB.ResumeLayout(false);
+            this.panelSummaryPMC.ResumeLayout(false);
             this.tableProcessMetrics.ResumeLayout(false);
             this.tableProcessMetrics.PerformLayout();
             this.panelFoupStatusA.ResumeLayout(false);
             this.tableFoupACard.ResumeLayout(false);
             this.panelFoupALevelContainer.ResumeLayout(false);
-            this.panelFoupALevelTrack.ResumeLayout(false);
+            this.tableFoupASlots.ResumeLayout(false);
             this.panelFoupADetail.ResumeLayout(false);
             this.tableFoupAInfo.ResumeLayout(false);
             this.panelFoupStatusB.ResumeLayout(false);
             this.tableFoupBCard.ResumeLayout(false);
             this.panelFoupBLevelContainer.ResumeLayout(false);
-            this.panelFoupBLevelTrack.ResumeLayout(false);
+            this.tableFoupBSlots.ResumeLayout(false);
             this.panelFoupBDetail.ResumeLayout(false);
             this.tableFoupBInfo.ResumeLayout(false);
             this.panelControlPanel.ResumeLayout(false);
@@ -3668,6 +3815,9 @@ namespace SemiconductorUi
         internal System.Windows.Forms.Panel panelSummaryPMA;
         internal System.Windows.Forms.Panel panelSummaryPMB;
         internal System.Windows.Forms.Panel panelSummaryPMC;
+        internal SemiconductorUi.Controls.PmStatusPanel pmStatusPanelA;
+        internal SemiconductorUi.Controls.PmStatusPanel pmStatusPanelB;
+        internal SemiconductorUi.Controls.PmStatusPanel pmStatusPanelC;
         internal System.Windows.Forms.Panel panelSummaryFoupA;
         internal System.Windows.Forms.Label labelSummaryFoupAStatus;
         internal System.Windows.Forms.Label labelSummaryFoupATitle;
@@ -3690,8 +3840,12 @@ namespace SemiconductorUi
         internal System.Windows.Forms.Panel panelFoupStatusA;
         private System.Windows.Forms.TableLayoutPanel tableFoupACard;
         internal System.Windows.Forms.Panel panelFoupALevelContainer;
-        private System.Windows.Forms.Panel panelFoupALevelTrack;
-        private System.Windows.Forms.Panel panelFoupALevelFill;
+        internal System.Windows.Forms.TableLayoutPanel tableFoupASlots;
+        internal System.Windows.Forms.Panel panelFoupASlot1;
+        internal System.Windows.Forms.Panel panelFoupASlot2;
+        internal System.Windows.Forms.Panel panelFoupASlot3;
+        internal System.Windows.Forms.Panel panelFoupASlot4;
+        internal System.Windows.Forms.Panel panelFoupASlot5;
         private System.Windows.Forms.Panel panelFoupADetail;
         internal System.Windows.Forms.Label labelFoupInfoATitle;
         internal System.Windows.Forms.Label labelFoupAStatusHeadline;
@@ -3709,8 +3863,12 @@ namespace SemiconductorUi
         internal System.Windows.Forms.Panel panelFoupStatusB;
         private System.Windows.Forms.TableLayoutPanel tableFoupBCard;
         internal System.Windows.Forms.Panel panelFoupBLevelContainer;
-        private System.Windows.Forms.Panel panelFoupBLevelTrack;
-        private System.Windows.Forms.Panel panelFoupBLevelFill;
+        internal System.Windows.Forms.TableLayoutPanel tableFoupBSlots;
+        internal System.Windows.Forms.Panel panelFoupBSlot1;
+        internal System.Windows.Forms.Panel panelFoupBSlot2;
+        internal System.Windows.Forms.Panel panelFoupBSlot3;
+        internal System.Windows.Forms.Panel panelFoupBSlot4;
+        internal System.Windows.Forms.Panel panelFoupBSlot5;
         private System.Windows.Forms.Panel panelFoupBDetail;
         internal System.Windows.Forms.Label labelFoupInfoBTitle;
         internal System.Windows.Forms.Label labelFoupBStatusHeadline;
