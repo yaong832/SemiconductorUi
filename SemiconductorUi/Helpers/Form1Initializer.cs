@@ -258,109 +258,39 @@ namespace SemiconductorUi.Helpers
 
         public void InitializeFoupTrackPanels()
         {
-            // FOUP A 트랙 패널 생성 (1~5층)
-            if (form.panelFoupALevelContainer != null)
+            // 슬롯 칸은 Form1.Designer.cs에 있다: tableFoupASlots / tableFoupBSlots 안의 panelFoupASlot1~5, panelFoupBSlot1~5.
+            // 배열 인덱스와 층 번호: foupATrackPanels[0]=1층(맨 아래, panelFoupASlot1) ... [4]=5층(맨 위, panelFoupASlot5).
+            WireFoupSlotPanels(form.tableFoupASlots, form.foupATrackPanels,
+                new[] { form.panelFoupASlot1, form.panelFoupASlot2, form.panelFoupASlot3, form.panelFoupASlot4, form.panelFoupASlot5 },
+                (panel, g, layer) => form.DrawSingleWaferTrack(panel, g, layer, form.FoupAQueue));
+            WireFoupSlotPanels(form.tableFoupBSlots, form.foupBTrackPanels,
+                new[] { form.panelFoupBSlot1, form.panelFoupBSlot2, form.panelFoupBSlot3, form.panelFoupBSlot4, form.panelFoupBSlot5 },
+                (panel, g, layer) => form.DrawSingleWaferTrack(panel, g, layer, null, form.FoupBCompleted));
+        }
+
+        /// <summary>
+        /// 슬롯 칸 5개에 그리기와 배치를 연결합니다. 칸 안의 웨이퍼 그림은 DrawSingleWaferTrack이 그립니다.
+        /// </summary>
+        private static void WireFoupSlotPanels(TableLayoutPanel tableLayout, Panel[] trackPanels, Panel[] slots, Action<Panel, Graphics, int> paint)
+        {
+            if (tableLayout == null || trackPanels == null || slots == null) return;
+
+            for (int i = 0; i < 5 && i < slots.Length && i < trackPanels.Length; i++)
             {
-                form.panelFoupALevelContainer.Controls.Clear(); // 기존 컨트롤 제거
-                
-                // TableLayoutPanel 생성하여 5개 패널을 세로로 배치
-                var tableLayout = new TableLayoutPanel
-                {
-                    Dock = DockStyle.Fill,
-                    ColumnCount = 1,
-                    RowCount = 5,
-                    Padding = new Padding(0)
-                };
-                
-                // 각 행의 높이를 동일하게 설정
-                for (int i = 0; i < 5; i++)
-                {
-                    tableLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 20F));
-                }
-                
-                // 1층이 맨 아래에 오도록 역순으로 추가 (5층부터 1층까지)
-                // 배열 인덱스와 층 번호 매핑: foupATrackPanels[0]=1층, foupATrackPanels[1]=2층, ..., foupATrackPanels[4]=5층
-                tableLayout.Layout += (s, e) => LayoutFoupTrackPanels(tableLayout, form.foupATrackPanels);
-                
-                for (int i = 0; i < 5; i++)
-                {
-                    int layer = i + 1; // 1~5층 (배열 인덱스 i에 해당하는 층 번호)
-                    int rowIndex = 4 - i; // 역순 배치: 1층(row=4, 맨 아래), 2층(row=3), ..., 5층(row=0, 맨 위)
-                    var trackPanel = new Panel
-                    {
-                        Dock = DockStyle.Fill,  // 초기에는 Fill, Layout 이벤트에서 조정됨
-                        BackColor = Color.FromArgb(245, 245, 250),  // 밝은 회색 배경
-                        BorderStyle = BorderStyle.None,  // 테두리는 Paint에서 그리므로 None
-                        Margin = new Padding(0)
-                    };
-                    
-                    // 해당 층의 웨이퍼만 표시하도록 Paint 이벤트 연결
-                    // layer는 1~5층을 의미하며, 1층부터 순서대로 쌓임
-                    int layerIndex = layer; // 클로저를 위한 로컬 변수
-                    // 갱신 때 지우고 다시 그리는 과정이 보이지 않도록 이중 버퍼로 그립니다.
-                    EquipmentCanvasStyler.EnableDoubleBuffer(trackPanel);
-                    trackPanel.Paint += (s, e) => form.DrawSingleWaferTrack(trackPanel, e.Graphics, layerIndex, form.FoupAQueue);
-                    trackPanel.Resize += (s, e) => trackPanel.Invalidate();
-                    
-                    // 배열에 저장: foupATrackPanels[0]=1층 패널, foupATrackPanels[1]=2층 패널, ...
-                    form.foupATrackPanels[i] = trackPanel;
-                    tableLayout.Controls.Add(trackPanel, 0, rowIndex);
-                }
-                
-                form.panelFoupALevelContainer.Controls.Add(tableLayout);
+                var trackPanel = slots[i];
+                if (trackPanel == null) continue;
+
+                int layer = i + 1; // 1~5층
+                // 갱신 때 지우고 다시 그리는 과정이 보이지 않도록 이중 버퍼로 그립니다.
+                EquipmentCanvasStyler.EnableDoubleBuffer(trackPanel);
+                trackPanel.Paint += (s, e) => paint(trackPanel, e.Graphics, layer);
+                trackPanel.Resize += (s, e) => trackPanel.Invalidate();
+                trackPanels[i] = trackPanel;
             }
-            
-            // FOUP B 트랙 패널 생성 (1~5층)
-            if (form.panelFoupBLevelContainer != null)
-            {
-                form.panelFoupBLevelContainer.Controls.Clear(); // 기존 컨트롤 제거
-                
-                // TableLayoutPanel 생성하여 5개 패널을 세로로 배치
-                var tableLayout = new TableLayoutPanel
-                {
-                    Dock = DockStyle.Fill,
-                    ColumnCount = 1,
-                    RowCount = 5,
-                    Padding = new Padding(0)
-                };
-                
-                // 각 행의 높이를 동일하게 설정
-                for (int i = 0; i < 5; i++)
-                {
-                    tableLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 20F));
-                }
-                
-                // 1층이 맨 아래에 오도록 역순으로 추가 (5층부터 1층까지)
-                // 배열 인덱스와 층 번호 매핑: foupBTrackPanels[0]=1층, foupBTrackPanels[1]=2층, ..., foupBTrackPanels[4]=5층
-                tableLayout.Layout += (s, e) => LayoutFoupTrackPanels(tableLayout, form.foupBTrackPanels);
-                
-                for (int i = 0; i < 5; i++)
-                {
-                    int layer = i + 1; // 1~5층 (배열 인덱스 i에 해당하는 층 번호)
-                    int rowIndex = 4 - i; // 역순 배치: 1층(row=4, 맨 아래), 2층(row=3), ..., 5층(row=0, 맨 위)
-                    var trackPanel = new Panel
-                    {
-                        Dock = DockStyle.Fill,  // 초기에는 Fill, Layout 이벤트에서 조정됨
-                        BackColor = Color.FromArgb(245, 245, 250),  // 밝은 회색 배경
-                        BorderStyle = BorderStyle.None,  // 테두리는 Paint에서 그리므로 None
-                        Margin = new Padding(0)
-                    };
-                    
-                    // 해당 층의 웨이퍼만 표시하도록 Paint 이벤트 연결
-                    // layer는 1~5층을 의미하며, 1층부터 순서대로 쌓임
-                    int layerIndex = layer; // 클로저를 위한 로컬 변수
-                    // 갱신 때 지우고 다시 그리는 과정이 보이지 않도록 이중 버퍼로 그립니다.
-                    EquipmentCanvasStyler.EnableDoubleBuffer(trackPanel);
-                    trackPanel.Paint += (s, e) => form.DrawSingleWaferTrack(trackPanel, e.Graphics, layerIndex, null, form.FoupBCompleted);
-                    trackPanel.Resize += (s, e) => trackPanel.Invalidate();
-                    
-                    // 배열에 저장: foupBTrackPanels[0]=1층 패널, foupBTrackPanels[1]=2층 패널, ...
-                    form.foupBTrackPanels[i] = trackPanel;
-                    tableLayout.Controls.Add(trackPanel, 0, rowIndex);
-                }
-                
-                form.panelFoupBLevelContainer.Controls.Add(tableLayout);
-            }
+
+            // 칸 높이의 70%만 쓰도록 배치 (Layout 때마다 다시 계산)
+            tableLayout.Layout += (s, e) => LayoutFoupTrackPanels(tableLayout, trackPanels);
+            tableLayout.PerformLayout();
         }
 
         /// <summary>
@@ -378,14 +308,18 @@ namespace SemiconductorUi.Helpers
         /// </summary>
         public void InitializePmStatusPanels()
         {
-            // PMA 패널
-            form.pmStatusPanelA = form.CreatePmStatusPanel("Chamber A", form.panelSummaryPMA);
-            
-            // PMB 패널
-            form.pmStatusPanelB = form.CreatePmStatusPanel("Chamber B", form.panelSummaryPMB);
-            
-            // PMC 패널
-            form.pmStatusPanelC = form.CreatePmStatusPanel("Chamber C", form.panelSummaryPMC);
+            // pmStatusPanelA/B/C는 Form1.Designer.cs에서 panelSummaryPMA/B/C를 채우고 있다.
+            // ConfigureStatusPanels가 카드 안쪽 여백을 주므로 여기서 없애 그림이 카드 전체를 쓰게 하고,
+            // 같은 카드에 코드가 만든 환경 값 표(tableEnvPMA 등, 값 보관용)가 있으므로 상태 패널을 맨 앞으로 둔다.
+            foreach (var panel in new[] { form.pmStatusPanelA, form.pmStatusPanelB, form.pmStatusPanelC })
+            {
+                if (panel == null) continue;
+                if (panel.Parent != null)
+                {
+                    panel.Parent.Padding = new Padding(0);
+                }
+                panel.BringToFront();
+            }
         }
 
         /// <summary>

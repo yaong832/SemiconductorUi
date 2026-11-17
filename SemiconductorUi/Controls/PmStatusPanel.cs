@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Windows.Forms;
@@ -95,54 +96,63 @@ namespace SemiconductorUi.Controls
 
         #region Properties
 
+        [DefaultValue("Chamber")]
         public string Title
         {
             get => _title;
             set { if (_title != value) { _title = value; Invalidate(); } }
         }
 
+        [Browsable(false), DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string StatusText
         {
             get => _statusText;
             set { if (_statusText != value) { _statusText = value; Invalidate(); } }
         }
 
+        [Browsable(false), DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string RecipeName
         {
             get => _recipeName;
             set { if (_recipeName != value) { _recipeName = value ?? "-"; Invalidate(); } }
         }
 
+        [Browsable(false), DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string StepName
         {
             get => _stepName;
             set { if (_stepName != value) { _stepName = value ?? "-"; Invalidate(); } }
         }
 
+        [Browsable(false), DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string TimeInfo
         {
             get => _timeInfo;
             set { if (_timeInfo != value) { _timeInfo = value ?? ""; Invalidate(); } }
         }
 
+        [Browsable(false), DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string WaferInfo
         {
             get => _waferInfo;
             set { if (_waferInfo != value) { _waferInfo = value ?? "-"; Invalidate(); } }
         }
 
+        [Browsable(false), DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string EnvInfo
         {
             get => _envInfo;
             set { if (_envInfo != value) { _envInfo = value ?? ""; Invalidate(); } }
         }
 
+        [Browsable(false), DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string StepMessage
         {
             get => _stepMessage;
             set { if (_stepMessage != value) { _stepMessage = value ?? ""; Invalidate(); } }
         }
 
+        [Browsable(false), DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public int ProgressPercent
         {
             get => _progressPercent;
@@ -157,12 +167,14 @@ namespace SemiconductorUi.Controls
             }
         }
 
+        [Browsable(false), DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public bool IsProcessing
         {
             get => _isProcessing;
             set { if (_isProcessing != value) { _isProcessing = value; Invalidate(); } }
         }
 
+        [Browsable(false), DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public bool HasAlarm
         {
             get => _hasAlarm;

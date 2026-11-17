@@ -618,10 +618,7 @@ namespace SemiconductorUi
         internal bool SimulationPaused => SimulationService?.IsPaused ?? false;
         private int simulationElapsedSeconds => SimulationService?.ElapsedSeconds ?? 0;
         
-        // PM 상태 표시용 커스텀 패널 (깜빡임 방지)
-        internal PmStatusPanel pmStatusPanelA;
-        internal PmStatusPanel pmStatusPanelB;
-        internal PmStatusPanel pmStatusPanelC;
+        // PM 상태 표시용 커스텀 패널 pmStatusPanelA/B/C는 Form1.Designer.cs에 있다 (panelSummaryPMA/B/C 안).
         // CurrentRecipeWaferCount, UserWaferLoadCount, activeBatchTargetCount, status 텍스트 필드들,
         // chamberCompletedCount, tm 상태 필드들, mainLampBlinkState, SecondExposureEnabled 등은
         // ViewModel 속성으로 관리됨 (위의 속성 래퍼 참조)
@@ -948,14 +945,8 @@ namespace SemiconductorUi
             uiConfigurator.CaptureFoupBaseVisuals();
             uiConfigurator.ResetDoorStates();
             PrepareDemoEnvironment();
-            // 5개의 개별 트랙 패널 생성
+            // FOUP 슬롯 5칸(panelFoupASlot1~5, panelFoupBSlot1~5)에 그리기를 연결
             uiInitializer.InitializeFoupTrackPanels();
-            // fillPanel은 더 이상 사용하지 않으므로 숨김
-            if (panelFoupALevelFill != null) panelFoupALevelFill.Visible = false;
-            if (panelFoupBLevelFill != null) panelFoupBLevelFill.Visible = false;
-            // 기존 단일 트랙 패널 숨김
-            if (panelFoupALevelTrack != null) panelFoupALevelTrack.Visible = false;
-            if (panelFoupBLevelTrack != null) panelFoupBLevelTrack.Visible = false;
             labelFoupSummaryInfo.Text = $"{CurrentFoupExchangeState} | {CurrentFoupQueueInfo}";
             // 장비 카드 상세 보기 이벤트는 추후 재적용 예정
             SetProcessState(ProcessState.Idle, "시스템 초기화 완료.");
@@ -6383,29 +6374,6 @@ namespace SemiconductorUi
         private void InitializePmStatusPanels()
         {
             uiInitializer?.InitializePmStatusPanels();
-        }
-
-        /// <summary>
-        /// PmStatusPanel 생성 및 기존 컨트롤 대체
-        /// </summary>
-        internal PmStatusPanel CreatePmStatusPanel(string title, Panel parentPanel)
-        {
-            if (parentPanel == null) return null;
-
-            // 새 PmStatusPanel 생성
-            var panel = new PmStatusPanel
-            {
-                Title = title,
-                Dock = DockStyle.Fill,
-                Padding = new Padding(0)
-            };
-
-            // 부모 패널에 추가 (안쪽 여백을 없애 그림이 카드 전체를 쓰게 함)
-            parentPanel.Padding = new Padding(0);
-            parentPanel.Controls.Add(panel);
-            panel.BringToFront();
-
-            return panel;
         }
 
         /// <summary>
