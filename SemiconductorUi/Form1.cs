@@ -5705,8 +5705,26 @@ namespace SemiconductorUi
             }
         }
 
+        /// <summary>
+        /// 이송 탭의 Clear. 공정 중(일시정지 포함)이거나 서보 ON·원점복귀 중이면 막습니다.
+        /// 이때 비우면 진행 중인 이송과 대기 이송만 사라지고 챔버의 반출 예약(PickupScheduled 등)은 남아
+        /// 다음 이송이 만들어지지 않으므로 공정이 끝나지 않습니다(시뮬레이션으로 확인).
+        /// </summary>
         internal void ClearTransferQueue()
         {
+            if (IsProcessActiveOrStarting())
+            {
+                AddLogMessage($"공정 진행 중 이송 목록 비우기 시도 차단 (사용자: {CurrentUser})", "WARN");
+                MessageBox.Show(
+                    "공정이 진행 중(일시정지 포함)이거나 서보 ON·원점복귀 중에는 이송 목록을 비울 수 없습니다.\n\n" +
+                    "비우면 진행 중인 이송과 예약된 이송이 사라져 공정이 끝나지 않습니다.\n" +
+                    "공정을 멈춰야 하면 '공정 리셋'을, 급히 멈춰야 하면 긴급 정지를 누르세요.",
+                    "이송 목록 비우기 제한",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
+                return;
+            }
+
             TransferService?.ClearQueue();
             AddLogMessage("이송 큐를 비웠습니다.", "INFO");
         }
