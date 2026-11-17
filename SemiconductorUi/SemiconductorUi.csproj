@@ -199,6 +199,7 @@
     <Compile Include="Helpers\EquipmentCanvasStyler.cs" />
     <Compile Include="Helpers\TmHeightEstimator.cs" />
     <Compile Include="Helpers\UiTheme.cs" />
+    <Compile Include="Helpers\DesignPreview.cs" />
     <Compile Include="Helpers\ShellNavPainter.cs" />
     <Compile Include="Helpers\Form1UiUpdater.cs" />
     <Compile Include="Helpers\Form1Initializer.cs" />
@@ -276,6 +277,15 @@
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="Controls\ShellTopBar.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Controls\ShellNavButton.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Controls\LampButton.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Controls\PlateGroupBox.cs">
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="Program.cs" />

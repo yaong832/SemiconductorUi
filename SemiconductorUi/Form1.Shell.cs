@@ -16,6 +16,8 @@ namespace SemiconductorUi
     /// 기존 상단 표(panelHeader)는 Form1.Designer.cs의 숨긴 보관 패널(panelShellParking)에 있습니다.
     /// 코드가 계속 바꾸는 상태 글자(labelEthercatStatus, labelServoStatus, labelHeaderEventMessage 등)를
     /// 상단 바가 읽어 보여 주므로 지우지 않습니다.
+    /// 메뉴·탭 버튼은 Form1.Designer.cs에서 ShellNavButton으로 선언되어 디자이너에서도 실행 화면과 같은 모양으로 보입니다.
+    /// 디자이너의 "디자이너 미리보기" 값(그림, 선택 표시, 칩 글자 등)은 디자이너 그림에만 쓰이고, 실행 중 모양은 이 파일이 정합니다.
     /// </summary>
     public partial class Form1
     {

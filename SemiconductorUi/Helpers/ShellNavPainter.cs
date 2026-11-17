@@ -119,14 +119,21 @@ namespace SemiconductorUi.Helpers
         private static void PaintNavItem(object sender, PaintEventArgs e)
         {
             var button = (Button)sender;
-            var g = e.Graphics;
+            DrawNavItem(e.Graphics, button, navItems[button], barItems.Contains(button),
+                selected.Contains(button), hovered.Contains(button) && button.Enabled);
+        }
+
+        /// <summary>
+        /// 메뉴 버튼 한 개를 그립니다. 실행 중에는 PaintNavItem이 지금 상태(선택·마우스 올림)로 부르고,
+        /// Visual Studio 디자이너에서는 ShellNavButton이 미리보기 값으로 부릅니다.
+        /// </summary>
+        internal static void DrawNavItem(Graphics g, Button button, ShellNavIcon icon, bool isBarItem, bool isSelected, bool isHover)
+        {
             var bounds = button.ClientRectangle;
             Color pageBack = button.Parent?.BackColor ?? UiTheme.Surface;
             g.Clear(pageBack);
             g.SmoothingMode = SmoothingMode.AntiAlias;
 
-            bool isSelected = selected.Contains(button);
-            bool isHover = hovered.Contains(button) && button.Enabled;
             Color back = isSelected ? SelectedSoft : (isHover ? UiTheme.SurfaceAlt : pageBack);
             Color fore = !button.Enabled ? UiTheme.ButtonDisabledText
                 : (isSelected ? UiTheme.Primary : UiTheme.TextSecondary);
@@ -137,7 +144,7 @@ namespace SemiconductorUi.Helpers
                 g.FillPath(brush, path);
             }
 
-            if (barItems.Contains(button))
+            if (isBarItem)
             {
                 Color border = isSelected ? UiTheme.Primary : UiTheme.Border;
                 using (var path = RoundedRect(new Rectangle(0, 0, bounds.Width - 1, bounds.Height - 1), 8))
@@ -153,7 +160,7 @@ namespace SemiconductorUi.Helpers
                 const int gap = 8;
                 int groupWidth = iconSize + gap + textSize.Width;
                 int left = Math.Max(6, (bounds.Width - groupWidth) / 2);
-                DrawIcon(g, navItems[button], new RectangleF(left, (bounds.Height - iconSize) / 2f, iconSize, iconSize), barFore);
+                DrawIcon(g, icon, new RectangleF(left, (bounds.Height - iconSize) / 2f, iconSize, iconSize), barFore);
                 TextRenderer.DrawText(g, button.Text, font,
                     new Rectangle(left + iconSize + gap, 0, bounds.Width - left - iconSize - gap, bounds.Height), barFore,
                     TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding | TextFormatFlags.SingleLine | TextFormatFlags.EndEllipsis);
@@ -161,7 +168,7 @@ namespace SemiconductorUi.Helpers
             }
 
             var iconBox = new RectangleF((bounds.Width - 22) / 2f, 9, 22, 22);
-            DrawIcon(g, navItems[button], iconBox, fore);
+            DrawIcon(g, icon, iconBox, fore);
 
             var textRect = new Rectangle(0, 34, bounds.Width, bounds.Height - 36);
             TextRenderer.DrawText(g, button.Text, isSelected ? NavFontBold : NavFont, textRect, fore,
@@ -171,14 +178,17 @@ namespace SemiconductorUi.Helpers
         private static void PaintSubTab(object sender, PaintEventArgs e)
         {
             var button = (Button)sender;
-            var g = e.Graphics;
+            DrawSubTab(e.Graphics, button, selected.Contains(button), hovered.Contains(button) && button.Enabled);
+        }
+
+        /// <summary>작은 탭 한 개를 그립니다. 실행 중에는 PaintSubTab이, 디자이너에서는 ShellNavButton이 부릅니다.</summary>
+        internal static void DrawSubTab(Graphics g, Button button, bool isSelected, bool isHover)
+        {
             var bounds = button.ClientRectangle;
             Color pageBack = button.Parent?.BackColor ?? UiTheme.Surface;
             g.Clear(pageBack);
             g.SmoothingMode = SmoothingMode.AntiAlias;
 
-            bool isSelected = selected.Contains(button);
-            bool isHover = hovered.Contains(button) && button.Enabled;
             Color back = isSelected ? UiTheme.Primary : (isHover ? UiTheme.SurfaceAlt : pageBack);
             Color fore = !button.Enabled ? UiTheme.ButtonDisabledText
                 : (isSelected ? Color.White : UiTheme.TextSecondary);
