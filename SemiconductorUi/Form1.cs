@@ -503,10 +503,7 @@ namespace SemiconductorUi
             }
         }
         
-        /// <summary>
-        /// 시뮬레이터 오른쪽의 TM 기준 화면(정면/옆면). Form1Initializer가 만든다.
-        /// </summary>
-        internal Controls.TmSideViewControl tmSideViewControl;
+        // 시뮬레이터 오른쪽의 TM 기준 화면(정면/옆면) tmSideViewControl은 Form1.Designer.cs에 있다.
 
         // Transfer Module 상태 속성
         internal EquipmentRegion TmVisualTarget

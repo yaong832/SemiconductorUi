@@ -90,6 +90,7 @@ namespace SemiconductorUi.Controls
             BackColor = EquipmentCanvasStyler.CanvasBack;
         }
 
+        [System.ComponentModel.DefaultValue(ViewMode.Front)]
         public ViewMode Mode
         {
             get => mode;

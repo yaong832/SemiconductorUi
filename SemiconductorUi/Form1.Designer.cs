@@ -99,6 +99,8 @@ namespace SemiconductorUi
             this.tableLayoutEquipment = new System.Windows.Forms.TableLayoutPanel();
             this.tableLayoutChamberCluster = new System.Windows.Forms.TableLayoutPanel();
             this.panelEquipmentCanvas = new System.Windows.Forms.Panel();
+            this.tmSideViewControl = new SemiconductorUi.Controls.TmSideViewControl();
+            this.tmVisualizationControl = new SemiconductorUi.Controls.TmVisualizationControl();
             this.panelPmStatus = new System.Windows.Forms.Panel();
             this.tableLayoutPmStatus = new System.Windows.Forms.TableLayoutPanel();
             this.panelSummaryPMA = new System.Windows.Forms.Panel();
@@ -203,7 +205,9 @@ namespace SemiconductorUi
             this.panelMainLampGreen = new System.Windows.Forms.Panel();
             this.labelMainLamp = new System.Windows.Forms.Label();
             this.panelFoupB = new System.Windows.Forms.Panel();
+            this.foupVisualizationControlB = new SemiconductorUi.Controls.FoupVisualizationControl();
             this.panelFoupA = new System.Windows.Forms.Panel();
+            this.foupVisualizationControlA = new SemiconductorUi.Controls.FoupVisualizationControl();
             this.panelChamberC = new System.Windows.Forms.Panel();
             this.panelDoorChamberC = new System.Windows.Forms.Panel();
             this.panelWaferChamberC = new System.Windows.Forms.Panel();
@@ -278,6 +282,7 @@ namespace SemiconductorUi
             this.tableLayoutEquipmentArea.SuspendLayout();
             this.tableLayoutEquipment.SuspendLayout();
             this.tableLayoutChamberCluster.SuspendLayout();
+            this.panelEquipmentCanvas.SuspendLayout();
             this.panelPmStatus.SuspendLayout();
             this.tableLayoutPmStatus.SuspendLayout();
             this.tableProcessMetrics.SuspendLayout();
@@ -311,6 +316,8 @@ namespace SemiconductorUi
             this.flowShellNavMenu.SuspendLayout();
             this.flowShellNavSystem.SuspendLayout();
             this.panelMainLamp.SuspendLayout();
+            this.panelFoupB.SuspendLayout();
+            this.panelFoupA.SuspendLayout();
             this.panelChamberC.SuspendLayout();
             this.panelDoorChamberC.SuspendLayout();
             this.panelChamberA.SuspendLayout();
@@ -1375,13 +1382,37 @@ namespace SemiconductorUi
             // panelEquipmentCanvas
             // 
             this.panelEquipmentCanvas.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(236)))), ((int)(((byte)(239)))), ((int)(((byte)(244)))));
+            this.panelEquipmentCanvas.Controls.Add(this.tmSideViewControl);
+            this.panelEquipmentCanvas.Controls.Add(this.panelMainLamp);
+            this.panelEquipmentCanvas.Controls.Add(this.panelChamberA);
+            this.panelEquipmentCanvas.Controls.Add(this.panelChamberB);
+            this.panelEquipmentCanvas.Controls.Add(this.panelChamberC);
+            this.panelEquipmentCanvas.Controls.Add(this.panelFoupA);
+            this.panelEquipmentCanvas.Controls.Add(this.panelFoupB);
+            this.panelEquipmentCanvas.Controls.Add(this.tmVisualizationControl);
             this.panelEquipmentCanvas.Dock = System.Windows.Forms.DockStyle.Fill;
             this.panelEquipmentCanvas.Location = new System.Drawing.Point(0, 0);
             this.panelEquipmentCanvas.Margin = new System.Windows.Forms.Padding(0);
             this.panelEquipmentCanvas.Name = "panelEquipmentCanvas";
-            this.panelEquipmentCanvas.Size = new System.Drawing.Size(942, 361);
+            this.panelEquipmentCanvas.Size = new System.Drawing.Size(924, 398);
             this.panelEquipmentCanvas.TabIndex = 0;
             this.panelEquipmentCanvas.Resize += new System.EventHandler(this.panelEquipmentCanvas_Resize);
+            // 
+            // tmSideViewControl
+            // 
+            this.tmSideViewControl.Location = new System.Drawing.Point(648, 56);
+            this.tmSideViewControl.Name = "tmSideViewControl";
+            this.tmSideViewControl.Size = new System.Drawing.Size(262, 328);
+            this.tmSideViewControl.TabIndex = 1;
+            this.tmSideViewControl.TabStop = false;
+            // 
+            // tmVisualizationControl
+            // 
+            this.tmVisualizationControl.BackColor = System.Drawing.Color.Transparent;
+            this.tmVisualizationControl.Location = new System.Drawing.Point(0, 0);
+            this.tmVisualizationControl.Name = "tmVisualizationControl";
+            this.tmVisualizationControl.Size = new System.Drawing.Size(636, 398);
+            this.tmVisualizationControl.TabIndex = 0;
             // 
             // panelPmStatus
             // 
@@ -2695,9 +2726,7 @@ namespace SemiconductorUi
             // 
             // panelMainLamp
             // 
-            this.panelMainLamp.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.panelMainLamp.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(236)))), ((int)(((byte)(239)))), ((int)(((byte)(244)))));
-            this.panelMainLamp.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.panelMainLamp.Controls.Add(this.labelMainLampRed);
             this.panelMainLamp.Controls.Add(this.labelMainLampYellow);
             this.panelMainLamp.Controls.Add(this.labelMainLampGreen);
@@ -2705,12 +2734,11 @@ namespace SemiconductorUi
             this.panelMainLamp.Controls.Add(this.panelMainLampYellow);
             this.panelMainLamp.Controls.Add(this.panelMainLampGreen);
             this.panelMainLamp.Controls.Add(this.labelMainLamp);
-            this.panelMainLamp.Location = new System.Drawing.Point(529, 16);
+            this.panelMainLamp.Location = new System.Drawing.Point(648, 14);
             this.panelMainLamp.Margin = new System.Windows.Forms.Padding(6, 18, 12, 6);
-            this.panelMainLamp.MinimumSize = new System.Drawing.Size(130, 90);
             this.panelMainLamp.Name = "panelMainLamp";
             this.panelMainLamp.Padding = new System.Windows.Forms.Padding(10, 10, 10, 8);
-            this.panelMainLamp.Size = new System.Drawing.Size(188, 90);
+            this.panelMainLamp.Size = new System.Drawing.Size(262, 34);
             this.panelMainLamp.TabIndex = 0;
             // 
             // labelMainLampRed
@@ -2787,28 +2815,48 @@ namespace SemiconductorUi
             // panelFoupB
             // 
             this.panelFoupB.Anchor = System.Windows.Forms.AnchorStyles.None;
-            this.panelFoupB.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(63)))), ((int)(((byte)(66)))), ((int)(((byte)(73)))));
-            this.panelFoupB.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.panelFoupB.Location = new System.Drawing.Point(422, 185);
+            this.panelFoupB.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(236)))), ((int)(((byte)(239)))), ((int)(((byte)(244)))));
+            this.panelFoupB.Controls.Add(this.foupVisualizationControlB);
+            this.panelFoupB.Location = new System.Drawing.Point(375, 281);
             this.panelFoupB.Margin = new System.Windows.Forms.Padding(0);
             this.panelFoupB.MinimumSize = new System.Drawing.Size(160, 110);
             this.panelFoupB.Name = "panelFoupB";
-            this.panelFoupB.Padding = new System.Windows.Forms.Padding(12);
-            this.panelFoupB.Size = new System.Drawing.Size(200, 110);
+            this.panelFoupB.Size = new System.Drawing.Size(176, 110);
             this.panelFoupB.TabIndex = 6;
+            // 
+            // foupVisualizationControlB
+            // 
+            this.foupVisualizationControlB.Capacity = 5;
+            this.foupVisualizationControlB.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.foupVisualizationControlB.FacingDegrees = -137.05F;
+            this.foupVisualizationControlB.Location = new System.Drawing.Point(0, 0);
+            this.foupVisualizationControlB.Name = "foupVisualizationControlB";
+            this.foupVisualizationControlB.Size = new System.Drawing.Size(176, 110);
+            this.foupVisualizationControlB.TabIndex = 0;
+            this.foupVisualizationControlB.Title = "FOUP B";
             // 
             // panelFoupA
             // 
             this.panelFoupA.Anchor = System.Windows.Forms.AnchorStyles.None;
-            this.panelFoupA.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(63)))), ((int)(((byte)(66)))), ((int)(((byte)(73)))));
-            this.panelFoupA.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.panelFoupA.Location = new System.Drawing.Point(95, 185);
+            this.panelFoupA.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(236)))), ((int)(((byte)(239)))), ((int)(((byte)(244)))));
+            this.panelFoupA.Controls.Add(this.foupVisualizationControlA);
+            this.panelFoupA.Location = new System.Drawing.Point(85, 281);
             this.panelFoupA.Margin = new System.Windows.Forms.Padding(0);
             this.panelFoupA.MinimumSize = new System.Drawing.Size(160, 110);
             this.panelFoupA.Name = "panelFoupA";
-            this.panelFoupA.Padding = new System.Windows.Forms.Padding(12);
-            this.panelFoupA.Size = new System.Drawing.Size(200, 110);
+            this.panelFoupA.Size = new System.Drawing.Size(176, 110);
             this.panelFoupA.TabIndex = 5;
+            // 
+            // foupVisualizationControlA
+            // 
+            this.foupVisualizationControlA.Capacity = 5;
+            this.foupVisualizationControlA.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.foupVisualizationControlA.FacingDegrees = -42.95F;
+            this.foupVisualizationControlA.Location = new System.Drawing.Point(0, 0);
+            this.foupVisualizationControlA.Name = "foupVisualizationControlA";
+            this.foupVisualizationControlA.Size = new System.Drawing.Size(176, 110);
+            this.foupVisualizationControlA.TabIndex = 0;
+            this.foupVisualizationControlA.Title = "FOUP A";
             // 
             // panelChamberC
             // 
@@ -2818,12 +2866,12 @@ namespace SemiconductorUi
             this.panelChamberC.Controls.Add(this.panelDoorChamberC);
             this.panelChamberC.Controls.Add(this.panelLampChamberC);
             this.panelChamberC.Controls.Add(this.labelChamberC);
-            this.panelChamberC.Location = new System.Drawing.Point(475, 87);
+            this.panelChamberC.Location = new System.Drawing.Point(446, 146);
             this.panelChamberC.Margin = new System.Windows.Forms.Padding(12);
             this.panelChamberC.MinimumSize = new System.Drawing.Size(150, 110);
             this.panelChamberC.Name = "panelChamberC";
             this.panelChamberC.Padding = new System.Windows.Forms.Padding(14);
-            this.panelChamberC.Size = new System.Drawing.Size(205, 110);
+            this.panelChamberC.Size = new System.Drawing.Size(176, 110);
             this.panelChamberC.TabIndex = 4;
             // 
             // panelDoorChamberC
@@ -2850,7 +2898,7 @@ namespace SemiconductorUi
             this.panelLampChamberC.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.panelLampChamberC.BackColor = System.Drawing.Color.ForestGreen;
             this.panelLampChamberC.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.panelLampChamberC.Location = new System.Drawing.Point(168, 14);
+            this.panelLampChamberC.Location = new System.Drawing.Point(139, 14);
             this.panelLampChamberC.Name = "panelLampChamberC";
             this.panelLampChamberC.Size = new System.Drawing.Size(20, 20);
             this.panelLampChamberC.TabIndex = 5;
@@ -2874,12 +2922,12 @@ namespace SemiconductorUi
             this.panelChamberA.Controls.Add(this.panelDoorChamberA);
             this.panelChamberA.Controls.Add(this.panelLampChamberA);
             this.panelChamberA.Controls.Add(this.labelChamberA);
-            this.panelChamberA.Location = new System.Drawing.Point(37, 87);
+            this.panelChamberA.Location = new System.Drawing.Point(14, 146);
             this.panelChamberA.Margin = new System.Windows.Forms.Padding(12);
             this.panelChamberA.MinimumSize = new System.Drawing.Size(150, 110);
             this.panelChamberA.Name = "panelChamberA";
             this.panelChamberA.Padding = new System.Windows.Forms.Padding(14);
-            this.panelChamberA.Size = new System.Drawing.Size(205, 110);
+            this.panelChamberA.Size = new System.Drawing.Size(176, 110);
             this.panelChamberA.TabIndex = 2;
             // 
             // panelDoorChamberA
@@ -2906,7 +2954,7 @@ namespace SemiconductorUi
             this.panelLampChamberA.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.panelLampChamberA.BackColor = System.Drawing.Color.ForestGreen;
             this.panelLampChamberA.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.panelLampChamberA.Location = new System.Drawing.Point(168, 14);
+            this.panelLampChamberA.Location = new System.Drawing.Point(139, 14);
             this.panelLampChamberA.Name = "panelLampChamberA";
             this.panelLampChamberA.Size = new System.Drawing.Size(20, 20);
             this.panelLampChamberA.TabIndex = 3;
@@ -2930,12 +2978,12 @@ namespace SemiconductorUi
             this.panelChamberB.Controls.Add(this.panelDoorChamberB);
             this.panelChamberB.Controls.Add(this.panelLampChamberB);
             this.panelChamberB.Controls.Add(this.labelChamberB);
-            this.panelChamberB.Location = new System.Drawing.Point(256, 2);
+            this.panelChamberB.Location = new System.Drawing.Point(230, 9);
             this.panelChamberB.Margin = new System.Windows.Forms.Padding(12);
             this.panelChamberB.MinimumSize = new System.Drawing.Size(150, 110);
             this.panelChamberB.Name = "panelChamberB";
             this.panelChamberB.Padding = new System.Windows.Forms.Padding(14);
-            this.panelChamberB.Size = new System.Drawing.Size(205, 110);
+            this.panelChamberB.Size = new System.Drawing.Size(176, 110);
             this.panelChamberB.TabIndex = 3;
             // 
             // panelDoorChamberB
@@ -2962,7 +3010,7 @@ namespace SemiconductorUi
             this.panelLampChamberB.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.panelLampChamberB.BackColor = System.Drawing.Color.ForestGreen;
             this.panelLampChamberB.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.panelLampChamberB.Location = new System.Drawing.Point(168, 14);
+            this.panelLampChamberB.Location = new System.Drawing.Point(139, 14);
             this.panelLampChamberB.Name = "panelLampChamberB";
             this.panelLampChamberB.Size = new System.Drawing.Size(20, 20);
             this.panelLampChamberB.TabIndex = 4;
@@ -3429,6 +3477,7 @@ namespace SemiconductorUi
             this.tableLayoutEquipmentArea.ResumeLayout(false);
             this.tableLayoutEquipment.ResumeLayout(false);
             this.tableLayoutChamberCluster.ResumeLayout(false);
+            this.panelEquipmentCanvas.ResumeLayout(false);
             this.panelPmStatus.ResumeLayout(false);
             this.panelPmStatus.PerformLayout();
             this.tableLayoutPmStatus.ResumeLayout(false);
@@ -3472,6 +3521,8 @@ namespace SemiconductorUi
             this.flowShellNavSystem.ResumeLayout(false);
             this.panelMainLamp.ResumeLayout(false);
             this.panelMainLamp.PerformLayout();
+            this.panelFoupB.ResumeLayout(false);
+            this.panelFoupA.ResumeLayout(false);
             this.panelChamberC.ResumeLayout(false);
             this.panelChamberC.PerformLayout();
             this.panelDoorChamberC.ResumeLayout(false);
@@ -3512,6 +3563,7 @@ namespace SemiconductorUi
         internal System.Windows.Forms.Label labelMainLampYellow;
         internal System.Windows.Forms.Label labelMainLampRed;
         internal SemiconductorUi.Controls.TmVisualizationControl tmVisualizationControl;
+        internal SemiconductorUi.Controls.TmSideViewControl tmSideViewControl;
         internal System.Windows.Forms.Panel panelChamberA;
         internal System.Windows.Forms.Panel panelLampChamberA;
         internal System.Windows.Forms.Panel panelDoorChamberA;
