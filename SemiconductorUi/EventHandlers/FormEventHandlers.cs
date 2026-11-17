@@ -23,6 +23,24 @@ namespace SemiconductorUi.EventHandlers
         /// <param name="e">FormClosing 이벤트 인자</param>
         public void Form1_FormClosing(object sender, FormClosingEventArgs e)
         {
+            // 사용자가 창을 닫을 때(X 버튼, Alt+F4) 공정 중이면 닫지 않습니다.
+            // 닫으면 확인 없이 진공 OFF → 실린더 후진 → 서보 OFF가 실행되기 때문입니다.
+            // Windows 종료·작업 관리자 등 다른 이유로 닫힐 때는 막지 않습니다.
+            if (e.CloseReason == CloseReason.UserClosing && form.IsProcessActiveOrStarting())
+            {
+                e.Cancel = true;
+                form.AddLogMessage($"공정 진행 중 프로그램 종료 시도 차단 (사용자: {form.CurrentUser})", "WARN");
+                MessageBox.Show(
+                    form,
+                    "공정이 진행 중(일시정지 포함)이거나 서보 ON·원점복귀 중에는 프로그램을 닫을 수 없습니다.\n\n" +
+                    "닫으면 진공 OFF → 실린더 후진 → 서보 OFF가 바로 실행됩니다.\n" +
+                    "공정이 끝나거나 '공정 초기화' 후에 닫아 주세요. 급히 멈춰야 하면 긴급 정지를 누르세요.",
+                    "프로그램 종료 제한",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
+                return;
+            }
+
             try
             {
                 // 시뮬레이션 서비스 정리 (IDisposable 구현)

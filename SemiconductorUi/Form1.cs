@@ -1247,6 +1247,16 @@ namespace SemiconductorUi
         /// </summary>
         internal bool IsLogoutBlockedByProcess()
         {
+            return IsProcessActiveOrStarting();
+        }
+
+        /// <summary>
+        /// 공정이 도는 중(실행·일시정지·알람 대기)이거나 공정 시작의 서보 ON/원점복귀 중이면 true.
+        /// 로그아웃, EtherCAT 연결 해제, 프로그램 창 닫기를 이때 막습니다.
+        /// 긴급 정지는 공정을 중단(SimulationRunning = false)하므로 긴급 정지 후에는 막지 않습니다.
+        /// </summary>
+        internal bool IsProcessActiveOrStarting()
+        {
             return SimulationRunning || IsHardwareInitInProgress;
         }
 
@@ -6717,6 +6727,12 @@ namespace SemiconductorUi
 
         private void buttonEthercatDisconnect_Click(object sender, EventArgs e)
         {
+            if (IsProcessActiveOrStarting())
+            {
+                MessageBox.Show("공정이 진행 중(일시정지 포함)이거나 서보 ON·원점복귀 중에는 EtherCAT 연결을 해제할 수 없습니다.", "연결 해제 제한", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
             try
             {
                 // HardwareManager를 통해 EtherCAT 연결 해제 (TM 하드웨어 컨트롤러 종료 포함)

@@ -122,6 +122,20 @@ namespace SemiconductorUi.EventHandlers
         /// <param name="e">이벤트 인자</param>
         public void ButtonEthercatDisconnect_Click(object sender, EventArgs e)
         {
+            // 공정 중에 해제하면 공정 루프가 하드웨어 대신 시뮬레이션 분기로 넘어가 단계가 바로 '완료'로 처리됩니다.
+            if (form.IsProcessActiveOrStarting())
+            {
+                form.AddLogMessage($"공정 진행 중 EtherCAT 연결 해제 시도 차단 (사용자: {form.CurrentUser})", "WARN");
+                MessageBox.Show(
+                    "공정이 진행 중(일시정지 포함)이거나 서보 ON·원점복귀 중에는 EtherCAT 연결을 해제할 수 없습니다.\n\n" +
+                    "해제하면 공정이 장비 없이 시뮬레이션처럼 계속 진행됩니다.\n" +
+                    "공정이 끝나거나 '공정 초기화' 후에 해제해 주세요. 급히 멈춰야 하면 긴급 정지를 누르세요.",
+                    "연결 해제 제한",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
+                return;
+            }
+
             try
             {
                 // HardwareManager를 통해 EtherCAT 연결 해제 (TM 하드웨어 컨트롤러 종료 포함)
