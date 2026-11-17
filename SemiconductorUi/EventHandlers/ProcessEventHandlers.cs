@@ -85,6 +85,22 @@ namespace SemiconductorUi.EventHandlers
                     return;
                 }
 
+                // 레시피를 한 번도 적용하지 않았으면 챔버 시간(30/45/45초)·2차 노광(안 함)·환경 목표값이
+                // 화면에 보이지 않는 프로그램 기본값으로 진행되므로, 새로 시작할 때는 적용을 먼저 받습니다.
+                // (일시정지 뒤 이어 가기와 알람 리셋 뒤 이어 가기는 위/아래 분기에서 그대로 진행)
+                if (!form.RecipeApplied)
+                {
+                    form.AddLogMessage($"레시피 미적용 상태에서 공정 시작 시도 차단 (사용자: {form.CurrentUser})", "WARN");
+                    MessageBox.Show(
+                        "레시피가 적용되지 않았습니다.\n\n" +
+                        "레시피를 고른 뒤 '레시피 적용'을 누르고 시작하세요.\n" +
+                        "적용하지 않으면 챔버 시간·2차 노광·환경 목표값이 화면에 보이지 않는 기본값으로 진행됩니다.",
+                        "레시피 미적용",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Warning);
+                    return;
+                }
+
                 // EtherCAT 연결 확인 (경고만 표시, 시뮬레이션은 계속 진행)
                 if (!form.EthercatConnected)
                 {
