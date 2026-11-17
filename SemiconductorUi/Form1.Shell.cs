@@ -225,7 +225,7 @@ namespace SemiconductorUi
             }
         }
 
-        private static readonly string[] ShellStateTexts = { "비상정지", "공정 진행 중", "일시 정지", "경고 · 정지", "대기" };
+        private static readonly string[] ShellStateTexts = { "비상정지", "공정 진행 중", "일시 정지", "경고 · 정지", "원점복귀 중", "대기" };
 
         /// <summary>메뉴 버튼 높이를 하단 줄 높이에 맞춥니다.</summary>
         private void FitShellNavItems(Control bar)
@@ -373,6 +373,11 @@ namespace SemiconductorUi
                 case ProcessState.Error:
                     return new ShellStatePill("경고 · 정지", UiTheme.Danger, Color.FromArgb(168, 38, 48), Color.FromArgb(251, 233, 234));
                 default:
+                    if (IsBackgroundHomingInProgress())
+                    {
+                        // 공정은 대기지만 TM이 원점복귀로 움직이는 중 (시작·리셋 등이 잠겨 있음)
+                        return new ShellStatePill("원점복귀 중", UiTheme.Warning, Color.FromArgb(150, 92, 8), Color.FromArgb(252, 241, 222));
+                    }
                     return new ShellStatePill("대기", Color.FromArgb(140, 150, 164), Color.FromArgb(58, 69, 85), Color.FromArgb(238, 241, 245));
             }
         }

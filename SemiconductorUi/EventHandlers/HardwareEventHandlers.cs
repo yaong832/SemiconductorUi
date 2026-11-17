@@ -198,6 +198,18 @@ namespace SemiconductorUi.EventHandlers
                 return;
             }
 
+            // 서보 ON은 서보를 껐다 다시 켭니다(OFF → ON). 공정 중이나 원점복귀 중에 누르면 진행 중인 이동·원점복귀가 끊깁니다.
+            if (form.IsProcessActiveOrStarting())
+            {
+                form.AddLogMessage($"공정 진행 중 서보 ON 시도 차단 (사용자: {form.CurrentUser})", "WARN");
+                MessageBox.Show(
+                    "공정이 진행 중(일시정지·알람 대기 포함)이거나 서보 ON·원점복귀 중에는 서보 ON을 할 수 없습니다.\n\n" +
+                    "서보 ON은 서보를 껐다 다시 켜므로 진행 중인 이동이나 원점복귀가 끊깁니다.\n" +
+                    "급히 멈춰야 하면 긴급 정지를 누르세요.",
+                    "서보 ON 제한", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
             form.AddLogMessage("서보모터 ON 시작...", "INFO");
             var ethercat = form.EtherCAT_M;
             Int64 velocity = AppSettings.ServoDefaultVelocity;

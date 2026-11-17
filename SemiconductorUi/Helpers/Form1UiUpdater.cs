@@ -619,7 +619,8 @@ namespace SemiconductorUi.Helpers
             string tmStatus;
             if (!form.SimulationRunning)
             {
-                tmStatus = form.CurrentProcessState == MainFormViewModel.ProcessState.Error ? "Error" : "대기";
+                tmStatus = form.CurrentProcessState == MainFormViewModel.ProcessState.Error ? "Error"
+                    : form.IsBackgroundHomingInProgress() ? "원점복귀 중" : "대기";
             }
             else if (form.SimulationPaused)
             {
@@ -1210,7 +1211,9 @@ namespace SemiconductorUi.Helpers
             // 환경 알람으로 멈춘 공정: 알람 리셋 전에는 시작 불가, 리셋 후에는 시작으로 이어 감. 일시정지는 쓰지 않음.
             bool heldByAlarm = form.ProcessHeldByAlarm && form.SimulationRunning;
             bool heldAwaitingReset = heldByAlarm && form.CurrentProcessState == MainFormViewModel.ProcessState.Error;
-            form.buttonStart.Enabled = !emergencyStopped && !form.IsHardwareInitInProgress && !heldAwaitingReset
+            // 공정 시작의 서보 ON·원점복귀 중, 공정이 끝난 뒤 원점복귀 중에는 시작과 공정 리셋을 막습니다.
+            bool backgroundHoming = form.IsBackgroundHomingInProgress();
+            form.buttonStart.Enabled = !emergencyStopped && !backgroundHoming && !heldAwaitingReset
                 && (!form.SimulationRunning || form.SimulationPaused || heldByAlarm || form.CurrentProcessState == MainFormViewModel.ProcessState.Error);
             form.buttonPause.Enabled = form.SimulationRunning && !form.SimulationPaused && !form.IsHardwareInitInProgress && !heldByAlarm;
             
@@ -1218,7 +1221,7 @@ namespace SemiconductorUi.Helpers
             bool hasHeaderAlarm = form.HasHeaderAlarm();
             form.buttonResetAlarm.Enabled = hasHeaderAlarm || emergencyStopped;
             
-            form.buttonResetProcess.Enabled = true;
+            form.buttonResetProcess.Enabled = !backgroundHoming;
             form.buttonApplyRecipe.Enabled = true;
             if (form.buttonEquipmentControl != null)
             {

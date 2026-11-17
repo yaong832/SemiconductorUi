@@ -85,7 +85,12 @@ namespace SemiconductorUi
         // 공정 시작 시 서보/원점복귀 백그라운드 초기화 중
         private volatile bool _hardwareInitInProgress;
         internal bool IsHardwareInitInProgress => _hardwareInitInProgress;
-        
+
+        // 공정이 끝난 뒤(로트 완료 후, 공정 리셋 후) 백그라운드에서 TM을 원점으로 돌리는 중.
+        // 화면 공정 상태는 '대기'지만 축이 움직이고 있으므로 공정 중과 같이 잠급니다 (IsProcessActiveOrStarting).
+        private volatile bool _postProcessHomingInProgress;
+        internal bool IsPostProcessHomingInProgress => _postProcessHomingInProgress;
+
         // 서비스 인터페이스 (의존성 주입)
         internal IChamberService ChamberService;
         internal ITransferService TransferService;
@@ -1238,13 +1243,60 @@ namespace SemiconductorUi
         }
 
         /// <summary>
-        /// 공정이 도는 중(실행·일시정지·알람 대기)이거나 공정 시작의 서보 ON/원점복귀 중이면 true.
-        /// 로그아웃, EtherCAT 연결 해제, 프로그램 창 닫기를 이때 막습니다.
-        /// 긴급 정지는 공정을 중단(SimulationRunning = false)하므로 긴급 정지 후에는 막지 않습니다.
+        /// 공정이 도는 중(실행·일시정지·알람 대기)이거나, 공정 시작의 서보 ON/원점복귀 중이거나,
+        /// 공정이 끝난 뒤(완료·공정 리셋) 원점복귀 중이면 true.
+        /// 로그아웃, EtherCAT 연결 해제, 프로그램 창 닫기, 장비 제어 창 수동 조작을 이때 막습니다.
+        /// 긴급 정지는 공정을 중단(SimulationRunning = false)하고 원점복귀도 멈추므로 긴급 정지 후에는 막지 않습니다.
         /// </summary>
         internal bool IsProcessActiveOrStarting()
         {
-            return SimulationRunning || IsHardwareInitInProgress;
+            return SimulationRunning || IsHardwareInitInProgress || IsPostProcessHomingInProgress;
+        }
+
+        /// <summary>
+        /// 공정 시작의 서보 ON/원점복귀, 또는 공정이 끝난 뒤 원점복귀가 백그라운드에서 도는 중이면 true.
+        /// 이때는 공정 시작과 공정 리셋을 막습니다 (축이 원점복귀 중인데 이송 명령이나 두 번째 원점복귀가 나가지 않도록).
+        /// </summary>
+        internal bool IsBackgroundHomingInProgress()
+        {
+            return IsHardwareInitInProgress || IsPostProcessHomingInProgress;
+        }
+
+        /// <summary>
+        /// 공정이 끝난 뒤 원점복귀를 시작할 때 UI 스레드에서 부릅니다. 끝나면 반드시 EndPostProcessHoming을 불러야 합니다.
+        /// </summary>
+        internal void BeginPostProcessHoming()
+        {
+            _postProcessHomingInProgress = true;
+            RefreshBackgroundHomingStatus();
+        }
+
+        /// <summary>
+        /// 공정이 끝난 뒤 원점복귀가 끝났을 때(성공·실패·긴급 정지 모두) 어느 스레드에서나 부릅니다.
+        /// </summary>
+        internal void EndPostProcessHoming()
+        {
+            SafeBeginInvoke(() =>
+            {
+                _postProcessHomingInProgress = false;
+                RefreshBackgroundHomingStatus();
+            });
+        }
+
+        private void RefreshBackgroundHomingStatus()
+        {
+            if (CurrentProcessState == ProcessState.Idle)
+            {
+                StatusProcessText = GetIdleStatusText();
+            }
+            // TM 카드·하단 상태 글자·버튼을 다시 그립니다 (긴급 정지로 끝났을 때 TM 카드가 '원점복귀 중'으로 남지 않게).
+            UpdateSimulationUi();
+            RefreshShellState();
+        }
+
+        private string GetIdleStatusText()
+        {
+            return IsBackgroundHomingInProgress() ? "공정 상태: 대기 · TM 원점복귀 중" : "공정 상태: 대기";
         }
 
         private void buttonLogout_Click(object sender, EventArgs e)
@@ -2564,7 +2616,7 @@ namespace SemiconductorUi
                     UpdateMainLampColors(null, false, true);
                     break;
                 default:
-                    StatusProcessText = "공정 상태: 대기";
+                    StatusProcessText = GetIdleStatusText();
                     statusPressureText = "챔버 압력: 안정";
                     statusTemperatureText = "온도: 정상 범위 유지";
                     StatusDoorText = "문 상태: 모두 닫힘";
@@ -2655,6 +2707,12 @@ namespace SemiconductorUi
                 return;
             }
 
+            if (_postProcessHomingInProgress)
+            {
+                AddLogMessage("공정 종료 원점복귀가 진행 중입니다. 끝난 뒤 다시 시작하세요.", "WARN");
+                return;
+            }
+
             ClearAlarmHold();
 
             // EtherCAT 연결 확인 (연결되어 있으면 실제 장비 제어)
@@ -2722,7 +2780,7 @@ namespace SemiconductorUi
         private void BeginHardwareInitThenStartSimulation()
         {
             _hardwareInitInProgress = true;
-            UpdateProcessControlButtons();
+            RefreshBackgroundHomingStatus();
 
             HardwareOperation.Run(EtherCAT_M, () =>
             {
@@ -2741,7 +2799,7 @@ namespace SemiconductorUi
                 SafeBeginInvoke(() =>
                 {
                     _hardwareInitInProgress = false;
-                    UpdateProcessControlButtons();
+                    RefreshBackgroundHomingStatus();
 
                     if (!ok)
                     {
@@ -7402,85 +7460,132 @@ namespace SemiconductorUi
 
         /// <summary>
         /// 공정 종료 후 원점복귀 수행
-        /// 비동기로 수행하여 UI가 멈추지 않도록 함
+        /// 비동기로 수행하여 UI가 멈추지 않도록 함.
+        /// 도는 동안은 IsPostProcessHomingInProgress가 true라 시작·공정 리셋·장비 제어 창 수동 조작·
+        /// 로그아웃·연결 해제·종료가 막히고, 화면에 '원점복귀 중'이 보입니다.
+        /// 원점복귀를 끝내지 못하면(실린더 전진 상태, 시간 초과, 오류) 원점복귀 완료로 보지 않으므로
+        /// 다음 공정 시작 때 서보 ON·원점복귀부터 다시 합니다.
         /// </summary>
         internal void PerformShutdownHoming()
         {
-            HardwareOperation.Run(EtherCAT_M, () =>
+            BeginPostProcessHoming();
+            try
             {
-                try
+                HardwareOperation.Run(EtherCAT_M, () =>
                 {
-                    // 실린더 후진 상태 확인
-                    bool cylinderRetracted = EtherCAT_M.Digital_Input(12);
-                    if (!cylinderRetracted)
+                    bool homed = false;
+                    bool emergencyStopped = false;
+                    try
+                    {
+                        homed = RunShutdownHoming();
+                    }
+                    catch (EmergencyStopActiveException ex)
+                    {
+                        emergencyStopped = true;
+                        this.Invoke((Action)(() => {
+                            AddLogMessage($"공정 종료 원점복귀 중단: {ex.Message}", "WARN");
+                        }));
+                    }
+                    catch (Exception ex)
                     {
                         this.Invoke((Action)(() => {
-                            AddLogMessage("공정 종료 원점복귀 실패: 실린더가 후진 상태가 아닙니다", "WARN");
+                            AddLogMessage($"공정 종료 원점복귀 오류: {ex.Message}", "WARN");
                         }));
-                        return;
                     }
-
-                    this.Invoke((Action)(() => {
-                        AddLogMessage("공정 종료 원점복귀 - 1단계: 상하(Axis1)", "INFO");
-                    }));
-
-                    // 1단계: Axis1 (상하) 원점복귀
-                    EtherCAT_M.Axis1_UD_Homming();
-
-                    var timeout = DateTime.Now.AddSeconds(120);
-                    while (DateTime.Now < timeout)
+                    finally
                     {
-                        EtherCAT_M.ThrowIfEmergencyStopped();
-                        if (EtherCAT_M.Axis1_Status("HOME_D"))
+                        // 긴급 정지는 긴급 정지 쪽에서 원점복귀 완료 표시를 이미 지웁니다.
+                        if (!homed && !emergencyStopped)
                         {
-                            break;
-                        }
-                        System.Threading.Thread.Sleep(100);
-                    }
-
-                    if (!EtherCAT_M.Axis1_Status("HOME_D"))
-                    {
-                        this.Invoke((Action)(() => {
-                            AddLogMessage("공정 종료 원점복귀 실패: Axis1 타임아웃", "WARN");
-                        }));
-                        return;
-                    }
-
-                    this.Invoke((Action)(() => {
-                        AddLogMessage("공정 종료 원점복귀 - 2단계: 좌우(Axis2)", "INFO");
-                    }));
-
-                    // 2단계: Axis2 (좌우) 원점복귀
-                    EtherCAT_M.Axis2_LR_Homming();
-
-                    timeout = DateTime.Now.AddSeconds(120);
-                    while (DateTime.Now < timeout)
-                    {
-                        EtherCAT_M.ThrowIfEmergencyStopped();
-                        if (EtherCAT_M.Axis2_Status("HOME_D"))
-                        {
-                            this.Invoke((Action)(() => {
-                                // TM 하드웨어 초기화 상태 업데이트
-                                TmHardwareInitialized = true;
-                                AddLogMessage("공정 종료 원점복귀 완료 - TM이 원점으로 복귀했습니다", "INFO");
+                            SafeBeginInvoke(() =>
+                            {
+                                TmHardwareInitialized = false;
+                                AddLogMessage("공정 종료 원점복귀를 끝내지 못했습니다 - 다음 공정 시작 때 서보 ON·원점복귀부터 다시 합니다", "WARN");
                                 UpdateServoStatusLabel();
-                            }));
-                            return;
+                            });
                         }
-                        System.Threading.Thread.Sleep(100);
+                        EndPostProcessHoming();
                     }
+                });
+            }
+            catch (Exception ex)
+            {
+                // 비상정지 중이면 시작되지 않습니다 (HardwareOperation.Run).
+                AddLogMessage($"공정 종료 원점복귀를 시작하지 못했습니다: {ex.Message}", "WARN");
+                EndPostProcessHoming();
+            }
+        }
 
-                    this.Invoke((Action)(() => {
-                        AddLogMessage("공정 종료 원점복귀 실패: Axis2 타임아웃", "WARN");
-                    }));
+        /// <summary>
+        /// 공정 종료 원점복귀 본체 (백그라운드 스레드). 상하(Axis1)가 끝난 뒤 좌우(Axis2).
+        /// 원점복귀를 마치면 true, 실린더가 후진 상태가 아니거나 시간 초과면 false. 비상정지면 예외.
+        /// </summary>
+        private bool RunShutdownHoming()
+        {
+            // 실린더 후진 상태 확인
+            bool cylinderRetracted = EtherCAT_M.Digital_Input(12);
+            if (!cylinderRetracted)
+            {
+                this.Invoke((Action)(() => {
+                    AddLogMessage("공정 종료 원점복귀 실패: 실린더가 후진 상태가 아닙니다", "WARN");
+                }));
+                return false;
+            }
+
+            this.Invoke((Action)(() => {
+                AddLogMessage("공정 종료 원점복귀 - 1단계: 상하(Axis1)", "INFO");
+            }));
+
+            // 1단계: Axis1 (상하) 원점복귀
+            EtherCAT_M.Axis1_UD_Homming();
+
+            var timeout = DateTime.Now.AddSeconds(120);
+            while (DateTime.Now < timeout)
+            {
+                EtherCAT_M.ThrowIfEmergencyStopped();
+                if (EtherCAT_M.Axis1_Status("HOME_D"))
+                {
+                    break;
                 }
-                catch (Exception ex)
+                System.Threading.Thread.Sleep(100);
+            }
+
+            if (!EtherCAT_M.Axis1_Status("HOME_D"))
+            {
+                this.Invoke((Action)(() => {
+                    AddLogMessage("공정 종료 원점복귀 실패: Axis1 타임아웃", "WARN");
+                }));
+                return false;
+            }
+
+            this.Invoke((Action)(() => {
+                AddLogMessage("공정 종료 원점복귀 - 2단계: 좌우(Axis2)", "INFO");
+            }));
+
+            // 2단계: Axis2 (좌우) 원점복귀
+            EtherCAT_M.Axis2_LR_Homming();
+
+            timeout = DateTime.Now.AddSeconds(120);
+            while (DateTime.Now < timeout)
+            {
+                EtherCAT_M.ThrowIfEmergencyStopped();
+                if (EtherCAT_M.Axis2_Status("HOME_D"))
                 {
                     this.Invoke((Action)(() => {
-                        AddLogMessage($"공정 종료 원점복귀 오류: {ex.Message}", "WARN");
+                        // TM 하드웨어 초기화 상태 업데이트
+                        TmHardwareInitialized = true;
+                        AddLogMessage("공정 종료 원점복귀 완료 - TM이 원점으로 복귀했습니다", "INFO");
+                        UpdateServoStatusLabel();
                     }));
+                    return true;
                 }
-            });
+                System.Threading.Thread.Sleep(100);
+            }
+
+            this.Invoke((Action)(() => {
+                AddLogMessage("공정 종료 원점복귀 실패: Axis2 타임아웃", "WARN");
+            }));
+            return false;
         }
 
         /// <summary>
