@@ -11,9 +11,11 @@ namespace SemiconductorUi
     /// <summary>
     /// 메인 화면 틀 (SEMI E95 배치): 맨 위 타이틀 줄(장비 이름·화면 이름·상태·로그인·연결·시계·3색 램프),
     /// 본문 위 작은 탭(모니터링/검증/이송), 맨 아래 메뉴 줄(운전~보고서, 현재 상태, 시스템).
-    /// 기존 버튼(로그인, EtherCAT 연결, 서보 ON/OFF, 메뉴, 탭)은 같은 객체를 자리만 옮기므로
-    /// 클릭 핸들러, 권한에 따른 Enabled, 이름으로 찾는 코드는 그대로 동작합니다.
-    /// 기존 상단 표와 하단 메뉴 줄은 숨겨서 보관하고, 코드가 계속 바꾸는 상태 글자는 상단 바가 읽어 보여 줍니다.
+    /// 배치(어떤 컨트롤이 어디에 있는지)는 모두 Form1.Designer.cs에 있고, 이 파일은 그리기·글자 연결과
+    /// 창 크기에 따른 크기 조정만 합니다.
+    /// 기존 상단 표(panelHeader)는 Form1.Designer.cs의 숨긴 보관 패널(panelShellParking)에 있습니다.
+    /// 코드가 계속 바꾸는 상태 글자(labelEthercatStatus, labelServoStatus, labelHeaderEventMessage 등)를
+    /// 상단 바가 읽어 보여 주므로 지우지 않습니다.
     /// </summary>
     public partial class Form1
     {
@@ -22,48 +24,27 @@ namespace SemiconductorUi
         // 창이 이 폭 이상이면(2560x1440 최대화 등) 상단 바 글자와 버튼을 한 단계 키웁니다.
         private const int ShellLargeMinWidth = 2200;
 
-        private ShellTopBar shellTopBar;
-        private ShellChip shellChipEthercat;
-        private ShellChip shellChipServo;
-        private ShellChip shellChipAlarm;
-        private ShellClock shellClock;
-        private ShellUserCard shellUserCard;
-        private ShellTowerLamp shellTowerLamp;
         private ToolTip shellToolTip;
         private readonly System.Collections.Generic.List<Tuple<Button, int>> shellBarButtons = new System.Collections.Generic.List<Tuple<Button, int>>();
 
         private void BuildMainShell()
         {
             if (IsDesignEnvironment()) return;
-            if (tableLayoutRoot == null || panelHeader == null || tableShellContent == null || tableShellBottomBar == null) return;
+            if (tableLayoutRoot == null || shellTopBar == null || tableShellContent == null || tableShellBottomBar == null) return;
 
             SuspendLayout();
             tableLayoutRoot.SuspendLayout();
 
-            // 기존 상단 영역은 화면에서 빼고 숨긴 채 보관합니다.
-            // 가운데(탭 줄 + 공정 화면)와 하단 메뉴 줄은 Form1.Designer.cs에 배치되어 있습니다.
-            tableLayoutRoot.Controls.Remove(panelHeader);
-            var parking = new Panel { Name = "panelShellParking", Visible = false };
-            parking.Controls.Add(panelHeader);
-            Controls.Add(parking);
-
+            // 상단 바(shellTopBar), 가운데(탭 줄 + 공정 화면), 하단 메뉴 줄은 Form1.Designer.cs에 배치되어 있습니다.
+            // 여기서는 그리기와 글자 연결만 합니다.
             shellToolTip = new ToolTip();
             if (components != null) components.Add(shellToolTip);
 
-            shellTopBar = BuildShellTopBar();
+            InitShellTopBar();
             AttachAlarmHistoryChip();
 
             InitShellSubTabs();
             InitShellBottomBar();
-
-            tableLayoutRoot.RowStyles.Clear();
-            tableLayoutRoot.RowCount = 3;
-            tableLayoutRoot.RowStyles.Add(new RowStyle(SizeType.Absolute, ShellTopBar.BarHeight));
-            tableLayoutRoot.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
-            tableLayoutRoot.RowStyles.Add(new RowStyle(SizeType.Absolute, ShellBottomBarHeight));
-            tableLayoutRoot.Margin = Padding.Empty;
-            tableLayoutRoot.Padding = Padding.Empty;
-            tableLayoutRoot.Controls.Add(shellTopBar, 0, 0);
 
             // FOUP 표 아래 "교환 상태" 한 줄은 하단 메뉴 줄 가운데(현재 상태)로 옮겨 보여 줍니다.
             // 글자는 기존 코드가 계속 바꾸므로 라벨은 숨겨서 그대로 둡니다.
@@ -132,81 +113,60 @@ namespace SemiconductorUi
             return styled;
         }
 
-        private ShellTopBar BuildShellTopBar()
+        /// <summary>
+        /// 맨 위 타이틀 줄. 배치(shellTopBar 안의 flowShellTopLeft·flowShellTopRight와 칩·버튼·시계·램프)는
+        /// Form1.Designer.cs에 있고, 여기서는 그릴 글자·색을 읽어 올 곳과 버튼 모양만 연결합니다.
+        /// </summary>
+        private void InitShellTopBar()
         {
-            var bar = new ShellTopBar
-            {
-                Name = "shellTopBar",
-                StateProvider = GetShellStatePill,
-                SubtitleProvider = GetShellViewTitle,
-                PillSlotTexts = ShellStateTexts
-            };
+            shellTopBar.StateProvider = GetShellStatePill;
+            shellTopBar.SubtitleProvider = GetShellViewTitle;
+            shellTopBar.PillSlotTexts = ShellStateTexts;
 
             // 상태 표시 옆: 로그인 사용자와 로그인/로그아웃/사용자 관리 (SEMI E95: 타이틀 줄에 로그인 버튼)
-            shellUserCard = new ShellUserCard
+            if (shellUserCard != null)
             {
-                Name = "shellUserCard",
-                Horizontal = true,
-                Size = new Size(92, 36),
-                UserProvider = () => CurrentUser,
-                RoleProvider = () => CurrentRole,
-                LoggedInProvider = () => IsLoggedIn
-            };
-            bar.AddLeft(shellUserCard, 0);
-            bar.AddLeft(AddShellBarButton(buttonLogin, "로그인", 64), 6);
-            bar.AddLeft(AddShellBarButton(buttonLogout, "로그아웃", 76), 4);
-            bar.AddLeft(AddShellBarButton(buttonUserManagement, "사용자 관리", 92), 4);
+                shellUserCard.UserProvider = () => CurrentUser;
+                shellUserCard.RoleProvider = () => CurrentRole;
+                shellUserCard.LoggedInProvider = () => IsLoggedIn;
+            }
+            AddShellBarButton(buttonLogin, "로그인", 64);
+            AddShellBarButton(buttonLogout, "로그아웃", 76);
+            AddShellBarButton(buttonUserManagement, "사용자 관리", 92);
 
-            shellChipEthercat = new ShellChip
+            if (shellChipEthercat != null)
             {
-                Name = "shellChipEthercat",
-                TextProvider = () => ShellEthercatText(labelEthercatStatus?.Text),
-                DotProvider = () => labelEthercatStatus?.ForeColor ?? UiTheme.TextSecondary
-            };
-            bar.AddRight(shellChipEthercat, 0);
-            bar.AddRight(AddShellBarButton(buttonEthercatConnect, "연결", 52), 6);
-            bar.AddRight(AddShellBarButton(buttonEthercatDisconnect, "해제", 52), 4);
-            bar.AddDivider();
+                shellChipEthercat.TextProvider = () => ShellEthercatText(labelEthercatStatus?.Text);
+                shellChipEthercat.DotProvider = () => labelEthercatStatus?.ForeColor ?? UiTheme.TextSecondary;
+            }
+            AddShellBarButton(buttonEthercatConnect, "연결", 52);
+            AddShellBarButton(buttonEthercatDisconnect, "해제", 52);
 
-            shellChipServo = new ShellChip
+            if (shellChipServo != null)
             {
-                Name = "shellChipServo",
-                MaxChipWidth = 200,
-                TextProvider = () => ShellServoText(labelServoStatus?.Text),
-                DotProvider = () => labelServoStatus?.ForeColor ?? UiTheme.TextSecondary
-            };
-            bar.AddRight(shellChipServo, 12);
-            bar.AddRight(AddShellBarButton(buttonServoOn, "서보 ON", 68), 6);
-            bar.AddRight(AddShellBarButton(buttonServoOff, "서보 OFF", 72), 4);
-            bar.AddDivider();
+                shellChipServo.TextProvider = () => ShellServoText(labelServoStatus?.Text);
+                shellChipServo.DotProvider = () => labelServoStatus?.ForeColor ?? UiTheme.TextSecondary;
+            }
+            AddShellBarButton(buttonServoOn, "서보 ON", 68);
+            AddShellBarButton(buttonServoOff, "서보 OFF", 72);
 
-            shellChipAlarm = new ShellChip
+            if (shellChipAlarm != null)
             {
-                Name = "shellChipAlarm",
-                MaxChipWidth = 220,
-                TextProvider = ShellAlarmText,
-                DotProvider = ShellAlarmDot
-            };
-            bar.AddRight(shellChipAlarm, 12);
-
-            shellClock = new ShellClock { Name = "shellClock" };
-            bar.AddRight(shellClock, 14);
+                shellChipAlarm.TextProvider = ShellAlarmText;
+                shellChipAlarm.DotProvider = ShellAlarmDot;
+            }
 
             // 오른쪽 끝 3색 램프: 장비 그림의 램프 표시와 같은 색을 읽습니다.
-            shellTowerLamp = new ShellTowerLamp
+            if (shellTowerLamp != null)
             {
-                Name = "shellTowerLamp",
-                RedProvider = () => panelMainLampRed?.BackColor ?? EquipmentCanvasStyler.LampOff,
-                YellowProvider = () => panelMainLampYellow?.BackColor ?? EquipmentCanvasStyler.LampOff,
-                GreenProvider = () => panelMainLampGreen?.BackColor ?? EquipmentCanvasStyler.LampOff
-            };
+                shellTowerLamp.RedProvider = () => panelMainLampRed?.BackColor ?? EquipmentCanvasStyler.LampOff;
+                shellTowerLamp.YellowProvider = () => panelMainLampYellow?.BackColor ?? EquipmentCanvasStyler.LampOff;
+                shellTowerLamp.GreenProvider = () => panelMainLampGreen?.BackColor ?? EquipmentCanvasStyler.LampOff;
+            }
             foreach (var lamp in new Control[] { panelMainLampRed, panelMainLampYellow, panelMainLampGreen })
             {
                 if (lamp != null) lamp.BackColorChanged += (s, e) => shellTowerLamp?.Invalidate();
             }
-            bar.AddRight(shellTowerLamp, 8);
-
-            return bar;
         }
 
         private Button StyleShellBarButton(Button button, string text, int width)
