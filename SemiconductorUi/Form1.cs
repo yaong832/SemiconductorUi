@@ -1288,12 +1288,9 @@ namespace SemiconductorUi
             if (CurrentProcessState == ProcessState.Idle)
             {
                 StatusProcessText = GetIdleStatusText();
-                UpdateSimulationUi();
             }
-            else
-            {
-                UpdateProcessControlButtons();
-            }
+            // TM 카드·하단 상태 글자·버튼을 다시 그립니다 (긴급 정지로 끝났을 때 TM 카드가 '원점복귀 중'으로 남지 않게).
+            UpdateSimulationUi();
             RefreshShellState();
         }
 
