@@ -165,8 +165,13 @@ namespace SemiconductorUi
             this.buttonApplyRecipe = new System.Windows.Forms.Button();
             this.comboRecipeSelect = new System.Windows.Forms.ComboBox();
             this.labelRecipe = new System.Windows.Forms.Label();
-            this.panelAlarmArea = new System.Windows.Forms.Panel();
-            this.flowBottomNavigation = new System.Windows.Forms.FlowLayoutPanel();
+            this.tableShellContent = new System.Windows.Forms.TableLayoutPanel();
+            this.panelShellSubTabs = new System.Windows.Forms.Panel();
+            this.flowShellSubTabs = new System.Windows.Forms.FlowLayoutPanel();
+            this.tableShellBottomBar = new System.Windows.Forms.TableLayoutPanel();
+            this.flowShellNavMenu = new System.Windows.Forms.FlowLayoutPanel();
+            this.shellStatusLine = new SemiconductorUi.Controls.ShellStatusLine();
+            this.flowShellNavSystem = new System.Windows.Forms.FlowLayoutPanel();
             this.buttonNavOperate = new System.Windows.Forms.Button();
             this.buttonNavRecipe = new System.Windows.Forms.Button();
             this.buttonNavMaintenance = new System.Windows.Forms.Button();
@@ -281,8 +286,12 @@ namespace SemiconductorUi
             this.groupBoxFoupReady.SuspendLayout();
             this.flowLayoutFoupReadyButtons.SuspendLayout();
             this.groupBoxRecipe.SuspendLayout();
-            this.panelAlarmArea.SuspendLayout();
-            this.flowBottomNavigation.SuspendLayout();
+            this.tableShellContent.SuspendLayout();
+            this.panelShellSubTabs.SuspendLayout();
+            this.flowShellSubTabs.SuspendLayout();
+            this.tableShellBottomBar.SuspendLayout();
+            this.flowShellNavMenu.SuspendLayout();
+            this.flowShellNavSystem.SuspendLayout();
             this.panelMainLamp.SuspendLayout();
             this.panelChamberC.SuspendLayout();
             this.panelDoorChamberC.SuspendLayout();
@@ -307,15 +316,15 @@ namespace SemiconductorUi
             this.tableLayoutRoot.ColumnCount = 1;
             this.tableLayoutRoot.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
             this.tableLayoutRoot.Controls.Add(this.panelHeader, 0, 0);
-            this.tableLayoutRoot.Controls.Add(this.tableLayoutProcessArea, 0, 1);
-            this.tableLayoutRoot.Controls.Add(this.panelAlarmArea, 0, 2);
+            this.tableLayoutRoot.Controls.Add(this.tableShellContent, 0, 1);
+            this.tableLayoutRoot.Controls.Add(this.tableShellBottomBar, 0, 2);
             this.tableLayoutRoot.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tableLayoutRoot.Location = new System.Drawing.Point(0, 0);
             this.tableLayoutRoot.Name = "tableLayoutRoot";
             this.tableLayoutRoot.RowCount = 3;
             this.tableLayoutRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 170F));
             this.tableLayoutRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-            this.tableLayoutRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 70F));
+            this.tableLayoutRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 64F));
             this.tableLayoutRoot.Size = new System.Drawing.Size(1701, 976);
             this.tableLayoutRoot.TabIndex = 0;
             // 
@@ -1097,9 +1106,6 @@ namespace SemiconductorUi
             // 
             this.flowHeaderTabs.BackColor = System.Drawing.Color.White;
             this.tableLayoutHeader.SetColumnSpan(this.flowHeaderTabs, 2);
-            this.flowHeaderTabs.Controls.Add(this.buttonTabMain);
-            this.flowHeaderTabs.Controls.Add(this.buttonTabVerification);
-            this.flowHeaderTabs.Controls.Add(this.buttonTabTransfer);
             this.flowHeaderTabs.Dock = System.Windows.Forms.DockStyle.Fill;
             this.flowHeaderTabs.Location = new System.Drawing.Point(0, 96);
             this.flowHeaderTabs.Margin = new System.Windows.Forms.Padding(0);
@@ -1118,12 +1124,12 @@ namespace SemiconductorUi
             this.buttonTabMain.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.buttonTabMain.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
             this.buttonTabMain.ForeColor = System.Drawing.Color.White;
-            this.buttonTabMain.Location = new System.Drawing.Point(12, 6);
-            this.buttonTabMain.Margin = new System.Windows.Forms.Padding(0, 0, 14, 0);
+            this.buttonTabMain.Location = new System.Drawing.Point(3, 3);
+            this.buttonTabMain.Margin = new System.Windows.Forms.Padding(0, 0, 2, 0);
             this.buttonTabMain.Name = "buttonTabMain";
-            this.buttonTabMain.Size = new System.Drawing.Size(140, 34);
+            this.buttonTabMain.Size = new System.Drawing.Size(88, 28);
             this.buttonTabMain.TabIndex = 0;
-            this.buttonTabMain.Text = "MAIN";
+            this.buttonTabMain.Text = "모니터링";
             this.buttonTabMain.UseVisualStyleBackColor = false;
             // 
             // buttonTabVerification
@@ -1135,12 +1141,12 @@ namespace SemiconductorUi
             this.buttonTabVerification.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.buttonTabVerification.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
             this.buttonTabVerification.ForeColor = System.Drawing.Color.White;
-            this.buttonTabVerification.Location = new System.Drawing.Point(166, 6);
-            this.buttonTabVerification.Margin = new System.Windows.Forms.Padding(0, 0, 14, 0);
+            this.buttonTabVerification.Location = new System.Drawing.Point(93, 3);
+            this.buttonTabVerification.Margin = new System.Windows.Forms.Padding(0, 0, 2, 0);
             this.buttonTabVerification.Name = "buttonTabVerification";
-            this.buttonTabVerification.Size = new System.Drawing.Size(160, 34);
+            this.buttonTabVerification.Size = new System.Drawing.Size(88, 28);
             this.buttonTabVerification.TabIndex = 1;
-            this.buttonTabVerification.Text = "VERIFICATION";
+            this.buttonTabVerification.Text = "검증";
             this.buttonTabVerification.UseVisualStyleBackColor = false;
             // 
             // buttonTabTransfer
@@ -1152,12 +1158,12 @@ namespace SemiconductorUi
             this.buttonTabTransfer.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.buttonTabTransfer.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
             this.buttonTabTransfer.ForeColor = System.Drawing.Color.White;
-            this.buttonTabTransfer.Location = new System.Drawing.Point(340, 6);
-            this.buttonTabTransfer.Margin = new System.Windows.Forms.Padding(0, 0, 14, 0);
+            this.buttonTabTransfer.Location = new System.Drawing.Point(183, 3);
+            this.buttonTabTransfer.Margin = new System.Windows.Forms.Padding(0, 0, 2, 0);
             this.buttonTabTransfer.Name = "buttonTabTransfer";
-            this.buttonTabTransfer.Size = new System.Drawing.Size(140, 34);
+            this.buttonTabTransfer.Size = new System.Drawing.Size(88, 28);
             this.buttonTabTransfer.TabIndex = 2;
-            this.buttonTabTransfer.Text = "TRANSFER";
+            this.buttonTabTransfer.Text = "이송";
             this.buttonTabTransfer.UseVisualStyleBackColor = false;
             // 
             // flowHeaderTimeAndUser
@@ -2243,34 +2249,112 @@ namespace SemiconductorUi
             this.labelRecipe.TabIndex = 0;
             this.labelRecipe.Text = "현재 선택 레시피/작업:";
             // 
-            // panelAlarmArea
+            // tableShellContent
             // 
-            this.panelAlarmArea.BackColor = System.Drawing.Color.White;
-            this.panelAlarmArea.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.panelAlarmArea.Controls.Add(this.flowBottomNavigation);
-            this.panelAlarmArea.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.panelAlarmArea.Location = new System.Drawing.Point(3, 909);
-            this.panelAlarmArea.Name = "panelAlarmArea";
-            this.panelAlarmArea.Padding = new System.Windows.Forms.Padding(20, 10, 20, 10);
-            this.panelAlarmArea.Size = new System.Drawing.Size(1695, 64);
-            this.panelAlarmArea.TabIndex = 2;
+            this.tableShellContent.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(226)))), ((int)(((byte)(231)))), ((int)(((byte)(238)))));
+            this.tableShellContent.ColumnCount = 1;
+            this.tableShellContent.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
+            this.tableShellContent.Controls.Add(this.panelShellSubTabs, 0, 0);
+            this.tableShellContent.Controls.Add(this.tableLayoutProcessArea, 0, 1);
+            this.tableShellContent.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.tableShellContent.Location = new System.Drawing.Point(0, 170);
+            this.tableShellContent.Margin = new System.Windows.Forms.Padding(0);
+            this.tableShellContent.Name = "tableShellContent";
+            this.tableShellContent.Padding = new System.Windows.Forms.Padding(10, 0, 6, 6);
+            this.tableShellContent.RowCount = 2;
+            this.tableShellContent.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 46F));
+            this.tableShellContent.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
+            this.tableShellContent.Size = new System.Drawing.Size(1701, 742);
+            this.tableShellContent.TabIndex = 1;
             // 
-            // flowBottomNavigation
+            // panelShellSubTabs
             // 
-            this.flowBottomNavigation.Controls.Add(this.buttonNavOperate);
-            this.flowBottomNavigation.Controls.Add(this.buttonNavRecipe);
-            this.flowBottomNavigation.Controls.Add(this.buttonNavMaintenance);
-            this.flowBottomNavigation.Controls.Add(this.buttonNavConfig);
-            this.flowBottomNavigation.Controls.Add(this.buttonNavTrend);
-            this.flowBottomNavigation.Controls.Add(this.buttonNavReport);
-            this.flowBottomNavigation.Controls.Add(this.buttonNavSystem);
-            this.flowBottomNavigation.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.flowBottomNavigation.Location = new System.Drawing.Point(20, 10);
-            this.flowBottomNavigation.Name = "flowBottomNavigation";
-            this.flowBottomNavigation.Padding = new System.Windows.Forms.Padding(0, 5, 0, 0);
-            this.flowBottomNavigation.Size = new System.Drawing.Size(1653, 42);
-            this.flowBottomNavigation.TabIndex = 1;
-            this.flowBottomNavigation.WrapContents = false;
+            this.panelShellSubTabs.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(226)))), ((int)(((byte)(231)))), ((int)(((byte)(238)))));
+            this.panelShellSubTabs.Controls.Add(this.flowShellSubTabs);
+            this.panelShellSubTabs.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.panelShellSubTabs.Location = new System.Drawing.Point(10, 0);
+            this.panelShellSubTabs.Margin = new System.Windows.Forms.Padding(0);
+            this.panelShellSubTabs.Name = "panelShellSubTabs";
+            this.panelShellSubTabs.Size = new System.Drawing.Size(1685, 46);
+            this.panelShellSubTabs.TabIndex = 0;
+            // 
+            // flowShellSubTabs
+            // 
+            this.flowShellSubTabs.AutoSize = true;
+            this.flowShellSubTabs.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+            this.flowShellSubTabs.BackColor = System.Drawing.Color.White;
+            this.flowShellSubTabs.Controls.Add(this.buttonTabMain);
+            this.flowShellSubTabs.Controls.Add(this.buttonTabVerification);
+            this.flowShellSubTabs.Controls.Add(this.buttonTabTransfer);
+            this.flowShellSubTabs.Location = new System.Drawing.Point(3, 8);
+            this.flowShellSubTabs.Name = "flowShellSubTabs";
+            this.flowShellSubTabs.Padding = new System.Windows.Forms.Padding(3);
+            this.flowShellSubTabs.Size = new System.Drawing.Size(274, 34);
+            this.flowShellSubTabs.TabIndex = 0;
+            this.flowShellSubTabs.WrapContents = false;
+            // 
+            // tableShellBottomBar
+            // 
+            this.tableShellBottomBar.BackColor = System.Drawing.Color.White;
+            this.tableShellBottomBar.ColumnCount = 3;
+            this.tableShellBottomBar.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.AutoSize));
+            this.tableShellBottomBar.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
+            this.tableShellBottomBar.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.AutoSize));
+            this.tableShellBottomBar.Controls.Add(this.flowShellNavMenu, 0, 0);
+            this.tableShellBottomBar.Controls.Add(this.shellStatusLine, 1, 0);
+            this.tableShellBottomBar.Controls.Add(this.flowShellNavSystem, 2, 0);
+            this.tableShellBottomBar.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.tableShellBottomBar.Location = new System.Drawing.Point(0, 912);
+            this.tableShellBottomBar.Margin = new System.Windows.Forms.Padding(0);
+            this.tableShellBottomBar.Name = "tableShellBottomBar";
+            this.tableShellBottomBar.Padding = new System.Windows.Forms.Padding(16, 8, 16, 8);
+            this.tableShellBottomBar.RowCount = 1;
+            this.tableShellBottomBar.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
+            this.tableShellBottomBar.Size = new System.Drawing.Size(1701, 64);
+            this.tableShellBottomBar.TabIndex = 2;
+            // 
+            // flowShellNavMenu
+            // 
+            this.flowShellNavMenu.AutoSize = true;
+            this.flowShellNavMenu.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+            this.flowShellNavMenu.BackColor = System.Drawing.Color.White;
+            this.flowShellNavMenu.Controls.Add(this.buttonNavOperate);
+            this.flowShellNavMenu.Controls.Add(this.buttonNavRecipe);
+            this.flowShellNavMenu.Controls.Add(this.buttonNavMaintenance);
+            this.flowShellNavMenu.Controls.Add(this.buttonNavConfig);
+            this.flowShellNavMenu.Controls.Add(this.buttonNavTrend);
+            this.flowShellNavMenu.Controls.Add(this.buttonNavReport);
+            this.flowShellNavMenu.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.flowShellNavMenu.Location = new System.Drawing.Point(16, 8);
+            this.flowShellNavMenu.Margin = new System.Windows.Forms.Padding(0);
+            this.flowShellNavMenu.Name = "flowShellNavMenu";
+            this.flowShellNavMenu.Size = new System.Drawing.Size(816, 48);
+            this.flowShellNavMenu.TabIndex = 0;
+            this.flowShellNavMenu.WrapContents = false;
+            // 
+            // shellStatusLine
+            // 
+            this.shellStatusLine.BackColor = System.Drawing.Color.White;
+            this.shellStatusLine.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.shellStatusLine.Location = new System.Drawing.Point(842, 8);
+            this.shellStatusLine.Margin = new System.Windows.Forms.Padding(10, 0, 10, 0);
+            this.shellStatusLine.Name = "shellStatusLine";
+            this.shellStatusLine.Size = new System.Drawing.Size(695, 48);
+            this.shellStatusLine.TabIndex = 1;
+            // 
+            // flowShellNavSystem
+            // 
+            this.flowShellNavSystem.AutoSize = true;
+            this.flowShellNavSystem.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+            this.flowShellNavSystem.BackColor = System.Drawing.Color.White;
+            this.flowShellNavSystem.Controls.Add(this.buttonNavSystem);
+            this.flowShellNavSystem.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.flowShellNavSystem.Location = new System.Drawing.Point(1557, 8);
+            this.flowShellNavSystem.Margin = new System.Windows.Forms.Padding(0);
+            this.flowShellNavSystem.Name = "flowShellNavSystem";
+            this.flowShellNavSystem.Size = new System.Drawing.Size(128, 48);
+            this.flowShellNavSystem.TabIndex = 2;
+            this.flowShellNavSystem.WrapContents = false;
             // 
             // buttonNavOperate
             // 
@@ -2279,12 +2363,12 @@ namespace SemiconductorUi
             this.buttonNavOperate.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.buttonNavOperate.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
             this.buttonNavOperate.ForeColor = System.Drawing.Color.White;
-            this.buttonNavOperate.Location = new System.Drawing.Point(3, 8);
-            this.buttonNavOperate.Margin = new System.Windows.Forms.Padding(3, 3, 10, 3);
+            this.buttonNavOperate.Location = new System.Drawing.Point(0, 0);
+            this.buttonNavOperate.Margin = new System.Windows.Forms.Padding(0, 0, 8, 0);
             this.buttonNavOperate.Name = "buttonNavOperate";
-            this.buttonNavOperate.Size = new System.Drawing.Size(120, 32);
+            this.buttonNavOperate.Size = new System.Drawing.Size(128, 48);
             this.buttonNavOperate.TabIndex = 0;
-            this.buttonNavOperate.Text = "OPERATE";
+            this.buttonNavOperate.Text = "운전";
             this.buttonNavOperate.UseVisualStyleBackColor = false;
             // 
             // buttonNavRecipe
@@ -2294,12 +2378,12 @@ namespace SemiconductorUi
             this.buttonNavRecipe.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.buttonNavRecipe.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
             this.buttonNavRecipe.ForeColor = System.Drawing.Color.White;
-            this.buttonNavRecipe.Location = new System.Drawing.Point(136, 8);
-            this.buttonNavRecipe.Margin = new System.Windows.Forms.Padding(3, 3, 10, 3);
+            this.buttonNavRecipe.Location = new System.Drawing.Point(136, 0);
+            this.buttonNavRecipe.Margin = new System.Windows.Forms.Padding(0, 0, 8, 0);
             this.buttonNavRecipe.Name = "buttonNavRecipe";
-            this.buttonNavRecipe.Size = new System.Drawing.Size(120, 32);
+            this.buttonNavRecipe.Size = new System.Drawing.Size(128, 48);
             this.buttonNavRecipe.TabIndex = 1;
-            this.buttonNavRecipe.Text = "RECIPE";
+            this.buttonNavRecipe.Text = "레시피";
             this.buttonNavRecipe.UseVisualStyleBackColor = false;
             // 
             // buttonNavMaintenance
@@ -2309,12 +2393,12 @@ namespace SemiconductorUi
             this.buttonNavMaintenance.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.buttonNavMaintenance.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
             this.buttonNavMaintenance.ForeColor = System.Drawing.Color.White;
-            this.buttonNavMaintenance.Location = new System.Drawing.Point(269, 8);
-            this.buttonNavMaintenance.Margin = new System.Windows.Forms.Padding(3, 3, 10, 3);
+            this.buttonNavMaintenance.Location = new System.Drawing.Point(272, 0);
+            this.buttonNavMaintenance.Margin = new System.Windows.Forms.Padding(0, 0, 8, 0);
             this.buttonNavMaintenance.Name = "buttonNavMaintenance";
-            this.buttonNavMaintenance.Size = new System.Drawing.Size(120, 32);
+            this.buttonNavMaintenance.Size = new System.Drawing.Size(128, 48);
             this.buttonNavMaintenance.TabIndex = 2;
-            this.buttonNavMaintenance.Text = "MAINT";
+            this.buttonNavMaintenance.Text = "유지보수";
             this.buttonNavMaintenance.UseVisualStyleBackColor = false;
             // 
             // buttonNavConfig
@@ -2324,12 +2408,12 @@ namespace SemiconductorUi
             this.buttonNavConfig.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.buttonNavConfig.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
             this.buttonNavConfig.ForeColor = System.Drawing.Color.White;
-            this.buttonNavConfig.Location = new System.Drawing.Point(402, 8);
-            this.buttonNavConfig.Margin = new System.Windows.Forms.Padding(3, 3, 10, 3);
+            this.buttonNavConfig.Location = new System.Drawing.Point(408, 0);
+            this.buttonNavConfig.Margin = new System.Windows.Forms.Padding(0, 0, 8, 0);
             this.buttonNavConfig.Name = "buttonNavConfig";
-            this.buttonNavConfig.Size = new System.Drawing.Size(120, 32);
+            this.buttonNavConfig.Size = new System.Drawing.Size(128, 48);
             this.buttonNavConfig.TabIndex = 3;
-            this.buttonNavConfig.Text = "CONFIG";
+            this.buttonNavConfig.Text = "설정";
             this.buttonNavConfig.UseVisualStyleBackColor = false;
             // 
             // buttonNavTrend
@@ -2339,12 +2423,12 @@ namespace SemiconductorUi
             this.buttonNavTrend.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.buttonNavTrend.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
             this.buttonNavTrend.ForeColor = System.Drawing.Color.White;
-            this.buttonNavTrend.Location = new System.Drawing.Point(535, 8);
-            this.buttonNavTrend.Margin = new System.Windows.Forms.Padding(3, 3, 10, 3);
+            this.buttonNavTrend.Location = new System.Drawing.Point(544, 0);
+            this.buttonNavTrend.Margin = new System.Windows.Forms.Padding(0, 0, 8, 0);
             this.buttonNavTrend.Name = "buttonNavTrend";
-            this.buttonNavTrend.Size = new System.Drawing.Size(120, 32);
+            this.buttonNavTrend.Size = new System.Drawing.Size(128, 48);
             this.buttonNavTrend.TabIndex = 5;
-            this.buttonNavTrend.Text = "TREND";
+            this.buttonNavTrend.Text = "추이";
             this.buttonNavTrend.UseVisualStyleBackColor = false;
             // 
             // buttonNavReport
@@ -2354,12 +2438,12 @@ namespace SemiconductorUi
             this.buttonNavReport.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.buttonNavReport.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
             this.buttonNavReport.ForeColor = System.Drawing.Color.White;
-            this.buttonNavReport.Location = new System.Drawing.Point(668, 8);
-            this.buttonNavReport.Margin = new System.Windows.Forms.Padding(3, 3, 10, 3);
+            this.buttonNavReport.Location = new System.Drawing.Point(680, 0);
+            this.buttonNavReport.Margin = new System.Windows.Forms.Padding(0, 0, 8, 0);
             this.buttonNavReport.Name = "buttonNavReport";
-            this.buttonNavReport.Size = new System.Drawing.Size(120, 32);
+            this.buttonNavReport.Size = new System.Drawing.Size(128, 48);
             this.buttonNavReport.TabIndex = 6;
-            this.buttonNavReport.Text = "REPORT";
+            this.buttonNavReport.Text = "보고서";
             this.buttonNavReport.UseVisualStyleBackColor = false;
             // 
             // buttonNavSystem
@@ -2369,12 +2453,12 @@ namespace SemiconductorUi
             this.buttonNavSystem.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.buttonNavSystem.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
             this.buttonNavSystem.ForeColor = System.Drawing.Color.White;
-            this.buttonNavSystem.Location = new System.Drawing.Point(801, 8);
-            this.buttonNavSystem.Margin = new System.Windows.Forms.Padding(3, 3, 10, 3);
+            this.buttonNavSystem.Location = new System.Drawing.Point(0, 0);
+            this.buttonNavSystem.Margin = new System.Windows.Forms.Padding(0);
             this.buttonNavSystem.Name = "buttonNavSystem";
-            this.buttonNavSystem.Size = new System.Drawing.Size(120, 32);
+            this.buttonNavSystem.Size = new System.Drawing.Size(128, 48);
             this.buttonNavSystem.TabIndex = 7;
-            this.buttonNavSystem.Text = "SYS INFO";
+            this.buttonNavSystem.Text = "시스템";
             this.buttonNavSystem.UseVisualStyleBackColor = false;
             // 
             // buttonServoHome
@@ -3155,8 +3239,14 @@ namespace SemiconductorUi
             this.flowLayoutFoupReadyButtons.ResumeLayout(false);
             this.groupBoxRecipe.ResumeLayout(false);
             this.groupBoxRecipe.PerformLayout();
-            this.panelAlarmArea.ResumeLayout(false);
-            this.flowBottomNavigation.ResumeLayout(false);
+            this.tableShellContent.ResumeLayout(false);
+            this.panelShellSubTabs.ResumeLayout(false);
+            this.panelShellSubTabs.PerformLayout();
+            this.flowShellSubTabs.ResumeLayout(false);
+            this.tableShellBottomBar.ResumeLayout(false);
+            this.tableShellBottomBar.PerformLayout();
+            this.flowShellNavMenu.ResumeLayout(false);
+            this.flowShellNavSystem.ResumeLayout(false);
             this.panelMainLamp.ResumeLayout(false);
             this.panelMainLamp.PerformLayout();
             this.panelChamberC.ResumeLayout(false);
@@ -3381,8 +3471,13 @@ namespace SemiconductorUi
         internal System.Windows.Forms.Button buttonApplyRecipe;
         internal System.Windows.Forms.ComboBox comboRecipeSelect;
         private System.Windows.Forms.Label labelRecipe;
-        internal System.Windows.Forms.Panel panelAlarmArea;
-        private System.Windows.Forms.FlowLayoutPanel flowBottomNavigation;
+        private System.Windows.Forms.TableLayoutPanel tableShellContent;
+        private System.Windows.Forms.Panel panelShellSubTabs;
+        private System.Windows.Forms.FlowLayoutPanel flowShellSubTabs;
+        internal System.Windows.Forms.TableLayoutPanel tableShellBottomBar;
+        private System.Windows.Forms.FlowLayoutPanel flowShellNavMenu;
+        private SemiconductorUi.Controls.ShellStatusLine shellStatusLine;
+        private System.Windows.Forms.FlowLayoutPanel flowShellNavSystem;
         internal System.Windows.Forms.Button buttonNavOperate;
         internal System.Windows.Forms.Button buttonNavRecipe;
         internal System.Windows.Forms.Button buttonNavMaintenance;

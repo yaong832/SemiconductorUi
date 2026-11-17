@@ -533,6 +533,9 @@ namespace SemiconductorUi.Controls
             BackColor = UiTheme.Surface;
         }
 
+        /// <summary>그릴 글자를 읽어 오는 곳. 실행할 때 코드(Form1.Shell.cs)에서 연결하며, 디자이너에는 나오지 않습니다.</summary>
+        [System.ComponentModel.Browsable(false)]
+        [System.ComponentModel.DesignerSerializationVisibility(System.ComponentModel.DesignerSerializationVisibility.Hidden)]
         public Func<string> TextProvider { get; set; }
 
         protected override void OnPaint(PaintEventArgs e)

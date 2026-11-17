@@ -203,7 +203,7 @@ namespace SemiconductorUi.Helpers
                 form.panelHeaderStatusSummary, form.flowHeaderStatus, form.flowAlarmIndicator, form.labelHeaderCurrentTime,
                 form.panelMainProcess, form.panelEquipment, form.panelPmStatus,
                 form.panelSummaryPMA, form.panelSummaryPMB, form.panelSummaryPMC,
-                form.panelFoupStatusA, form.panelFoupStatusB, form.panelControlPanel, form.panelAlarmArea
+                form.panelFoupStatusA, form.panelFoupStatusB, form.panelControlPanel
             })
             {
                 UiTheme.ApplySoftBorder(control);

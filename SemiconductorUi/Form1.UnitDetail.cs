@@ -150,9 +150,9 @@ namespace SemiconductorUi
             {
                 minTop = ToClient(panelEquipmentCanvas).Top + margin;
             }
-            if (Usable(shellBottomBar))
+            if (Usable(tableShellBottomBar))
             {
-                maxBottom = ToClient(shellBottomBar).Top - margin;
+                maxBottom = ToClient(tableShellBottomBar).Top - margin;
             }
 
             int x;
