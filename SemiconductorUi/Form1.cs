@@ -1241,10 +1241,25 @@ namespace SemiconductorUi
             }
         }
 
+        /// <summary>
+        /// 공정이 도는 중(실행·일시정지·알람 대기)이거나 공정 시작의 서보 ON/원점복귀 중이면 true.
+        /// 이때는 로그아웃을 막습니다. 로그아웃하면 일시정지·시작이 잠기는데 TM은 계속 움직이기 때문입니다.
+        /// </summary>
+        internal bool IsLogoutBlockedByProcess()
+        {
+            return SimulationRunning || IsHardwareInitInProgress;
+        }
+
         private void buttonLogout_Click(object sender, EventArgs e)
         {
             if (!IsLoggedIn)
             {
+                return;
+            }
+
+            if (IsLogoutBlockedByProcess())
+            {
+                MessageBox.Show("공정이 진행 중(일시정지 포함)이거나 서보 ON·원점복귀 중에는 로그아웃할 수 없습니다.", "로그아웃 제한", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 

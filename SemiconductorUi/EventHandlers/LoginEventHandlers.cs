@@ -100,6 +100,21 @@ namespace SemiconductorUi.EventHandlers
                 return;
             }
 
+            // 공정이 도는 중(일시정지·알람 대기 포함)이나 서보 ON/원점복귀 중에는 로그아웃을 막습니다.
+            // 로그아웃하면 일시정지·시작 버튼이 잠기는데 TM은 계속 움직이기 때문입니다.
+            if (form.IsLogoutBlockedByProcess())
+            {
+                form.AddLogMessage($"공정 진행 중 로그아웃 시도 차단 (사용자: {form.CurrentUser})", "WARN");
+                MessageBox.Show(
+                    "공정이 진행 중(일시정지 포함)이거나 서보 ON·원점복귀 중에는 로그아웃할 수 없습니다.\n\n" +
+                    "공정이 끝나거나 '공정 초기화' 후에 로그아웃해 주세요.\n" +
+                    "급히 멈춰야 하면 긴급 정지를 누르세요.",
+                    "로그아웃 제한",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
+                return;
+            }
+
             form.IsLoggedIn = false;
             form.CurrentUser = "Guest";
             form.CurrentRole = "없음";
