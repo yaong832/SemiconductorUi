@@ -3,22 +3,31 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Windows.Forms;
 using System.Windows.Forms.DataVisualization.Charting;
+using SemiconductorUi.Helpers;
 
 namespace SemiconductorUi.Forms
 {
+	/// <summary>
+	/// 추이(Trend) 창: Chamber A/B/C의 온도·압력 PV/SV를 시간 그래프로 보여준다.
+	/// 값은 메인 화면 PM 상태 카드에 표시되는 값과 같다.
+	/// (PV는 그 챔버가 공정 중일 때만, SV는 레시피가 적용된 경우에만 있음 → 없으면 선이 끊긴다)
+	/// 데이터는 Form1이 공정 중 1초마다 기록하고, 이 창은 1초마다 다시 그린다.
+	/// </summary>
 	public class TrendForm : Form
 	{
-		private ListView listTrend;
-		private Button buttonStart;
-		private Button buttonStop;
-		private Button buttonRefresh;
-		private ComboBox comboUnit;
-		private Chart chartTemp;
-		private Chart chartPress;
+		private static readonly string[] Units = { "PMA", "PMB", "PMC" };
+
+		private static readonly Color PvColor = Color.FromArgb(45, 98, 196);
+		private static readonly Color SvColor = Color.FromArgb(214, 138, 20);
+
+		private ComboBox comboRange;
+		private Label labelStatus;
+		private Chart chart;
 		private Timer refreshTimer;
 
-		public Action OnStartCapture;
-		public Action OnStopCapture;
+		/// <summary>
+		/// 기록된 샘플을 돌려준다. PV/SV가 없는 구간은 double.NaN.
+		/// </summary>
 		public Func<List<(DateTime t, string unit, double pvTemp, double svTemp, double pvPress, double svPress)>> ProvideSamples;
 
 		public TrendForm()
@@ -28,227 +37,211 @@ namespace SemiconductorUi.Forms
 
 		private void InitializeComponent()
 		{
-			this.Text = "Trend - 환경 트렌드";
+			this.Text = "추이 - 챔버 온도·압력";
 			this.StartPosition = FormStartPosition.CenterParent;
-			this.FormBorderStyle = FormBorderStyle.FixedDialog;
-			this.MaximizeBox = false;
+			this.FormBorderStyle = FormBorderStyle.Sizable;
+			this.MaximizeBox = true;
 			this.MinimizeBox = false;
-			this.BackColor = Color.FromArgb(250, 250, 255);
-			this.ClientSize = new Size(1100, 720);
+			this.ShowInTaskbar = false;
+			this.BackColor = UiTheme.Surface;
+			this.Font = new Font("Segoe UI", 10F);
+			this.ClientSize = new Size(1280, 820);
+			this.MinimumSize = new Size(900, 600);
 
-			comboUnit = new ComboBox();
-			comboUnit.DropDownStyle = ComboBoxStyle.DropDownList;
-			comboUnit.Items.AddRange(new object[] { "ALL", "Chamber A", "Chamber B", "Chamber C" });
-			comboUnit.SelectedIndex = 0;
-			comboUnit.Location = new Point(16, 12);
-			comboUnit.Width = 120;
-			comboUnit.Anchor = AnchorStyles.Top | AnchorStyles.Left;
-			comboUnit.BackColor = Color.FromArgb(240, 240, 245);
-			comboUnit.ForeColor = Color.FromArgb(40, 40, 40);
+			var topBar = new FlowLayoutPanel
+			{
+				Dock = DockStyle.Top,
+				Height = 44,
+				Padding = new Padding(12, 8, 12, 0),
+				FlowDirection = FlowDirection.LeftToRight,
+				WrapContents = false,
+				BackColor = UiTheme.Surface
+			};
 
-			listTrend = new ListView();
-			listTrend.Location = new Point(16, 44);
-			listTrend.Width = 1060;
-			listTrend.Height = 240;
-			listTrend.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-			listTrend.View = View.Details;
-			listTrend.FullRowSelect = true;
-			listTrend.GridLines = true;
-			listTrend.ForeColor = Color.FromArgb(40, 40, 40);
-			listTrend.BackColor = Color.FromArgb(240, 240, 245);
-			listTrend.Columns.Add("시간", 140);
-			listTrend.Columns.Add("유닛", 80);
-			listTrend.Columns.Add("PV 온도(°C)", 140);
-			listTrend.Columns.Add("SV 온도(°C)", 140);
-			listTrend.Columns.Add("PV 압력(Torr)", 180);
-			listTrend.Columns.Add("SV 압력(Torr)", 180);
+			var labelRange = new Label
+			{
+				Text = "표시 구간",
+				AutoSize = true,
+				ForeColor = UiTheme.TextPrimary,
+				Margin = new Padding(0, 6, 6, 0)
+			};
 
-			chartTemp = new Chart();
-			chartTemp.Location = new Point(16, 296);
-			chartTemp.Size = new Size(1060, 160);
-			chartTemp.BackColor = Color.FromArgb(240, 240, 245);
-			var areaT = new ChartArea("areaT");
-			areaT.BackColor = Color.FromArgb(240, 240, 245);
-			areaT.AxisX.MajorGrid.LineColor = Color.FromArgb(200, 200, 210);
-			areaT.AxisY.MajorGrid.LineColor = Color.FromArgb(200, 200, 210);
-			areaT.AxisX.LabelStyle.ForeColor = Color.FromArgb(40, 40, 40);
-			areaT.AxisY.LabelStyle.ForeColor = Color.FromArgb(40, 40, 40);
-			chartTemp.ChartAreas.Add(areaT);
-			var legendT = new Legend();
-			legendT.BackColor = Color.FromArgb(240, 240, 245);
-			legendT.ForeColor = Color.FromArgb(40, 40, 40);
-			chartTemp.Legends.Add(legendT);
-			var sPvT = new Series("PV Temp");
-			sPvT.ChartType = SeriesChartType.Line;
-			sPvT.Color = Color.DeepSkyBlue;
-			sPvT.BorderWidth = 2;
-			sPvT.XValueType = ChartValueType.DateTime;
-			sPvT.ChartArea = "areaT";
-			var sSvT = new Series("SV Temp");
-			sSvT.ChartType = SeriesChartType.Line;
-			sSvT.Color = Color.LightCoral;
-			sSvT.BorderWidth = 2;
-			sSvT.XValueType = ChartValueType.DateTime;
-			sSvT.ChartArea = "areaT";
-			chartTemp.Series.Add(sPvT);
-			chartTemp.Series.Add(sSvT);
-			var titleT = new Title("Temperature (°C)");
-			titleT.ForeColor = Color.FromArgb(40, 40, 40);
-			chartTemp.Titles.Add(titleT);
-			chartTemp.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+			comboRange = new ComboBox
+			{
+				DropDownStyle = ComboBoxStyle.DropDownList,
+				Width = 110,
+				Margin = new Padding(0, 2, 16, 0)
+			};
+			comboRange.Items.AddRange(new object[] { "최근 5분", "최근 10분", "최근 30분", "최근 1시간", "전체" });
+			comboRange.SelectedIndex = 1;
+			comboRange.SelectedIndexChanged += (s, e) => RefreshChart();
 
-			chartPress = new Chart();
-			chartPress.Location = new Point(16, 480);
-			chartPress.Size = new Size(1060, 160);
-			chartPress.BackColor = Color.FromArgb(240, 240, 245);
-			var areaP = new ChartArea("areaP");
-			areaP.BackColor = Color.FromArgb(240, 240, 245);
-			areaP.AxisX.MajorGrid.LineColor = Color.FromArgb(200, 200, 210);
-			areaP.AxisY.MajorGrid.LineColor = Color.FromArgb(200, 200, 210);
-			areaP.AxisX.LabelStyle.ForeColor = Color.FromArgb(40, 40, 40);
-			areaP.AxisY.LabelStyle.ForeColor = Color.FromArgb(40, 40, 40);
-			chartPress.ChartAreas.Add(areaP);
-			var legendP = new Legend();
-			legendP.BackColor = Color.FromArgb(240, 240, 245);
-			legendP.ForeColor = Color.FromArgb(40, 40, 40);
-			chartPress.Legends.Add(legendP);
-			var sPvP = new Series("PV Press");
-			sPvP.ChartType = SeriesChartType.Line;
-			sPvP.Color = Color.DeepSkyBlue;
-			sPvP.BorderWidth = 2;
-			sPvP.XValueType = ChartValueType.DateTime;
-			sPvP.ChartArea = "areaP";
-			var sSvP = new Series("SV Press");
-			sSvP.ChartType = SeriesChartType.Line;
-			sSvP.Color = Color.LightCoral;
-			sSvP.BorderWidth = 2;
-			sSvP.XValueType = ChartValueType.DateTime;
-			sSvP.ChartArea = "areaP";
-			chartPress.Series.Add(sPvP);
-			chartPress.Series.Add(sSvP);
-			var titleP = new Title("Pressure (Torr)");
-			titleP.ForeColor = Color.FromArgb(40, 40, 40);
-			chartPress.Titles.Add(titleP);
-			chartPress.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom;
+			labelStatus = new Label
+			{
+				AutoSize = true,
+				ForeColor = UiTheme.TextSecondary,
+				Margin = new Padding(0, 6, 0, 0),
+				Text = ""
+			};
 
-			buttonStart = new Button();
-			buttonStart.Text = "Start";
-			buttonStart.Width = 80;
-			buttonStart.Height = 28;
-			buttonStart.Location = new Point(160, 12);
-			buttonStart.BackColor = Color.FromArgb(100, 120, 130);
-			buttonStart.FlatStyle = FlatStyle.Flat;
-			buttonStart.FlatAppearance.BorderSize = 0;
-			buttonStart.ForeColor = Color.White;
-			buttonStart.Anchor = AnchorStyles.Top | AnchorStyles.Left;
-			buttonStart.Click += buttonStart_Click;
+			topBar.Controls.Add(labelRange);
+			topBar.Controls.Add(comboRange);
+			topBar.Controls.Add(labelStatus);
 
-			buttonStop = new Button();
-			buttonStop.Text = "Stop";
-			buttonStop.Width = 80;
-			buttonStop.Height = 28;
-			buttonStop.Location = new Point(246, 12);
-			buttonStop.BackColor = Color.FromArgb(100, 120, 130);
-			buttonStop.FlatStyle = FlatStyle.Flat;
-			buttonStop.FlatAppearance.BorderSize = 0;
-			buttonStop.ForeColor = Color.White;
-			buttonStop.Anchor = AnchorStyles.Top | AnchorStyles.Left;
-			buttonStop.Click += buttonStop_Click;
+			chart = new Chart
+			{
+				Dock = DockStyle.Fill,
+				BackColor = UiTheme.Surface
+			};
 
-			buttonRefresh = new Button();
-			buttonRefresh.Text = "Refresh";
-			buttonRefresh.Width = 90;
-			buttonRefresh.Height = 28;
-			buttonRefresh.Location = new Point(332, 12);
-			buttonRefresh.BackColor = Color.FromArgb(100, 120, 130);
-			buttonRefresh.FlatStyle = FlatStyle.Flat;
-			buttonRefresh.FlatAppearance.BorderSize = 0;
-			buttonRefresh.ForeColor = Color.White;
-			buttonRefresh.Anchor = AnchorStyles.Top | AnchorStyles.Left;
-			buttonRefresh.Click += buttonRefresh_Click;
+			// 3행(Chamber A/B/C) × 2열(온도, 압력)
+			for (int row = 0; row < Units.Length; row++)
+			{
+				string unit = Units[row];
+				AddArea(unit, "T", row, 0, "0.0");
+				AddArea(unit, "P", row, 1, "G4");
+			}
 
-			refreshTimer = new Timer();
-			refreshTimer.Interval = 1000;
+			var legend = new Legend("legend")
+			{
+				Docking = Docking.Top,
+				Alignment = StringAlignment.Center,
+				BackColor = UiTheme.Surface,
+				ForeColor = UiTheme.TextPrimary,
+				LegendStyle = LegendStyle.Row
+			};
+			// 그래프 칸을 직접 배치하므로 범례도 맨 위 5% 자리에 직접 둔다
+			legend.Position = new ElementPosition(0f, 0f, 100f, 5f);
+			legend.CustomItems.Add(new LegendItem("PV (현재값)", PvColor, ""));
+			legend.CustomItems.Add(new LegendItem("SV (레시피 설정값)", SvColor, ""));
+			chart.Legends.Add(legend);
+
+			refreshTimer = new Timer { Interval = 1000 };
 			refreshTimer.Tick += refreshTimer_Tick;
 
-			this.Controls.Add(comboUnit);
-			this.Controls.Add(listTrend);
-			this.Controls.Add(chartTemp);
-			this.Controls.Add(chartPress);
-			this.Controls.Add(buttonStart);
-			this.Controls.Add(buttonStop);
-			this.Controls.Add(buttonRefresh);
+			this.Controls.Add(chart);
+			this.Controls.Add(topBar);
 
 			this.FormClosing += TrendForm_FormClosing;
+		}
+
+		private static string AreaName(string unit, string kind) => unit + "_" + kind;
+
+		private void AddArea(string unit, string kind, int row, int col, string labelFormat)
+		{
+			string name = AreaName(unit, kind);
+			var area = new ChartArea(name)
+			{
+				BackColor = UiTheme.SurfaceAlt
+			};
+			// 위쪽 범례(약 5%)를 뺀 나머지를 3×2로 나눈다
+			const float top = 5f;
+			float h = (100f - top) / Units.Length;
+			area.Position = new ElementPosition(col * 50f, top + row * h, 50f, h);
+			area.AxisX.LabelStyle.Format = "HH:mm:ss";
+			area.AxisX.LabelStyle.ForeColor = UiTheme.TextSecondary;
+			area.AxisY.LabelStyle.ForeColor = UiTheme.TextSecondary;
+			area.AxisY.LabelStyle.Format = labelFormat;
+			area.AxisX.MajorGrid.LineColor = UiTheme.Border;
+			area.AxisY.MajorGrid.LineColor = UiTheme.Border;
+			area.AxisX.LineColor = UiTheme.Border;
+			area.AxisY.LineColor = UiTheme.Border;
+			area.AxisY.IsStartedFromZero = false;
+			chart.ChartAreas.Add(area);
+
+			var title = new Title(name)
+			{
+				Name = name,
+				DockedToChartArea = name,
+				// 그래프 칸 위치를 직접 정했으므로 제목은 칸 안쪽 위에 둔다 (칸 밖이면 위 칸과 겹칠 수 있음)
+				IsDockedInsideChartArea = true,
+				Docking = Docking.Top,
+				Alignment = ContentAlignment.MiddleLeft,
+				ForeColor = UiTheme.TextPrimary,
+				Font = new Font("Segoe UI", 10F, FontStyle.Bold),
+				Text = TitleText(unit, kind, double.NaN, double.NaN)
+			};
+			chart.Titles.Add(title);
+
+			chart.Series.Add(CreateSeries(name + "_PV", name, PvColor, ChartDashStyle.Solid));
+			chart.Series.Add(CreateSeries(name + "_SV", name, SvColor, ChartDashStyle.Dash));
+		}
+
+		private static Series CreateSeries(string name, string area, Color color, ChartDashStyle dash)
+		{
+			var s = new Series(name)
+			{
+				ChartArea = area,
+				ChartType = SeriesChartType.Line,
+				Color = color,
+				BorderWidth = 2,
+				BorderDashStyle = dash,
+				XValueType = ChartValueType.DateTime,
+				IsVisibleInLegend = false
+			};
+			// 값이 없는 구간(공정 중 아님 / 레시피 미적용)은 선을 끊는다
+			s.EmptyPointStyle.Color = Color.Transparent;
+			s.EmptyPointStyle.BorderWidth = 0;
+			return s;
+		}
+
+		private static string TitleText(string unit, string kind, double pv, double sv)
+		{
+			string label = EquipmentRegionHelper.FormatUnitLabel(unit);
+			bool isTemp = kind == "T";
+			string what = isTemp ? "온도 (°C)" : "압력 (Torr)";
+			string pvText = double.IsNaN(pv) ? "-" : (isTemp ? pv.ToString("0.0") : FormatPressure(pv));
+			string svText = double.IsNaN(sv) ? "-" : (isTemp ? sv.ToString("0.0") : FormatPressure(sv));
+			return $"{label} {what}   PV {pvText} / SV {svText}";
+		}
+
+		private static string FormatPressure(double v)
+		{
+			return v < 1.0 ? v.ToString("0.####") : v.ToString("0.##");
 		}
 
 		protected override void OnLoad(EventArgs e)
 		{
 			base.OnLoad(e);
 			if (IsDesignEnvironment()) return;
+			// 창을 열면 바로 그리고, 닫을 때까지 1초마다 갱신
+			RefreshChart();
+			refreshTimer.Start();
 		}
 
 		private void TrendForm_FormClosing(object sender, FormClosingEventArgs e)
 		{
 			try
 			{
-				// 타이머 정지 및 정리
 				if (refreshTimer != null)
 				{
 					refreshTimer.Stop();
 					refreshTimer.Tick -= refreshTimer_Tick;
 				}
-
-				// 캡처 중지
-				OnStopCapture?.Invoke();
 			}
 			catch (Exception ex)
 			{
-				// 오류가 발생해도 폼 종료는 계속 진행
 				System.Diagnostics.Debug.WriteLine($"TrendForm FormClosing 오류: {ex.Message}");
 			}
-		}
-
-		private void buttonStart_Click(object sender, EventArgs e)
-		{
-			OnStartCapture?.Invoke();
-			StartAutoRefresh();
-		}
-
-		private void buttonStop_Click(object sender, EventArgs e)
-		{
-			OnStopCapture?.Invoke();
-			StopAutoRefresh();
-		}
-
-		private void buttonRefresh_Click(object sender, EventArgs e)
-		{
-			RefreshSamples();
-			PlotSamples();
 		}
 
 		private void refreshTimer_Tick(object sender, EventArgs e)
 		{
 			try
 			{
-				// 폼이 닫히거나 disposed된 경우 처리 중단
 				if (this.IsDisposed || this.Disposing)
 				{
 					refreshTimer?.Stop();
 					return;
 				}
-
-				RefreshSamples();
-				PlotSamples();
+				RefreshChart();
 			}
 			catch (ObjectDisposedException)
 			{
-				// 컨트롤이 이미 disposed된 경우 타이머 정지
 				refreshTimer?.Stop();
 			}
 			catch (Exception ex)
 			{
-				// 기타 오류 발생 시에도 타이머는 계속 실행
 				System.Diagnostics.Debug.WriteLine($"refreshTimer_Tick 오류: {ex.Message}");
 			}
 		}
@@ -264,104 +257,106 @@ namespace SemiconductorUi.Forms
 			return false;
 		}
 
-		public void RefreshSamples()
+		private TimeSpan? SelectedRange()
 		{
-			try
+			switch (comboRange?.SelectedIndex ?? 1)
 			{
-				if (listTrend == null || listTrend.IsDisposed)
-				{
-					return;
-				}
-
-				var samples = ProvideSamples?.Invoke() ?? new List<(DateTime, string, double, double, double, double)>();
-				listTrend.BeginUpdate();
-				listTrend.Items.Clear();
-				// 최근 200개만 표시
-				int start = Math.Max(0, samples.Count - 200);
-				for (int i = start; i < samples.Count; i++)
-				{
-					var s = samples[i];
-					var item = new ListViewItem(s.t.ToString("HH:mm:ss"));
-					item.SubItems.Add(SemiconductorUi.Helpers.EquipmentRegionHelper.FormatUnitLabel(s.unit));
-					item.SubItems.Add(s.pvTemp.ToString("0.0"));
-					item.SubItems.Add(s.svTemp.ToString("0.0"));
-					item.SubItems.Add(s.pvPress.ToString("0.###"));
-					item.SubItems.Add(s.svPress.ToString("0.###"));
-					listTrend.Items.Add(item);
-				}
-				listTrend.EndUpdate();
-			}
-			catch (ObjectDisposedException)
-			{
-				// 컨트롤이 이미 disposed된 경우 무시
+				case 0: return TimeSpan.FromMinutes(5);
+				case 1: return TimeSpan.FromMinutes(10);
+				case 2: return TimeSpan.FromMinutes(30);
+				case 3: return TimeSpan.FromHours(1);
+				default: return null;
 			}
 		}
 
-		private void PlotSamples()
+		/// <summary>
+		/// 기록된 샘플로 6개 그래프를 다시 그린다.
+		/// </summary>
+		public void RefreshChart()
 		{
-			try
+			if (chart == null || chart.IsDisposed)
 			{
-				if (chartTemp == null || chartTemp.IsDisposed || chartPress == null || chartPress.IsDisposed)
+				return;
+			}
+
+			var samples = ProvideSamples?.Invoke() ?? new List<(DateTime, string, double, double, double, double)>();
+			DateTime now = DateTime.Now;
+			TimeSpan? range = SelectedRange();
+			DateTime from = range.HasValue ? now - range.Value : (samples.Count > 0 ? samples[0].t : now.AddMinutes(-10));
+
+			foreach (var s in chart.Series)
+			{
+				s.Points.Clear();
+			}
+
+			var lastPvT = new Dictionary<string, double>();
+			var lastSvT = new Dictionary<string, double>();
+			var lastPvP = new Dictionary<string, double>();
+			var lastSvP = new Dictionary<string, double>();
+
+			foreach (var s in samples)
+			{
+				if (s.t < from)
 				{
-					return;
+					continue;
 				}
-
-				var samples = ProvideSamples?.Invoke() ?? new List<(DateTime, string, double, double, double, double)>();
-				string unitFilter = comboUnit?.SelectedItem?.ToString() ?? "ALL";
-
-				if (chartTemp.Series.Count < 2 || chartPress.Series.Count < 2)
+				if (Array.IndexOf(Units, s.unit) < 0)
 				{
-					return;
+					continue;
 				}
+				double x = s.t.ToOADate();
+				AddPoint(AreaName(s.unit, "T") + "_PV", x, s.pvTemp);
+				AddPoint(AreaName(s.unit, "T") + "_SV", x, s.svTemp);
+				AddPoint(AreaName(s.unit, "P") + "_PV", x, s.pvPress);
+				AddPoint(AreaName(s.unit, "P") + "_SV", x, s.svPress);
+				lastPvT[s.unit] = s.pvTemp;
+				lastSvT[s.unit] = s.svTemp;
+				lastPvP[s.unit] = s.pvPress;
+				lastSvP[s.unit] = s.svPress;
+			}
 
-				var sPvT = chartTemp.Series[0];
-				var sSvT = chartTemp.Series[1];
-				var sPvP = chartPress.Series[0];
-				var sSvP = chartPress.Series[1];
-				sPvT.Points.Clear();
-				sSvT.Points.Clear();
-				sPvP.Points.Clear();
-				sSvP.Points.Clear();
+			double minX = from.ToOADate();
+			double maxX = now.ToOADate();
+			foreach (var unit in Units)
+			{
+				foreach (var kind in new[] { "T", "P" })
+				{
+					string name = AreaName(unit, kind);
+					var area = chart.ChartAreas[name];
+					area.AxisX.Minimum = minX;
+					area.AxisX.Maximum = maxX;
+					area.RecalculateAxesScale();
 
-				int start = Math.Max(0, samples.Count - 400);
-				for (int i = start; i < samples.Count; i++)
-				{
-					var s = samples[i];
-					if (unitFilter != "ALL" && !string.Equals(unitFilter, SemiconductorUi.Helpers.EquipmentRegionHelper.FormatUnitLabel(s.unit), StringComparison.OrdinalIgnoreCase))
-					{
-						continue;
-					}
-					double x = s.t.ToOADate();
-					sPvT.Points.AddXY(x, s.pvTemp);
-					sSvT.Points.AddXY(x, s.svTemp);
-					sPvP.Points.AddXY(x, s.pvPress);
-					sSvP.Points.AddXY(x, s.svPress);
-				}
-
-				if (chartTemp.ChartAreas.Count > 0)
-				{
-					chartTemp.ChartAreas[0].RecalculateAxesScale();
-				}
-				if (chartPress.ChartAreas.Count > 0)
-				{
-					chartPress.ChartAreas[0].RecalculateAxesScale();
+					var lastPv = kind == "T" ? lastPvT : lastPvP;
+					var lastSv = kind == "T" ? lastSvT : lastSvP;
+					chart.Titles[name].Text = TitleText(unit, kind,
+						lastPv.TryGetValue(unit, out var pv) ? pv : double.NaN,
+						lastSv.TryGetValue(unit, out var sv) ? sv : double.NaN);
 				}
 			}
-			catch (ObjectDisposedException)
+
+			if (samples.Count == 0)
 			{
-				// 컨트롤이 이미 disposed된 경우 무시
+				labelStatus.Text = "아직 기록이 없습니다. 공정을 시작하면 1초마다 기록됩니다.";
+			}
+			else
+			{
+				labelStatus.Text = $"기록 {samples[0].t:HH:mm:ss} ~ {samples[samples.Count - 1].t:HH:mm:ss} (1초 간격) · PV는 공정 중인 챔버만, SV는 레시피 적용 시에만 표시";
 			}
 		}
 
-		private void StartAutoRefresh()
+		private void AddPoint(string seriesName, double x, double y)
 		{
-			refreshTimer.Start();
-		}
-
-		private void StopAutoRefresh()
-		{
-			refreshTimer.Stop();
+			var series = chart.Series[seriesName];
+			if (double.IsNaN(y) || double.IsInfinity(y))
+			{
+				int i = series.Points.AddXY(x, 0);
+				series.Points[i].IsEmpty = true;
+			}
+			else
+			{
+				series.Points.AddXY(x, y);
+			}
 		}
 	}
 }
-

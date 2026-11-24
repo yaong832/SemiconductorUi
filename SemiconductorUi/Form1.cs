@@ -5196,12 +5196,13 @@ namespace SemiconductorUi
                     // 폼은 버튼 클릭 이벤트에서 열도록 변경 (중복 방지)
                     break;
                 case AppSection.Trend:
-                    StartTrendCapture();
-                    // Trend 폼 열기
+                    // Trend 폼 열기: 기록된 챔버 온도·압력 샘플을 넘겨준다
+                    // (예전에는 ProvideSamples를 연결하지 않아 그래프가 항상 비어 있었음)
                     try
                     {
                         using (var tf = new TrendForm())
                         {
+                            tf.ProvideSamples = GetTrendSamplesSnapshot;
                             tf.ShowDialog(this);
                         }
                     }
@@ -5825,20 +5826,18 @@ namespace SemiconductorUi
         }
 
         // ===== Trend: PV/SV 샘플 수집 =====
+        // 공정 중(시뮬레이션 타이머가 도는 동안) 1초마다 Chamber A/B/C 값을 기록한다.
+        // 추이 창을 열지 않아도 기록하므로, 창을 나중에 열어도 그동안의 그래프가 보인다.
+        // 값은 PM 상태 카드와 같은 기준: PV는 그 챔버가 공정 중일 때만, SV는 레시피 적용 시에만 (없으면 NaN).
         private readonly List<(DateTime t, string unit, double pvTemp, double svTemp, double pvPress, double svPress)> trendSamples
             = new List<(DateTime, string, double, double, double, double)>();
-        private bool trendCaptureEnabled = false;
+        private DateTime lastTrendSampleTime = DateTime.MinValue;
+        private const int TrendSampleIntervalMs = 1000;
+        private static readonly TimeSpan TrendKeepDuration = TimeSpan.FromHours(2);
 
-        private void StartTrendCapture()
+        internal List<(DateTime t, string unit, double pvTemp, double svTemp, double pvPress, double svPress)> GetTrendSamplesSnapshot()
         {
-            trendCaptureEnabled = true;
-            AddLogMessage("Trend 캡처 시작", "INFO");
-        }
-
-        private void StopTrendCapture()
-        {
-            trendCaptureEnabled = false;
-            AddLogMessage($"Trend 캡처 중지 (샘플 {trendSamples.Count}개)", "INFO");
+            return new List<(DateTime, string, double, double, double, double)>(trendSamples);
         }
 
         // ===== Maintenance: 기본 점검/조치 구현 =====
@@ -5902,21 +5901,44 @@ namespace SemiconductorUi
         // 시뮬레이션 타이머 틱 등 적절한 위치에서 호출되는 업데이트 루프에 아래 훅 추가되어야 함
         internal void CaptureTrendSampleTick()
         {
-            if (!trendCaptureEnabled)
+            var now = DateTime.Now;
+            if ((now - lastTrendSampleTime).TotalMilliseconds < TrendSampleIntervalMs)
             {
                 return;
             }
+            lastTrendSampleTime = now;
+
             foreach (var unit in new[] { "PMA", "PMB", "PMC" })
             {
-                if (ChamberEnvSpecs.TryGetValue(unit, out var spec) && ChamberEnvLive.TryGetValue(unit, out var live))
+                double svTemp = double.NaN, svPress = double.NaN;
+                if (RecipeApplied && ChamberEnvSpecs.TryGetValue(unit, out var spec))
                 {
-                    trendSamples.Add((DateTime.Now, unit, live.TemperatureC, spec.TargetTemperatureC, live.PressureTorr, spec.TargetPressureTorr));
-                    // 간단한 메모리 제한
-                    if (trendSamples.Count > 5000)
-                    {
-                        trendSamples.RemoveRange(0, 1000);
-                    }
+                    svTemp = spec.TargetTemperatureC;
+                    svPress = spec.TargetPressureTorr;
                 }
+
+                double pvTemp = double.NaN, pvPress = double.NaN;
+                var cs = GetChamberStateForUnit(unit);
+                bool processing = SimulationRunning && cs != null && IsChamberProcessing(cs);
+                if (processing && ChamberEnvLive.TryGetValue(unit, out var live) && live != null)
+                {
+                    pvTemp = live.TemperatureC;
+                    pvPress = live.PressureTorr;
+                }
+
+                trendSamples.Add((now, unit, pvTemp, svTemp, pvPress, svPress));
+            }
+
+            // 최근 2시간만 보관
+            var cutoff = now - TrendKeepDuration;
+            int remove = 0;
+            while (remove < trendSamples.Count && trendSamples[remove].t < cutoff)
+            {
+                remove++;
+            }
+            if (remove > 0)
+            {
+                trendSamples.RemoveRange(0, remove);
             }
         }
 
