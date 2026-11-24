@@ -1,0 +1,42 @@
+name: build
+
+# PR과 main에 올라온 코드가 Windows에서 빌드되고 단위 테스트를 통과하는지 확인합니다.
+# 장비(EtherCAT)는 쓰지 않습니다. 안전 규칙 테스트는 가짜 장치·가짜 시계로 돕니다.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: microsoft/setup-msbuild@v2
+      - uses: NuGet/setup-nuget@v2
+
+      - name: NuGet 복원
+        run: nuget restore SemiconductorUi/SemiconductorUi.sln
+
+      - name: 빌드 (Release)
+        run: msbuild SemiconductorUi/SemiconductorUi.sln /p:Configuration=Release /m /v:minimal
+
+      - name: 단위 테스트
+        shell: pwsh
+        run: |
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          $vstest = & $vswhere -latest -products * -find "**\vstest.console.exe" | Select-Object -First 1
+          & $vstest SemiconductorUi.Tests\bin\Release\SemiconductorUi.Tests.dll /Logger:trx /Logger:"console;verbosity=normal"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: 테스트 결과 올리기
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: TestResults/
+          if-no-files-found: ignore
